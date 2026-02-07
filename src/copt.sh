@@ -196,8 +196,6 @@ ${C_BLD}NOTES${C_RST}
     • On multi-GPU systems, try --dri-device /dev/dri/card1 if card0 fails.
     • Check audio devices:  cat /proc/asound/cards
     • Mouse cursor capture is not supported by kmsgrab.
-    • Window capture requires xdotool or wmctrl (install: sudo apt install xdotool)
-    • List windows:  wmctrl -l  or  xdotool search --name "window name"
 
 EOF
     exit 0
