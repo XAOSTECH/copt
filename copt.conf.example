@@ -1,0 +1,65 @@
+# ============================================================================
+# copt configuration — ~/.config/copt/copt.conf
+# ============================================================================
+# All settings below can also be overridden via CLI flags or environment
+# variables prefixed with COPT_. CLI flags take highest priority.
+#
+# This file is sourced as bash, so use bash variable syntax.
+# ============================================================================
+
+# -- DRI / GPU device ---------------------------------------------------------
+# Leave empty for auto-detection (tries card1 then card0).
+# On multi-GPU systems you may need to set this explicitly.
+# COPT_DRI_DEVICE="/dev/dri/card1"
+
+# -- Source screen resolution -------------------------------------------------
+# Your native display resolution. Used for default crop dimensions.
+# COPT_SCREEN_W=3456
+# COPT_SCREEN_H=2160
+
+# -- Output resolution --------------------------------------------------------
+# The final resolution of the encoded video.
+# COPT_OUT_W=1440
+# COPT_OUT_H=900
+
+# -- Crop region --------------------------------------------------------------
+# Capture a sub-region of the screen.  Set to 0 to use full screen.
+# COPT_CROP_X=0
+# COPT_CROP_Y=0
+# COPT_CROP_W=0
+# COPT_CROP_H=0
+
+# -- Encoder ------------------------------------------------------------------
+# auto  = detect best available (VAAPI > NVENC > x264)
+# vaapi = Intel/AMD hardware encoding
+# nvenc = NVIDIA hardware encoding
+# x264  = CPU software encoding (libx264)
+# x265  = CPU software encoding (libx265)
+# COPT_ENCODER=auto
+
+# -- Video quality ------------------------------------------------------------
+# CRF for x264/x265, QP for VAAPI/NVENC.  Lower = better quality, bigger file.
+# Range: 0-51.  Recommendation: 18-23 for high quality, 23-28 for smaller files.
+# COPT_QUALITY=20
+
+# -- Pixel format -------------------------------------------------------------
+# COPT_PIXEL_FMT=nv12
+
+# -- Framerate ----------------------------------------------------------------
+# COPT_FRAMERATE=60
+
+# -- Audio --------------------------------------------------------------------
+# ALSA device.  Check available devices:
+#   cat /proc/asound/cards
+#   cat /proc/asound/devices
+# Leave empty for auto-detection.  Set COPT_AUDIO=0 to disable.
+# COPT_AUDIO=1
+# COPT_AUDIO_DEVICE="hw:0,6"
+# COPT_AUDIO_CODEC=aac    # aac | opus | mp3 | copy
+
+# -- Output file --------------------------------------------------------------
+# COPT_OUTPUT=/tmp/copt-output.mkv
+
+# -- Duration -----------------------------------------------------------------
+# 0 = record until Ctrl-C
+# COPT_DURATION=0

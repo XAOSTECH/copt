@@ -1,0 +1,461 @@
+#!/usr/bin/env bash
+# ============================================================================
+# copt — Capture Operations for Wayland (kmsgrab + FFmpeg)
+# ============================================================================
+# Low-level screen/region/audio capture on Wayland using KMS grab,
+# hardware-accelerated encoding (VAAPI / NVENC), and ALSA audio.
+#
+# Requires: FFmpeg (with --enable-libx264/x265, kmsgrab, vaapi or nvenc),
+#           root access (sudo) for /dev/dri KMS framebuffer reads.
+#
+# Usage:  copt [OPTIONS]
+#         copt --help
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+# ============================================================================
+
+set -euo pipefail
+IFS=$'\n\t'
+
+# ----- version --------------------------------------------------------------
+readonly COPT_VERSION="0.1.0"
+
+# ----- color helpers ---------------------------------------------------------
+if [[ -t 1 ]]; then
+    readonly C_RST='\033[0m'  C_RED='\033[0;31m'  C_GRN='\033[0;32m'
+    readonly C_YEL='\033[0;33m'  C_BLU='\033[0;34m'  C_CYN='\033[0;36m'
+    readonly C_BLD='\033[1m'
+else
+    readonly C_RST='' C_RED='' C_GRN='' C_YEL='' C_BLU='' C_CYN='' C_BLD=''
+fi
+
+info()  { printf "${C_BLU}[INFO]${C_RST}  %s\n" "$*"; }
+ok()    { printf "${C_GRN}[ OK ]${C_RST}  %s\n" "$*"; }
+warn()  { printf "${C_YEL}[WARN]${C_RST}  %s\n" "$*" >&2; }
+die()   { printf "${C_RED}[ERR ]${C_RST}  %s\n" "$*" >&2; exit 1; }
+
+# ----- defaults (overridable via env, config, or CLI) ------------------------
+: "${COPT_DRI_DEVICE:=""}"
+: "${COPT_AUDIO_DEVICE:=""}"
+: "${COPT_SCREEN_W:=3456}"
+: "${COPT_SCREEN_H:=2160}"
+: "${COPT_OUT_W:=1440}"
+: "${COPT_OUT_H:=900}"
+: "${COPT_CROP_X:=0}"
+: "${COPT_CROP_Y:=0}"
+: "${COPT_CROP_W:=0}"         # 0 = use SCREEN_W
+: "${COPT_CROP_H:=0}"         # 0 = use SCREEN_H
+: "${COPT_ENCODER:=auto}"     # auto | vaapi | nvenc | x264 | x265
+: "${COPT_PIXEL_FMT:=nv12}"
+: "${COPT_FRAMERATE:=60}"
+: "${COPT_QUALITY:=20}"       # CRF / QP depending on encoder
+: "${COPT_AUDIO:=1}"          # 1 = capture audio, 0 = no audio
+: "${COPT_AUDIO_CODEC:=aac}"  # aac | opus | mp3 | copy
+: "${COPT_OUTPUT:=/tmp/copt-output.mkv}"
+: "${COPT_DURATION:=0}"       # 0 = until Ctrl-C
+: "${COPT_CONFIG:=${XDG_CONFIG_HOME:-$HOME/.config}/copt/copt.conf}"
+
+# ----- load config file if present ------------------------------------------
+load_config() {
+    if [[ -f "$COPT_CONFIG" ]]; then
+        info "Loading config: $COPT_CONFIG"
+        # shellcheck source=/dev/null
+        source "$COPT_CONFIG"
+    fi
+}
+
+# ----- usage / help ----------------------------------------------------------
+usage() {
+    cat <<EOF
+${C_BLD}copt${C_RST} v${COPT_VERSION} — Wayland screen capture via KMS grab + FFmpeg
+
+${C_BLD}USAGE${C_RST}
+    copt [OPTIONS]
+
+${C_BLD}CAPTURE OPTIONS${C_RST}
+    -d, --dri-device PATH    DRI device          (default: auto-detect)
+    -W, --screen-width  N    Source screen width  (default: $COPT_SCREEN_W)
+    -H, --screen-height N    Source screen height (default: $COPT_SCREEN_H)
+    -w, --out-width     N    Output width         (default: $COPT_OUT_W)
+    -h, --out-height    N    Output height        (default: $COPT_OUT_H)
+    --crop-x  N              Crop region X offset (default: 0)
+    --crop-y  N              Crop region Y offset (default: 0)
+    --crop-w  N              Crop region width    (default: screen width)
+    --crop-h  N              Crop region height   (default: screen height)
+    -r, --framerate     N    Capture framerate    (default: $COPT_FRAMERATE)
+    -t, --duration      N    Duration in seconds  (default: unlimited)
+
+${C_BLD}ENCODER OPTIONS${C_RST}
+    -e, --encoder  NAME      Encoder: auto|vaapi|nvenc|x264|x265  (default: auto)
+    -q, --quality  N         Quality (CRF/QP)     (default: $COPT_QUALITY)
+    -p, --pix-fmt  FMT       Pixel format          (default: $COPT_PIXEL_FMT)
+
+${C_BLD}AUDIO OPTIONS${C_RST}
+    -a, --audio-device DEV   ALSA device (e.g. hw:0,6)  (default: auto-detect)
+    -A, --no-audio           Disable audio capture
+    --audio-codec CODEC      Audio codec: aac|opus|mp3|copy (default: $COPT_AUDIO_CODEC)
+
+${C_BLD}OUTPUT${C_RST}
+    -o, --output  FILE       Output file path      (default: $COPT_OUTPUT)
+
+${C_BLD}GENERAL${C_RST}
+    -c, --config  FILE       Config file path
+    --probe                  Probe system and show detected devices, then exit
+    --dry-run                Print the ffmpeg command without executing
+    --version                Show version
+    --help                   Show this help
+
+${C_BLD}EXAMPLES${C_RST}
+    # Full screen capture with auto-detect
+    sudo copt -o ~/recording.mkv
+
+    # Capture at native resolution, no scaling
+    sudo copt -W 3456 -H 2160 -w 3456 -h 2160
+
+    # Capture a 1920x1080 region starting at (100,200)
+    sudo copt --crop-x 100 --crop-y 200 --crop-w 1920 --crop-h 1080
+
+    # Use NVENC encoder explicitly
+    sudo copt -e nvenc -o /tmp/gpu-recording.mkv
+
+    # No audio, 30fps, short recording
+    sudo copt -A -r 30 -t 60 -o /tmp/clip.mkv
+
+${C_BLD}NOTES${C_RST}
+    • Requires root (sudo) for KMS framebuffer access.
+    • On multi-GPU systems, try --dri-device /dev/dri/card1 if card0 fails.
+    • Check audio devices:  cat /proc/asound/cards
+    • Mouse cursor capture is not supported by kmsgrab.
+
+EOF
+    exit 0
+}
+
+# ----- system probing --------------------------------------------------------
+detect_dri_device() {
+    if [[ -n "$COPT_DRI_DEVICE" ]]; then
+        [[ -e "$COPT_DRI_DEVICE" ]] || die "DRI device not found: $COPT_DRI_DEVICE"
+        return
+    fi
+    # Prefer card1 (often the discrete GPU), fall back to card0
+    for card in /dev/dri/card{1,0}; do
+        if [[ -e "$card" ]]; then
+            COPT_DRI_DEVICE="$card"
+            ok "Auto-detected DRI device: $COPT_DRI_DEVICE"
+            return
+        fi
+    done
+    die "No DRI device found in /dev/dri/. Is the GPU driver loaded?"
+}
+
+detect_audio_device() {
+    [[ "$COPT_AUDIO" -eq 0 ]] && return
+    if [[ -n "$COPT_AUDIO_DEVICE" ]]; then return; fi
+
+    # Try to find a usable ALSA capture/playback device
+    if [[ -r /proc/asound/cards ]]; then
+        local card_num
+        card_num=$(awk '/^ *[0-9]/ {print $1; exit}' /proc/asound/cards)
+        if [[ -n "$card_num" ]]; then
+            # Find the first digital or analog output subdevice
+            if [[ -r /proc/asound/devices ]]; then
+                local dev_line
+                dev_line=$(grep -E "audio (capture|playback)" /proc/asound/devices | head -1)
+                if [[ -n "$dev_line" ]]; then
+                    local raw
+                    raw=$(echo "$dev_line" | grep -oP '\[\s*\K[0-9]+-\s*[0-9]+' | tr -d ' ')
+                    if [[ -n "$raw" ]]; then
+                        local c d
+                        c="${raw%%-*}"
+                        d="${raw##*-}"
+                        COPT_AUDIO_DEVICE="hw:${c},${d}"
+                        ok "Auto-detected ALSA device: $COPT_AUDIO_DEVICE"
+                        return
+                    fi
+                fi
+            fi
+            COPT_AUDIO_DEVICE="hw:${card_num},0"
+            ok "Fallback ALSA device: $COPT_AUDIO_DEVICE"
+            return
+        fi
+    fi
+
+    warn "Could not auto-detect audio device. Disabling audio."
+    warn "List devices with:  cat /proc/asound/cards && cat /proc/asound/devices"
+    COPT_AUDIO=0
+}
+
+detect_encoder() {
+    if [[ "$COPT_ENCODER" != "auto" ]]; then return; fi
+
+    local encoders
+    encoders=$(ffmpeg -hide_banner -encoders 2>/dev/null || true)
+
+    # Check VAAPI
+    if echo "$encoders" | grep -q h264_vaapi; then
+        if [[ -e /dev/dri/renderD128 ]]; then
+            COPT_ENCODER="vaapi"
+            ok "Auto-selected encoder: VAAPI (h264_vaapi)"
+            return
+        fi
+    fi
+
+    # Check NVENC
+    if echo "$encoders" | grep -q h264_nvenc; then
+        COPT_ENCODER="nvenc"
+        ok "Auto-selected encoder: NVENC (h264_nvenc)"
+        return
+    fi
+
+    # Fallback to software x264
+    if echo "$encoders" | grep -q libx264; then
+        COPT_ENCODER="x264"
+        warn "No hardware encoder found. Falling back to libx264 (CPU)."
+        return
+    fi
+
+    die "No usable H.264 encoder found. Install FFmpeg with libx264, VAAPI, or NVENC support."
+}
+
+probe_system() {
+    echo ""
+    printf "${C_BLD}=== copt system probe ===${C_RST}\n\n"
+
+    printf "${C_CYN}DRI devices:${C_RST}\n"
+    if ls /dev/dri/card* 2>/dev/null; then true; else echo "  (none found)"; fi
+    echo ""
+
+    printf "${C_CYN}Render nodes:${C_RST}\n"
+    if ls /dev/dri/render* 2>/dev/null; then true; else echo "  (none found)"; fi
+    echo ""
+
+    printf "${C_CYN}ALSA cards:${C_RST}\n"
+    if [[ -r /proc/asound/cards ]]; then cat /proc/asound/cards; else echo "  (none found)"; fi
+    echo ""
+
+    printf "${C_CYN}ALSA devices:${C_RST}\n"
+    if [[ -r /proc/asound/devices ]]; then cat /proc/asound/devices; else echo "  (none found)"; fi
+    echo ""
+
+    printf "${C_CYN}FFmpeg HW encoders:${C_RST}\n"
+    ffmpeg -hide_banner -encoders 2>/dev/null | grep -E '(vaapi|nvenc|qsv|amf)' || echo "  (none found)"
+    echo ""
+
+    printf "${C_CYN}Kernel:${C_RST}\n"
+    uname -r
+    echo ""
+
+    printf "${C_CYN}GPU info:${C_RST}\n"
+    if command -v lspci &>/dev/null; then
+        lspci | grep -iE '(vga|3d|display)' 2>/dev/null || echo "  (none found)"
+    else
+        echo "  (lspci not available)"
+    fi
+    echo ""
+
+    exit 0
+}
+
+# ----- build ffmpeg command --------------------------------------------------
+build_ffmpeg_cmd() {
+    local cmd=()
+    cmd+=(ffmpeg -hide_banner -loglevel info -y)
+
+    # -- Audio input --
+    if [[ "$COPT_AUDIO" -eq 1 && -n "${COPT_AUDIO_DEVICE:-}" ]]; then
+        cmd+=(-f alsa -i "$COPT_AUDIO_DEVICE")
+    fi
+
+    # -- Video input (kmsgrab) --
+    cmd+=(-device "$COPT_DRI_DEVICE" -f kmsgrab -framerate "$COPT_FRAMERATE" -i -)
+
+    # -- Duration --
+    if [[ "$COPT_DURATION" -gt 0 ]]; then
+        cmd+=(-t "$COPT_DURATION")
+    fi
+
+    # Resolve crop dimensions
+    local cw="${COPT_CROP_W}"
+    local ch="${COPT_CROP_H}"
+    [[ "$cw" -eq 0 ]] && cw="$COPT_SCREEN_W"
+    [[ "$ch" -eq 0 ]] && ch="$COPT_SCREEN_H"
+
+    # -- Build filter + encoder per backend --
+    case "$COPT_ENCODER" in
+        vaapi)
+            local vf="hwmap=derive_device=vaapi"
+            vf+=",crop=x=${COPT_CROP_X}:y=${COPT_CROP_Y}:w=${cw}:h=${ch}"
+            vf+=",scale_vaapi=${COPT_OUT_W}:${COPT_OUT_H}:${COPT_PIXEL_FMT}"
+            cmd+=(-vf "$vf")
+            cmd+=(-c:v h264_vaapi -qp "$COPT_QUALITY")
+            ;;
+        nvenc)
+            local vf="hwmap=derive_device=cuda"
+            vf+=",crop=x=${COPT_CROP_X}:y=${COPT_CROP_Y}:w=${cw}:h=${ch}"
+            vf+=",scale_cuda=${COPT_OUT_W}:${COPT_OUT_H}:${COPT_PIXEL_FMT}"
+            cmd+=(-vf "$vf")
+            cmd+=(-c:v h264_nvenc -preset p4 -qp "$COPT_QUALITY" -bf 0)
+            ;;
+        x264)
+            # Software path: download from GPU then filter on CPU
+            local vf="hwdownload,format=bgr0"
+            vf+=",crop=${cw}:${ch}:${COPT_CROP_X}:${COPT_CROP_Y}"
+            vf+=",scale=${COPT_OUT_W}:${COPT_OUT_H}"
+            cmd+=(-vf "$vf")
+            cmd+=(-c:v libx264 -preset fast -crf "$COPT_QUALITY" -pix_fmt yuv420p)
+            ;;
+        x265)
+            local vf="hwdownload,format=bgr0"
+            vf+=",crop=${cw}:${ch}:${COPT_CROP_X}:${COPT_CROP_Y}"
+            vf+=",scale=${COPT_OUT_W}:${COPT_OUT_H}"
+            cmd+=(-vf "$vf")
+            cmd+=(-c:v libx265 -preset fast -crf "$COPT_QUALITY" -pix_fmt yuv420p)
+            ;;
+        *)
+            die "Unknown encoder: $COPT_ENCODER"
+            ;;
+    esac
+
+    # -- Audio codec --
+    if [[ "$COPT_AUDIO" -eq 1 && -n "${COPT_AUDIO_DEVICE:-}" ]]; then
+        case "$COPT_AUDIO_CODEC" in
+            aac)   cmd+=(-c:a aac -b:a 192k) ;;
+            opus)  cmd+=(-c:a libopus -b:a 128k) ;;
+            mp3)   cmd+=(-c:a libmp3lame -b:a 192k) ;;
+            copy)  cmd+=(-c:a copy) ;;
+            *)     die "Unknown audio codec: $COPT_AUDIO_CODEC" ;;
+        esac
+    fi
+
+    # -- Output --
+    cmd+=("$COPT_OUTPUT")
+
+    # Return as a joined string for display, but we'll use the array to exec
+    FFMPEG_CMD=("${cmd[@]}")
+}
+
+# ----- parse CLI args --------------------------------------------------------
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -d|--dri-device)   COPT_DRI_DEVICE="$2"; shift 2 ;;
+            -W|--screen-width) COPT_SCREEN_W="$2"; shift 2 ;;
+            -H|--screen-height)COPT_SCREEN_H="$2"; shift 2 ;;
+            -w|--out-width)    COPT_OUT_W="$2"; shift 2 ;;
+            -h|--out-height)   COPT_OUT_H="$2"; shift 2 ;;
+            --crop-x)          COPT_CROP_X="$2"; shift 2 ;;
+            --crop-y)          COPT_CROP_Y="$2"; shift 2 ;;
+            --crop-w)          COPT_CROP_W="$2"; shift 2 ;;
+            --crop-h)          COPT_CROP_H="$2"; shift 2 ;;
+            -r|--framerate)    COPT_FRAMERATE="$2"; shift 2 ;;
+            -t|--duration)     COPT_DURATION="$2"; shift 2 ;;
+            -e|--encoder)      COPT_ENCODER="$2"; shift 2 ;;
+            -q|--quality)      COPT_QUALITY="$2"; shift 2 ;;
+            -p|--pix-fmt)      COPT_PIXEL_FMT="$2"; shift 2 ;;
+            -a|--audio-device) COPT_AUDIO_DEVICE="$2"; shift 2 ;;
+            -A|--no-audio)     COPT_AUDIO=0; shift ;;
+            --audio-codec)     COPT_AUDIO_CODEC="$2"; shift 2 ;;
+            -o|--output)       COPT_OUTPUT="$2"; shift 2 ;;
+            -c|--config)       COPT_CONFIG="$2"; shift 2 ;;
+            --probe)           probe_system ;;
+            --dry-run)         DRY_RUN=1; shift ;;
+            --version)         echo "copt v${COPT_VERSION}"; exit 0 ;;
+            --help)            usage ;;
+            -*)                die "Unknown option: $1  (try --help)" ;;
+            *)                 COPT_OUTPUT="$1"; shift ;;   # positional = output
+        esac
+    done
+}
+
+# ----- signal handling -------------------------------------------------------
+cleanup() {
+    echo ""
+    info "Capture stopped."
+    if [[ -f "$COPT_OUTPUT" ]]; then
+        local size
+        size=$(stat --printf='%s' "$COPT_OUTPUT" 2>/dev/null || echo 0)
+        if [[ "$size" -gt 0 ]]; then
+            ok "Output saved: $COPT_OUTPUT ($(numfmt --to=iec "$size" 2>/dev/null || echo "${size} bytes"))"
+        else
+            warn "Output file is empty — capture may have failed."
+        fi
+    fi
+}
+trap cleanup EXIT
+
+# ----- main ------------------------------------------------------------------
+main() {
+    DRY_RUN="${DRY_RUN:-0}"
+
+    load_config
+    parse_args "$@"
+
+    # Ensure running with privileges (kmsgrab needs root)
+    if [[ $EUID -ne 0 ]]; then
+        die "KMS grab requires root. Run with:  sudo copt $*"
+    fi
+
+    # Check ffmpeg
+    command -v ffmpeg &>/dev/null || die "ffmpeg not found in PATH."
+
+    info "copt v${COPT_VERSION} — Wayland KMS screen capture"
+
+    detect_dri_device
+    detect_audio_device
+    detect_encoder
+
+    build_ffmpeg_cmd
+
+    echo ""
+    printf "${C_CYN}Capture config:${C_RST}\n"
+    printf "  DRI device  : %s\n" "$COPT_DRI_DEVICE"
+    printf "  Screen      : %sx%s\n" "$COPT_SCREEN_W" "$COPT_SCREEN_H"
+    printf "  Crop region : x=%s y=%s w=%s h=%s\n" \
+        "$COPT_CROP_X" "$COPT_CROP_Y" \
+        "$([[ ${COPT_CROP_W} -eq 0 ]] && echo "$COPT_SCREEN_W" || echo "$COPT_CROP_W")" \
+        "$([[ ${COPT_CROP_H} -eq 0 ]] && echo "$COPT_SCREEN_H" || echo "$COPT_CROP_H")"
+    printf "  Output res  : %sx%s\n" "$COPT_OUT_W" "$COPT_OUT_H"
+    printf "  Encoder     : %s\n" "$COPT_ENCODER"
+    printf "  Framerate   : %s fps\n" "$COPT_FRAMERATE"
+    printf "  Quality     : %s\n" "$COPT_QUALITY"
+    if [[ "$COPT_AUDIO" -eq 1 ]]; then
+        printf "  Audio       : %s (%s)\n" "$COPT_AUDIO_DEVICE" "$COPT_AUDIO_CODEC"
+    else
+        printf "  Audio       : disabled\n"
+    fi
+    printf "  Output file : %s\n" "$COPT_OUTPUT"
+    if [[ "$COPT_DURATION" -gt 0 ]]; then
+        printf "  Duration    : %ss\n" "$COPT_DURATION"
+    else
+        printf "  Duration    : until Ctrl-C\n"
+    fi
+    echo ""
+
+    # Print the command
+    printf "${C_CYN}ffmpeg command:${C_RST}\n"
+    local cmd_str=""
+    for arg in "${FFMPEG_CMD[@]}"; do
+        if [[ "$arg" == *" "* ]]; then
+            cmd_str+=" '${arg}'"
+        else
+            cmd_str+=" ${arg}"
+        fi
+    done
+    printf "  %s\n\n" "${cmd_str# }"
+
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+        info "Dry run — not executing."
+        exit 0
+    fi
+
+    info "Starting capture… press Ctrl-C to stop."
+    echo ""
+
+    # Create output directory if needed
+    mkdir -p "$(dirname "$COPT_OUTPUT")"
+
+    # Execute
+    exec "${FFMPEG_CMD[@]}"
+}
+
+main "$@"
