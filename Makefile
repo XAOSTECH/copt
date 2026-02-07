@@ -73,7 +73,7 @@ install:
 	# Install binaries
 	install -Dm755 src/copt.sh $(BINDIR)/copt
 	install -Dm755 src/copt-autorestart.sh $(BINDIR)/copt-autorestart
-	install -Dm755 copt-host.sh $(BINDIR)/copt-host
+	install -Dm755 src/copt-host.sh $(BINDIR)/copt-host
 	# Install libraries
 	mkdir -p $(LIBDIR)/lib $(LIBDIR)/cfg
 	cp -r lib/* $(LIBDIR)/lib/
