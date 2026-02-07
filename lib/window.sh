@@ -43,12 +43,28 @@ detect_window() {
 detect_window_xdotool() {
     local window_name="$1"
     local window_id
+    local search_output
     
-    # Search for window by name (case-insensitive, partial match)
-    window_id=$(xdotool search --name "$window_name" 2>/dev/null | head -n1)
+    # Search for window by name and capture both stdout and stderr
+    search_output=$(xdotool search --name "$window_name" 2>&1)
+    window_id=$(echo "$search_output" | grep -E '^[0-9]+$' | head -n1)
     
     if [[ -z "$window_id" ]]; then
-        die "Window not found: '$window_name'. Check window name with: wmctrl -l"
+        warn "Window not found: '$window_name'"
+        
+        # Check if xdotool had an error (display/permission issue)
+        if echo "$search_output" | grep -qi "error\|failed\|protocol"; then
+            die "xdotool error: $search_output\n\nThis usually means no X11 display is available."
+        fi
+        
+        # Try to list available windows
+        if command -v wmctrl &>/dev/null; then
+            local available_windows
+            available_windows=$(wmctrl -l 2>/dev/null | awk '{print $NF}' | sort -u || echo "(unable to list)")
+            die "Available windows:\n${available_windows}\n\nList all windows with: wmctrl -l"
+        else
+            die "List open windows with: xdotool search --name ."
+        fi
     fi
     
     # Get window geometry
@@ -93,12 +109,24 @@ detect_window_xdotool() {
 detect_window_wmctrl() {
     local window_name="$1"
     local window_line
+    local search_output
     
     # Search for window by name (case-insensitive grep)
-    window_line=$(wmctrl -lG 2>/dev/null | grep -i "$window_name" | head -n1)
+    search_output=$(wmctrl -lG 2>&1)
+    window_line=$(echo "$search_output" | grep -i "$window_name" | head -n1)
     
     if [[ -z "$window_line" ]]; then
-        die "Window not found: '$window_name'. Available windows:\n$(wmctrl -l)"
+        warn "Window not found: '$window_name'"
+        
+        # Check if wmctrl had an error
+        if echo "$search_output" | grep -qi "error\|failed"; then
+            die "wmctrl error: $search_output"
+        fi
+        
+        # List available windows
+        local available_windows
+        available_windows=$(echo "$search_output" | awk '{$1=$2=$3=$4=""; print $0}' | sed 's/^ *//' | sort -u || echo "(unable to list)")
+        die "No window matching '$window_name' found.\\n\\nAvailable windows:\\n${available_windows}\\n\\nList all windows with: wmctrl -l"
     fi
     
     # Parse wmctrl output: ID DESKTOP X Y W H HOSTNAME TITLE
