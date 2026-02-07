@@ -34,7 +34,7 @@ help:
 	@echo "  make clean            Clean build artifacts"
 	@echo ""
 	@echo "Install location:"
-	@echo "  Binaries: $(BINDIR)/copt, $(BINDIR)/copt-autorestart"
+	@echo "  Binaries: $(BINDIR)/copt, $(BINDIR)/copt-autorestart, $(BINDIR)/copt-host"
 	@echo "  Libraries: $(LIBDIR)/"
 	@echo "  Config: $(CONFDIR)/copt.conf"
 
