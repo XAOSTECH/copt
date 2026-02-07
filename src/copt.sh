@@ -278,9 +278,15 @@ main() {
     load_profile
     parse_args "$@"
 
-    # Ensure running with privileges (kmsgrab needs root)
-    if [[ $EUID -ne 0 ]]; then
-        die "KMS grab requires root. Run with:  sudo copt $*"
+    # Ensure DRI device access (kmsgrab needs /dev/dri access)
+    # Check if user has read/write access to DRI devices
+    if [[ ! -r /dev/dri/card0 ]] && [[ ! -r /dev/dri/card1 ]] && [[ $EUID -ne 0 ]]; then
+        die "KMS grab requires DRI device access. Run with:  sudo copt $*
+        
+Or add your user to the 'video' and 'render' groups:
+  sudo usermod -aG video,render \$USER
+  
+Then log out and log back in for group changes to take effect."
     fi
 
     # Check ffmpeg
