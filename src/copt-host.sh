@@ -72,65 +72,14 @@ fi
 ok "Host has DRI device access"
 
 # ============================================================================
-# Auto-detect host ALSA audio device
+# Execute copt in container
 # ============================================================================
-AUDIO_DEVICE=""
-
-# Check if user already specified audio device
-for arg in "$@"; do
-    if [[ "$arg" == "-a" ]] || [[ "$arg" == "--audio-device" ]] || [[ "$arg" == "-A" ]] || [[ "$arg" == "--no-audio" ]]; then
-        # User specified audio options, skip auto-detection
-        AUDIO_DEVICE="user-specified"
-        break
-    fi
-done
-
-if [[ -z "$AUDIO_DEVICE" ]] && [[ -r /proc/asound/cards ]]; then
-    # Auto-detect from host
-    card_num=$(awk '/^ *[0-9]/ {print $1; exit}' /proc/asound/cards)
-    if [[ -n "$card_num" ]] && [[ -r /proc/asound/devices ]]; then
-        dev_line=$(grep -E "audio (capture|playback)" /proc/asound/devices | head -1)
-        if [[ -n "$dev_line" ]]; then
-            raw=$(echo "$dev_line" | grep -oP '\[\s*\K[0-9]+-\s*[0-9]+' | tr -d ' ')
-            if [[ -n "$raw" ]]; then
-                c="${raw%%-*}"
-                d="${raw##*-}"
-                AUDIO_DEVICE="hw:${c},${d}"
-            fi
-        fi
-        # Fallback
-        if [[ -z "$AUDIO_DEVICE" ]]; then
-            AUDIO_DEVICE="hw:${card_num},0"
-        fi
-    fi
-fi
-
-# ============================================================================
-# Execute copt in container with host's DRI devices
-# ============================================================================
-# Key technique: Use 'podman exec' with the container that already has
-# devices mounted, but the container was started with --privileged so
-# the exec inherits proper access.
-
 info "Executing copt..."
 
-# Build command with auto-detected audio device
-if [[ -n "$AUDIO_DEVICE" ]] && [[ "$AUDIO_DEVICE" != "user-specified" ]]; then
-    ok "Auto-detected host ALSA device: $AUDIO_DEVICE"
-    exec podman exec \
-        --env DISPLAY="${DISPLAY:-:0}" \
-        --env WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}" \
-        --env XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp}" \
-        -it \
-        "$CONTAINER_ID" \
-        sudo bash /workspaces/copt/src/copt.sh --audio-device "$AUDIO_DEVICE" "$@"
-else
-    # User specified audio options or detection failed
-    exec podman exec \
-        --env DISPLAY="${DISPLAY:-:0}" \
-        --env WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}" \
-        --env XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp}" \
-        -it \
-        "$CONTAINER_ID" \
-        sudo bash /workspaces/copt/src/copt.sh "$@"
-fi
+exec podman exec \
+    --env DISPLAY="${DISPLAY:-:0}" \
+    --env WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}" \
+    --env XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp}" \
+    -it \
+    "$CONTAINER_ID" \
+    sudo bash /workspaces/copt/src/copt.sh "$@"

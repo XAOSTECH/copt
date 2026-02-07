@@ -25,6 +25,7 @@
   "runArgs": [
     "--shm-size=1g",
     "--device=/dev/dri",
+    "--device=/dev/snd",
     "--device=/dev/nvidia0",
     "--device=/dev/nvidiactl",
     "--device=/dev/nvidia-modeset",
@@ -32,12 +33,13 @@
     "--device=/dev/nvidia-uvm-tools",
     "--group-add=video",
     "--group-add=render",
+    "--group-add=audio",
     "--security-opt=label=disable",
     "--cap-add=SYS_ADMIN",
     "--privileged"
   ],
   "mounts": [
-    "source=/run/user/1000/gnupg/S.gpg-agent,target=/run/user/1000/gnupg/S.gpg-agent,type=bind","source=/run/user/1000/podman/podman.sock,target=/var/run/docker.sock,type=bind","source=${localEnv:HOME}/.config/gh,target=/home/streaming/.config/gh,type=bind,consistency=cached","source=${localEnv:XDG_RUNTIME_DIR}/${localEnv:WAYLAND_DISPLAY},target=/tmp/wayland-0,type=bind,readonly","source=/run/user/1000/wayland-0.lock,target=/tmp/wayland-0.lock,type=bind","source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind","source=/usr/lib/x86_64-linux-gnu/libcuda.so.1,target=/usr/lib/x86_64-linux-gnu/libcuda.so.1,type=bind,readonly","source=/usr/lib/x86_64-linux-gnu/libnvcuvid.so.1,target=/usr/lib/x86_64-linux-gnu/libnvcuvid.so.1,type=bind,readonly"
+    "source=/run/user/1000/gnupg/S.gpg-agent,target=/run/user/1000/gnupg/S.gpg-agent,type=bind","source=/run/user/1000/podman/podman.sock,target=/var/run/docker.sock,type=bind","source=${localEnv:HOME}/.config/gh,target=/home/streaming/.config/gh,type=bind,consistency=cached","source=${localEnv:XDG_RUNTIME_DIR}/${localEnv:WAYLAND_DISPLAY},target=/tmp/wayland-0,type=bind,readonly","source=/run/user/1000/wayland-0.lock,target=/tmp/wayland-0.lock,type=bind","source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind","source=/usr/lib/x86_64-linux-gnu/libcuda.so.1,target=/usr/lib/x86_64-linux-gnu/libcuda.so.1,type=bind,readonly","source=/usr/lib/x86_64-linux-gnu/libnvcuvid.so.1,target=/usr/lib/x86_64-linux-gnu/libnvcuvid.so.1,type=bind,readonly","source=/run/user/1000/pulse,target=/run/user/1000/pulse,type=bind"
   ],
   "containerEnv": {
     "GPG_TTY": "$(tty)",
@@ -51,7 +53,8 @@
     "__NV_PRIME_RENDER_OFFLOAD": "1",
     "__GLX_VENDOR_LIBRARY_NAME": "nvidia",
     "WAYLAND_DISPLAY": "wayland-0",
-    "XDG_RUNTIME_DIR": "/tmp"
+    "XDG_RUNTIME_DIR": "/tmp",
+    "PULSE_SERVER": "unix:/run/user/1000/pulse/native"
   },
   "postCreateCommand": "sudo chown -R streaming:streaming . 2>/dev/null || true && sudo chmod 755 /home/streaming 2>/dev/null || true && sudo chown -R streaming:streaming /home/streaming/.vscode-server 2>/dev/null || true && git config --global --add safe.directory '*' && git config --global init.defaultBranch main && git config --global --add safe.directory '*' && git config --global init.defaultBranch main && git config --global user.email 69734795+xaoscience@users.noreply.github.com && git config --global user.name xaoscience && git config --global commit.gpgsign true && git config --global user.signingkey 31B0D17183B69144 && git config --global gpg.program gpg && sudo mkdir -p /run/user/1000 && sudo chown streaming:streaming /run/user/1000 && ln -sf /tmp/wayland-0 /run/user/1000/wayland-0 2>/dev/null || true && gpg-connect-agent updatestartuptty /bye >/dev/null 2>&1 || true && sudo chown -R streaming:streaming /run/user/1000 2>/dev/null || true && bash -c 'bash /opt/dev-control/scripts/alias-loading.sh <<< A'",
   "customizations": {
