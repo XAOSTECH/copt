@@ -6,7 +6,7 @@
 # Useful for long-running streams that need reliability.
 #
 # Usage:  sudo copt-autorestart [COPT_OPTIONS]
-# Example:  sudo copt-autorestart --window "The Sims 4" -y STREAM_KEY
+# Example:  sudo copt-autorestart -y STREAM_KEY
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 # ============================================================================

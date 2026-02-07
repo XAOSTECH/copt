@@ -49,9 +49,6 @@ fi
 # shellcheck source=../lib/detect.sh
 source "${COPT_LIB}/detect.sh"
 
-# shellcheck source=../lib/window.sh
-source "${COPT_LIB}/window.sh"
-
 # shellcheck source=../lib/streaming.sh
 source "${COPT_LIB}/streaming.sh"
 
@@ -134,7 +131,6 @@ ${C_BLD}CAPTURE OPTIONS${C_RST}
     --crop-y  N              Crop region Y offset (default: 0)
     --crop-w  N              Crop region width    (default: screen width)
     --crop-h  N              Crop region height   (default: screen height)
-    --window  NAME           Capture specific window by name (requires xdotool/wmctrl)
     -r, --framerate     N    Capture framerate    (default: $COPT_FRAMERATE)
     -t, --duration      N    Duration in seconds  (default: unlimited)
 
@@ -176,9 +172,6 @@ ${C_BLD}EXAMPLES${C_RST}
 
     # Capture a 1920x1080 region starting at (100,200)
     sudo copt --crop-x 100 --crop-y 200 --crop-w 1920 --crop-h 1080
-
-    # Capture a specific window by name
-    sudo copt --window "The Sims 4" -o ~/sims-recording.mkv
 
     # Use NVENC encoder explicitly
     sudo copt -e nvenc -o /tmp/gpu-recording.mkv
@@ -223,7 +216,6 @@ parse_args() {
             --crop-y)          COPT_CROP_Y="$2"; shift 2 ;;
             --crop-w)          COPT_CROP_W="$2"; shift 2 ;;
             --crop-h)          COPT_CROP_H="$2"; shift 2 ;;
-            --window)          COPT_WINDOW_NAME="$2"; shift 2 ;;
             -r|--framerate)    COPT_FRAMERATE="$2"; shift 2 ;;
             -t|--duration)     COPT_DURATION="$2"; shift 2 ;;
             -e|--encoder)      COPT_ENCODER="$2"; shift 2 ;;
@@ -300,7 +292,6 @@ main() {
 
     detect_screen_resolution
     detect_dri_device
-    detect_window
     detect_audio_device
     detect_encoder
     setup_streaming
@@ -312,9 +303,6 @@ main() {
     printf "${C_CYN}Capture config:${C_RST}\n"
     printf "  DRI device  : %s\n" "$COPT_DRI_DEVICE"
     printf "  Screen      : %sx%s\n" "$COPT_SCREEN_W" "$COPT_SCREEN_H"
-    if [[ -n "${COPT_WINDOW_NAME:-}" ]]; then
-        printf "  ${C_GRN}Window      : %s (ID: %s)${C_RST}\n" "$COPT_WINDOW_NAME" "${COPT_WINDOW_ID:-unknown}"
-    fi
     printf "  Crop region : x=%s y=%s w=%s h=%s\n" \
         "$COPT_CROP_X" "$COPT_CROP_Y" \
         "$([[ ${COPT_CROP_W} -eq 0 ]] && echo "$COPT_SCREEN_W" || echo "$COPT_CROP_W")" \
