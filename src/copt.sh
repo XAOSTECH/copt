@@ -22,7 +22,7 @@ readonly COPT_VERSION="0.1.0"
 
 # ----- determine script and library paths -----------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly COPT_ROOT="$SCRIPT_DIR"
+readonly COPT_ROOT="$(dirname "$SCRIPT_DIR")"
 readonly COPT_LIB="${COPT_ROOT}/lib"
 readonly COPT_CFG="${COPT_ROOT}/cfg"
 
