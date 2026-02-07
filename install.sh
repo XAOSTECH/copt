@@ -6,6 +6,7 @@ set -euo pipefail
 
 readonly PREFIX="${PREFIX:-/usr/local}"
 readonly BINDIR="${PREFIX}/bin"
+readonly LIBDIR="${PREFIX}/lib/copt"
 readonly CONFDIR="${XDG_CONFIG_HOME:-$HOME/.config}/copt"
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -13,11 +14,17 @@ C_GRN='\033[0;32m' C_YEL='\033[0;33m' C_RST='\033[0m'
 ok()   { printf "${C_GRN}[OK]${C_RST}  %s\n" "$*"; }
 warn() { printf "${C_YEL}[!!]${C_RST}  %s\n" "$*"; }
 
-echo "Installing copt to ${BINDIR}/copt …"
+echo "Installing copt to ${PREFIX} …"
 
 # Install binary
 sudo install -Dm755 "${SCRIPT_DIR}/copt" "${BINDIR}/copt"
 ok "Installed ${BINDIR}/copt"
+
+# Install library modules
+sudo mkdir -p "${LIBDIR}/lib" "${LIBDIR}/cfg"
+sudo cp -r "${SCRIPT_DIR}/lib/"* "${LIBDIR}/lib/"
+sudo cp -r "${SCRIPT_DIR}/cfg/"* "${LIBDIR}/cfg/"
+ok "Installed libraries to ${LIBDIR}"
 
 # Install example config (don't overwrite existing)
 mkdir -p "$CONFDIR"
