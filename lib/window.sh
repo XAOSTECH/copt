@@ -31,18 +31,12 @@ detect_window() {
         return $?
     fi
     
-    # Fallback to xwininfo (requires exact window ID)
-    if command -v xwininfo &>/dev/null; then
-        warn "xwininfo available but requires window ID. Install xdotool or wmctrl for name-based search."
-        warn "Falling back to full-screen capture."
-        COPT_WINDOW_NAME=""
-        return 0
-    fi
+    # Neither tool available
+    die "Window detection requires xdotool or wmctrl.
     
-    warn "No window detection tools found (xdotool, wmctrl). Install xdotool for window capture."
-    warn "Falling back to full-screen capture."
-    COPT_WINDOW_NAME=""
-    return 0
+    Install with: sudo apt-get install xdotool
+    
+    Or run 'check-deps.sh' to find and install all missing dependencies."
 }
 
 # ----- xdotool-based window detection ---------------------------------------
