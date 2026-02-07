@@ -54,6 +54,11 @@ die()   { printf "${C_RED}[ERR ]${C_RST}  %s\n" "$*" >&2; exit 1; }
 : "${COPT_OUTPUT:=/tmp/copt-output.mkv}"
 : "${COPT_DURATION:=0}"       # 0 = until Ctrl-C
 : "${COPT_CONFIG:=${XDG_CONFIG_HOME:-$HOME/.config}/copt/copt.conf}"
+: "${COPT_YOUTUBE_KEY:=${YT_API_KEY:-}}"  # from env, .env, or CLI
+: "${COPT_STREAM_TYPE:=rtmp}"  # rtmp or hls
+: "${COPT_RTMP_URL:=rtmps://a.rtmp.youtube.com/live2/}"  # RTMP server URL
+: "${COPT_HLS_URL:=}"  # HLS endpoint (if using HLS)
+: "${COPT_STREAM_NAME:=""}"   # Custom stream name (defaults to "copt-stream")
 
 # ----- load config file if present ------------------------------------------
 load_config() {
@@ -62,6 +67,32 @@ load_config() {
         # shellcheck source=/dev/null
         source "$COPT_CONFIG"
     fi
+}
+
+# ----- load .env file if present (for environment variables like YT_API_KEY) ---
+load_env_file() {
+    local env_candidates=(
+        ".devcontainer/.env"
+        ".env"
+        "${HOME}/.copt.env"
+    )
+    
+    for env_file in "${env_candidates[@]}"; do
+        if [[ -f "$env_file" ]]; then
+            info "Loading environment: $env_file"
+            # shellcheck source=/dev/null
+            set -a
+            source "$env_file"
+            set +a
+            
+            # If YT_API_KEY is set but COPT_YOUTUBE_KEY isn't, use YT_API_KEY
+            if [[ -n "${YT_API_KEY:-}" ]] && [[ -z "${COPT_YOUTUBE_KEY:-}" ]]; then
+                COPT_YOUTUBE_KEY="$YT_API_KEY"
+                ok "Using YouTube API key from environment"
+            fi
+            return
+        fi
+    done
 }
 
 # ----- usage / help ----------------------------------------------------------
@@ -98,6 +129,14 @@ ${C_BLD}AUDIO OPTIONS${C_RST}
 ${C_BLD}OUTPUT${C_RST}
     -o, --output  FILE       Output file path      (default: $COPT_OUTPUT)
 
+${C_BLD}STREAMING${C_RST}
+    -y, --youtube-key KEY    YouTube stream key (enables live streaming)
+    --rtmp                   Use RTMP protocol (default)
+    --hls                    Use HLS protocol (requires --hls-url)
+    --rtmp-url URL           Custom RTMP server URL (default: YouTube)
+    --hls-url URL            HLS endpoint URL
+    --stream-name NAME       Stream name/key suffix (default: copt-stream)
+
 ${C_BLD}GENERAL${C_RST}
     -c, --config  FILE       Config file path
     --probe                  Probe system and show detected devices, then exit
@@ -120,6 +159,12 @@ ${C_BLD}EXAMPLES${C_RST}
 
     # No audio, 30fps, short recording
     sudo copt -A -r 30 -t 60 -o /tmp/clip.mkv
+
+    # Stream to YouTube Live via RTMP (default)
+    sudo copt -y YOUR_STREAM_KEY
+
+    # Stream to YouTube Live via HLS
+    sudo copt -y YOUR_STREAM_KEY --hls --hls-url https://your-hls-url
 
 ${C_BLD}NOTES${C_RST}
     • Requires root (sudo) for KMS framebuffer access.
@@ -215,6 +260,41 @@ detect_encoder() {
     fi
 
     die "No usable H.264 encoder found. Install FFmpeg with libx264, VAAPI, or NVENC support."
+}
+
+# ----- setup streaming -------------------------------------------------------
+setup_streaming() {
+    if [[ -z "${COPT_YOUTUBE_KEY:-}" ]]; then
+        return
+    fi
+
+    # Validate stream key
+    if [[ ${#COPT_YOUTUBE_KEY} -lt 20 ]]; then
+        die "Invalid YouTube stream key (too short). Check your key."
+    fi
+
+    # Set stream name if not provided
+    COPT_STREAM_NAME="${COPT_STREAM_NAME:-copt-stream}"
+
+    # Build output URL based on protocol
+    case "${COPT_STREAM_TYPE}" in
+        rtmp)
+            COPT_OUTPUT="${COPT_RTMP_URL%/}/${COPT_STREAM_NAME}?key=${COPT_YOUTUBE_KEY}"
+            ok "Streaming to YouTube Live via RTMP"
+            ;;
+        hls)
+            if [[ -z "${COPT_HLS_URL:-}" ]]; then
+                die "HLS streaming requires --hls-url to be set."
+            fi
+            COPT_OUTPUT="${COPT_HLS_URL%/}/${COPT_STREAM_NAME}?key=${COPT_YOUTUBE_KEY}"
+            ok "Streaming to YouTube Live via HLS"
+            ;;
+        *)
+            die "Unknown streaming protocol: ${COPT_STREAM_TYPE}"
+            ;;
+    esac
+
+    COPT_IS_STREAMING=1
 }
 
 probe_system() {
@@ -356,6 +436,12 @@ parse_args() {
             -A|--no-audio)     COPT_AUDIO=0; shift ;;
             --audio-codec)     COPT_AUDIO_CODEC="$2"; shift 2 ;;
             -o|--output)       COPT_OUTPUT="$2"; shift 2 ;;
+            -y|--youtube-key)  COPT_YOUTUBE_KEY="$2"; shift 2 ;;
+            --rtmp)            COPT_STREAM_TYPE="rtmp"; shift ;;
+            --hls)             COPT_STREAM_TYPE="hls"; shift ;;
+            --rtmp-url)        COPT_RTMP_URL="$2"; shift 2 ;;
+            --hls-url)         COPT_HLS_URL="$2"; shift 2 ;;
+            --stream-name)     COPT_STREAM_NAME="$2"; shift 2 ;;
             -c|--config)       COPT_CONFIG="$2"; shift 2 ;;
             --probe)           probe_system ;;
             --dry-run)         DRY_RUN=1; shift ;;
@@ -371,7 +457,9 @@ parse_args() {
 cleanup() {
     echo ""
     info "Capture stopped."
-    if [[ -f "$COPT_OUTPUT" ]]; then
+    if [[ "${COPT_IS_STREAMING:-0}" -eq 1 ]]; then
+        ok "YouTube Live stream closed."
+    elif [[ -f "$COPT_OUTPUT" ]]; then
         local size
         size=$(stat --printf='%s' "$COPT_OUTPUT" 2>/dev/null || echo 0)
         if [[ "$size" -gt 0 ]]; then
@@ -387,6 +475,7 @@ trap cleanup EXIT
 main() {
     DRY_RUN="${DRY_RUN:-0}"
 
+    load_env_file
     load_config
     parse_args "$@"
 
@@ -403,6 +492,7 @@ main() {
     detect_dri_device
     detect_audio_device
     detect_encoder
+    setup_streaming
 
     build_ffmpeg_cmd
 
@@ -423,7 +513,11 @@ main() {
     else
         printf "  Audio       : disabled\n"
     fi
-    printf "  Output file : %s\n" "$COPT_OUTPUT"
+    if [[ "${COPT_IS_STREAMING:-0}" -eq 1 ]]; then
+        printf "  ${C_GRN}Output      : YouTube Live (%s)${C_RST}\n" "${COPT_STREAM_TYPE^^}"
+    else
+        printf "  Output file : %s\n" "$COPT_OUTPUT"
+    fi
     if [[ "$COPT_DURATION" -gt 0 ]]; then
         printf "  Duration    : %ss\n" "$COPT_DURATION"
     else
@@ -451,8 +545,10 @@ main() {
     info "Starting capture… press Ctrl-C to stop."
     echo ""
 
-    # Create output directory if needed
-    mkdir -p "$(dirname "$COPT_OUTPUT")"
+    # Create output directory if needed (only for file output)
+    if [[ "${COPT_IS_STREAMING:-0}" -eq 0 ]]; then
+        mkdir -p "$(dirname "$COPT_OUTPUT")"
+    fi
 
     # Execute
     exec "${FFMPEG_CMD[@]}"

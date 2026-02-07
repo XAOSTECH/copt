@@ -60,6 +60,13 @@
 # -- Output file --------------------------------------------------------------
 # COPT_OUTPUT=/tmp/copt-output.mkv
 
+# -- YouTube Streaming --------------------------------------------------------
+# To stream to YouTube Live, provide your stream key.
+# Get your key from: YouTube Studio > Go live > Stream settings > Stream key
+# COPT_YOUTUBE_KEY="your-stream-key-here"
+# COPT_RTMP_URL="rtmps://a.rtmp.youtube.com/live2/"  # YouTube default
+# COPT_STREAM_NAME="copt-stream"  # Can be any name
+
 # -- Duration -----------------------------------------------------------------
 # 0 = record until Ctrl-C
 # COPT_DURATION=0
