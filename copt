@@ -105,8 +105,8 @@ ${C_BLD}USAGE${C_RST}
 
 ${C_BLD}CAPTURE OPTIONS${C_RST}
     -d, --dri-device PATH    DRI device          (default: auto-detect)
-    -W, --screen-width  N    Source screen width  (default: $COPT_SCREEN_W)
-    -H, --screen-height N    Source screen height (default: $COPT_SCREEN_H)
+    -W, --screen-width  N    Source screen width  (default: auto-detect)
+    -H, --screen-height N    Source screen height (default: auto-detect)
     -w, --out-width     N    Output width         (default: $COPT_OUT_W)
     -h, --out-height    N    Output height        (default: $COPT_OUT_H)
     --crop-x  N              Crop region X offset (default: 0)
@@ -177,6 +177,53 @@ EOF
 }
 
 # ----- system probing --------------------------------------------------------
+detect_screen_resolution() {
+    # Try multiple methods to detect native screen resolution
+    local detected_w detected_h
+
+    # Method 1: xrandr (works on X11 and some Wayland)
+    if command -v xrandr &>/dev/null; then
+        local xrandr_out
+        xrandr_out=$(xrandr 2>/dev/null | grep -E "^[^ ].*connected" | head -1)
+        if [[ -n "$xrandr_out" ]]; then
+            # Extract resolution like "1920x1080" from xrandr output
+            if [[ $xrandr_out =~ ([0-9]+)x([0-9]+) ]]; then
+                detected_w="${BASH_REMATCH[1]}"
+                detected_h="${BASH_REMATCH[2]}"
+                if [[ -n "$detected_w" && -n "$detected_h" ]]; then
+                    COPT_SCREEN_W="$detected_w"
+                    COPT_SCREEN_H="$detected_h"
+                    ok "Auto-detected screen resolution: ${COPT_SCREEN_W}x${COPT_SCREEN_H}"
+                    return
+                fi
+            fi
+        fi
+    fi
+
+    # Method 2: weston-info (Wayland-specific)
+    if command -v weston-info &>/dev/null; then
+        local weston_out
+        weston_out=$(weston-info 2>/dev/null | grep "geometry:" | head -1)
+        if [[ -n "$weston_out" ]]; then
+            # Extract from "geometry: 0, 0, 1920, 1080"
+            if [[ $weston_out =~ ([0-9]+),\ ([0-9]+)$ ]]; then
+                detected_w="${BASH_REMATCH[1]}"
+                detected_h="${BASH_REMATCH[2]}"
+                if [[ -n "$detected_w" && -n "$detected_h" ]]; then
+                    COPT_SCREEN_W="$detected_w"
+                    COPT_SCREEN_H="$detected_h"
+                    ok "Auto-detected screen resolution: ${COPT_SCREEN_W}x${COPT_SCREEN_H}"
+                    return
+                fi
+            fi
+        fi
+    fi
+
+    # Fallback: keep defaults (user can override with -W/-H)
+    warn "Could not auto-detect screen resolution. Using defaults: ${COPT_SCREEN_W}x${COPT_SCREEN_H}"
+    warn "To override, use: -W WIDTH -H HEIGHT"
+}
+
 detect_dri_device() {
     if [[ -n "$COPT_DRI_DEVICE" ]]; then
         [[ -e "$COPT_DRI_DEVICE" ]] || die "DRI device not found: $COPT_DRI_DEVICE"
@@ -489,6 +536,7 @@ main() {
 
     info "copt v${COPT_VERSION} — Wayland KMS screen capture"
 
+    detect_screen_resolution
     detect_dri_device
     detect_audio_device
     detect_encoder

@@ -13,9 +13,10 @@
 # COPT_DRI_DEVICE="/dev/dri/card1"
 
 # -- Source screen resolution -------------------------------------------------
-# Your native display resolution. Used for default crop dimensions.
-# COPT_SCREEN_W=3456
-# COPT_SCREEN_H=2160
+# Auto-detected from display using xrandr or weston-info.
+# Only set these if auto-detection fails or you want specific values.
+# COPT_SCREEN_W=1920
+# COPT_SCREEN_H=1080
 
 # -- Output resolution --------------------------------------------------------
 # The final resolution of the encoded video.
