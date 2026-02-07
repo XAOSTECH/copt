@@ -20,10 +20,22 @@ warn() { printf "${C_YEL}[!!]${C_RST}  %s\n" "$*"; }
 err()  { printf "${C_RED}[ERR]${C_RST} %s\n" "$*"; }
 info() { printf "[INFO]  %s\n" "$*"; }
 
+# Check for root privileges early
+if [[ $EUID -ne 0 ]]; then
+    err "copt requires root access for KMS framebuffer."
+    err "Run with: sudo copt-autorestart [OPTIONS]"
+    exit 1
+fi
+
 # Configuration
 readonly MAX_RETRIES="${COPT_MAX_RETRIES:-0}"        # 0 = infinite
 readonly RESTART_DELAY="${COPT_RESTART_DELAY:-5}"   # seconds between restarts
-readonly LOG_FILE="${COPT_LOG_FILE:-/tmp/copt-autorestart.log}"
+# Use /var/log if writable (system install) or /tmp with unique name
+if [[ -w /var/log ]]; then
+    readonly LOG_FILE="${COPT_LOG_FILE:-/var/log/copt-autorestart.log}"
+else
+    readonly LOG_FILE="${COPT_LOG_FILE:-/tmp/copt-autorestart-${USER}.log}"
+fi
 
 # State
 retry_count=0
@@ -49,6 +61,14 @@ info "Binary: $COPT_BIN"
 info "Max retries: $([[ $MAX_RETRIES -eq 0 ]] && echo "infinite" || echo "$MAX_RETRIES")"
 info "Restart delay: ${RESTART_DELAY}s"
 info "Log file: $LOG_FILE"
+
+# Ensure log file is writable
+touch "$LOG_FILE" 2>/dev/null || {
+    err "Cannot write to log file: $LOG_FILE"
+    err "Set COPT_LOG_FILE to a writable location."
+    exit 1
+}
+
 echo ""
 
 # Signal handling for graceful shutdown
