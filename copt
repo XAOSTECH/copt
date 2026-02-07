@@ -38,11 +38,22 @@ if [[ -f "${COPT_CFG}/defaults.conf" ]]; then
     set +a
 fi
 
+# Load bandwidth limit
+if [[ -f "${COPT_CFG}/bandwidth_max.conf" ]]; then
+    # shellcheck source=../cfg/bandwidth_max.conf
+    set -a
+    source "${COPT_CFG}/bandwidth_max.conf"
+    set +a
+fi
+
 # shellcheck source=../lib/detect.sh
 source "${COPT_LIB}/detect.sh"
 
 # shellcheck source=../lib/streaming.sh
 source "${COPT_LIB}/streaming.sh"
+
+# shellcheck source=../lib/bandwidth.sh
+source "${COPT_LIB}/bandwidth.sh"
 
 # shellcheck source=../lib/ffmpeg.sh
 source "${COPT_LIB}/ffmpeg.sh"
@@ -56,6 +67,23 @@ load_config() {
         info "Loading config: $COPT_CONFIG"
         # shellcheck source=/dev/null
         source "$COPT_CONFIG"
+    fi
+}
+
+# ----- load profile if specified --------------------------------------------
+load_profile() {
+    local profile_name="${COPT_PROFILE:-}"
+    if [[ -n "$profile_name" ]]; then
+        local profile_path="${COPT_CFG}/profiles/${profile_name}.conf"
+        if [[ -f "$profile_path" ]]; then
+            info "Loading profile: $profile_name"
+            # shellcheck source=/dev/null
+            set -a
+            source "$profile_path"
+            set +a
+        else
+            die "Profile not found: $profile_path"
+        fi
     fi
 }
 
@@ -107,9 +135,10 @@ ${C_BLD}CAPTURE OPTIONS${C_RST}
     -t, --duration      N    Duration in seconds  (default: unlimited)
 
 ${C_BLD}ENCODER OPTIONS${C_RST}
-    -e, --encoder  NAME      Encoder: auto|vaapi|nvenc|x264|x265  (default: auto)
+    -e, --encoder  NAME      Encoder: auto|vaapi|nvenc|x264|x265|hevc  (default: auto)
     -q, --quality  N         Quality (CRF/QP)     (default: $COPT_QUALITY)
     -p, --pix-fmt  FMT       Pixel format          (default: $COPT_PIXEL_FMT)
+    --profile NAME           Load encoding profile (1080p30|1080p60|4k30|4k60|4kHDR30)
 
 ${C_BLD}AUDIO OPTIONS${C_RST}
     -a, --audio-device DEV   ALSA device (e.g. hw:0,6)  (default: auto-detect)
@@ -149,6 +178,12 @@ ${C_BLD}EXAMPLES${C_RST}
 
     # No audio, 30fps, short recording
     sudo copt -A -r 30 -t 60 -o /tmp/clip.mkv
+
+    # Use 1080p60 encoding profile
+    sudo copt --profile 1080p60 -o ~/recording.mkv
+
+    # Use 4K HDR profile for HDR10 streaming/recording
+    sudo copt --profile 4kHDR30 -y YOUR_STREAM_KEY
 
     # Stream to YouTube Live via RTMP (default)
     sudo copt -y YOUR_STREAM_KEY
@@ -194,6 +229,7 @@ parse_args() {
             --rtmp-url)        COPT_RTMP_URL="$2"; shift 2 ;;
             --hls-url)         COPT_HLS_URL="$2"; shift 2 ;;
             --stream-name)     COPT_STREAM_NAME="$2"; shift 2 ;;
+            --profile)         COPT_PROFILE="$2"; shift 2 ;;
             -c|--config)       COPT_CONFIG="$2"; shift 2 ;;
             --probe)           probe_system ;;
             --dry-run)         DRY_RUN=1; shift ;;
@@ -229,6 +265,17 @@ main() {
 
     load_env_file
     load_config
+    
+    # Parse args once to check for --profile flag
+    for arg in "$@"; do
+        if [[ "$arg" == "--profile" ]]; then
+            shift
+            COPT_PROFILE="$1"
+            break
+        fi
+    done
+    
+    load_profile
     parse_args "$@"
 
     # Ensure running with privileges (kmsgrab needs root)
@@ -246,6 +293,7 @@ main() {
     detect_audio_device
     detect_encoder
     setup_streaming
+    adapt_profile_to_bandwidth
 
     build_ffmpeg_cmd
 
