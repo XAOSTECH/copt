@@ -44,14 +44,29 @@ start_time=$(date +%s)
 # Find copt binary
 COPT_BIN="${COPT_BIN:-}"
 if [[ -z "$COPT_BIN" ]]; then
+    # Check multiple locations in order
+    script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+    copt_root=$(dirname "$script_dir")
+    
     if [[ -x "/usr/local/bin/copt" ]]; then
         COPT_BIN="/usr/local/bin/copt"
+    elif [[ -x "${copt_root}/src/copt.sh" ]]; then
+        COPT_BIN="${copt_root}/src/copt.sh"
     elif [[ -x "./src/copt.sh" ]]; then
         COPT_BIN="./src/copt.sh"
     elif [[ -x "./copt.sh" ]]; then
         COPT_BIN="./copt.sh"
+    elif [[ -x "/workspaces/copt/src/copt.sh" ]]; then
+        COPT_BIN="/workspaces/copt/src/copt.sh"
     else
-        err "copt binary not found. Set COPT_BIN or install copt."
+        err "copt binary not found. Checked:"
+        err "  /usr/local/bin/copt"
+        err "  ${copt_root}/src/copt.sh"
+        err "  ./src/copt.sh"
+        err "  ./copt.sh"
+        err "  /workspaces/copt/src/copt.sh"
+        err ""
+        err "Set COPT_BIN to the full path: COPT_BIN=/path/to/copt sudo copt-autorestart"
         exit 1
     fi
 fi
