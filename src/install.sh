@@ -25,6 +25,10 @@ ok "Installed ${BINDIR}/copt"
 sudo install -Dm755 "${SCRIPT_DIR}/copt-autorestart.sh" "${BINDIR}/copt-autorestart"
 ok "Installed ${BINDIR}/copt-autorestart"
 
+# Install dependency installer
+sudo install -Dm755 "${SCRIPT_DIR}/copt-install-deps.sh" "${BINDIR}/copt-install-deps"
+ok "Installed ${BINDIR}/copt-install-deps"
+
 # Install library modules
 sudo mkdir -p "${LIBDIR}/lib" "${LIBDIR}/cfg"
 sudo cp -r "${ROOT_DIR}/lib/"* "${LIBDIR}/lib/"
@@ -44,6 +48,12 @@ fi
 echo ""
 ok "Done!  Run:  sudo copt --help"
 echo ""
+
+# Optional: Install window capture dependencies
+if [[ ! -x "$(command -v xdotool)" ]] && [[ ! -x "$(command -v wmctrl)" ]]; then
+    warn "Optional: Install window capture tools with:"
+    warn "  sudo ${SCRIPT_DIR}/copt-install-deps.sh"
+fi
 
 # Quick system check
 if ! command -v ffmpeg &>/dev/null; then
