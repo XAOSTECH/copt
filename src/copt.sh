@@ -49,6 +49,9 @@ fi
 # shellcheck source=../lib/detect.sh
 source "${COPT_LIB}/detect.sh"
 
+# shellcheck source=../lib/window.sh
+source "${COPT_LIB}/window.sh"
+
 # shellcheck source=../lib/streaming.sh
 source "${COPT_LIB}/streaming.sh"
 
@@ -131,6 +134,7 @@ ${C_BLD}CAPTURE OPTIONS${C_RST}
     --crop-y  N              Crop region Y offset (default: 0)
     --crop-w  N              Crop region width    (default: screen width)
     --crop-h  N              Crop region height   (default: screen height)
+    --window  NAME           Capture specific window by name (requires xdotool/wmctrl)
     -r, --framerate     N    Capture framerate    (default: $COPT_FRAMERATE)
     -t, --duration      N    Duration in seconds  (default: unlimited)
 
@@ -173,6 +177,9 @@ ${C_BLD}EXAMPLES${C_RST}
     # Capture a 1920x1080 region starting at (100,200)
     sudo copt --crop-x 100 --crop-y 200 --crop-w 1920 --crop-h 1080
 
+    # Capture a specific window by name
+    sudo copt --window "The Sims 4" -o ~/sims-recording.mkv
+
     # Use NVENC encoder explicitly
     sudo copt -e nvenc -o /tmp/gpu-recording.mkv
 
@@ -196,6 +203,8 @@ ${C_BLD}NOTES${C_RST}
     • On multi-GPU systems, try --dri-device /dev/dri/card1 if card0 fails.
     • Check audio devices:  cat /proc/asound/cards
     • Mouse cursor capture is not supported by kmsgrab.
+    • Window capture requires xdotool or wmctrl (install: sudo apt install xdotool)
+    • List windows:  wmctrl -l  or  xdotool search --name "window name"
 
 EOF
     exit 0
@@ -214,6 +223,7 @@ parse_args() {
             --crop-y)          COPT_CROP_Y="$2"; shift 2 ;;
             --crop-w)          COPT_CROP_W="$2"; shift 2 ;;
             --crop-h)          COPT_CROP_H="$2"; shift 2 ;;
+            --window)          COPT_WINDOW_NAME="$2"; shift 2 ;;
             -r|--framerate)    COPT_FRAMERATE="$2"; shift 2 ;;
             -t|--duration)     COPT_DURATION="$2"; shift 2 ;;
             -e|--encoder)      COPT_ENCODER="$2"; shift 2 ;;
@@ -290,6 +300,7 @@ main() {
 
     detect_screen_resolution
     detect_dri_device
+    detect_window
     detect_audio_device
     detect_encoder
     setup_streaming
@@ -301,6 +312,9 @@ main() {
     printf "${C_CYN}Capture config:${C_RST}\n"
     printf "  DRI device  : %s\n" "$COPT_DRI_DEVICE"
     printf "  Screen      : %sx%s\n" "$COPT_SCREEN_W" "$COPT_SCREEN_H"
+    if [[ -n "${COPT_WINDOW_NAME:-}" ]]; then
+        printf "  ${C_GRN}Window      : %s (ID: %s)${C_RST}\n" "$COPT_WINDOW_NAME" "${COPT_WINDOW_ID:-unknown}"
+    fi
     printf "  Crop region : x=%s y=%s w=%s h=%s\n" \
         "$COPT_CROP_X" "$COPT_CROP_Y" \
         "$([[ ${COPT_CROP_W} -eq 0 ]] && echo "$COPT_SCREEN_W" || echo "$COPT_CROP_W")" \
@@ -339,7 +353,42 @@ main() {
     printf "  %s\n\n" "${cmd_str# }"
 
     if [[ "$DRY_RUN" -eq 1 ]]; then
-        info "Dry run — not executing."
+        info "Dry run mode — testing FFmpeg command with 5-second capture to /tmp"
+        
+        # Override duration for dry-run test
+        local test_cmd=("${FFMPEG_CMD[@]}")
+        
+        # Find and replace output file or add -t flag
+        local has_duration=0
+        for i in "${!test_cmd[@]}"; do
+            if [[ "${test_cmd[$i]}" == "-t" ]]; then
+                test_cmd[$((i+1))]="5"
+                has_duration=1
+                break
+            fi
+        done
+        
+        # Add -t 5 if not present (insert before output)
+        if [[ $has_duration -eq 0 ]]; then
+            local out_idx=$((${#test_cmd[@]} - 1))
+            test_cmd=("${test_cmd[@]:0:$out_idx}" "-t" "5" "${test_cmd[$out_idx]}")
+        fi
+        
+        # For streaming, ensure output goes to /tmp
+        if [[ "${COPT_IS_STREAMING:-0}" -eq 1 ]]; then
+            test_cmd[$((${#test_cmd[@]} - 1))]="${COPT_OUTPUT}"
+        fi
+        
+        echo ""
+        info "Executing test capture for 5 seconds…"
+        "${test_cmd[@]}" && ok "Dry-run test successful!" || warn "Dry-run test failed (exit code: $?)"
+        
+        if [[ "${COPT_IS_STREAMING:-0}" -eq 1 && -f "${COPT_OUTPUT}" ]]; then
+            local size=$(stat --printf='%s' "${COPT_OUTPUT}" 2>/dev/null || echo 0)
+            ok "Test output: ${COPT_OUTPUT} ($(numfmt --to=iec "$size" 2>/dev/null || echo "${size} bytes"))"
+            info "Review output with: ffplay ${COPT_OUTPUT}"
+        fi
+        
         exit 0
     fi
 

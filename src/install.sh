@@ -21,6 +21,10 @@ echo "Installing copt to ${PREFIX} …"
 sudo install -Dm755 "${SCRIPT_DIR}/copt.sh" "${BINDIR}/copt"
 ok "Installed ${BINDIR}/copt"
 
+# Install autorestart wrapper
+sudo install -Dm755 "${SCRIPT_DIR}/copt-autorestart.sh" "${BINDIR}/copt-autorestart"
+ok "Installed ${BINDIR}/copt-autorestart"
+
 # Install library modules
 sudo mkdir -p "${LIBDIR}/lib" "${LIBDIR}/cfg"
 sudo cp -r "${ROOT_DIR}/lib/"* "${LIBDIR}/lib/"

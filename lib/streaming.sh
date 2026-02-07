@@ -22,15 +22,27 @@ setup_streaming() {
     # Build output URL based on protocol
     case "${COPT_STREAM_TYPE}" in
         rtmp)
-            COPT_OUTPUT="${COPT_RTMP_URL%/}/${COPT_STREAM_NAME}?key=${COPT_YOUTUBE_KEY}"
-            ok "Streaming to YouTube Live via RTMP"
+            # Use dummy file for dry-run testing
+            if [[ "${DRY_RUN:-0}" -eq 1 ]]; then
+                COPT_OUTPUT="/tmp/copt-dryrun-stream.flv"
+                ok "Streaming to YouTube Live via RTMP (dry-run: output to /tmp)"
+            else
+                COPT_OUTPUT="${COPT_RTMP_URL%/}/${COPT_STREAM_NAME}?key=${COPT_YOUTUBE_KEY}"
+                ok "Streaming to YouTube Live via RTMP"
+            fi
             ;;
         hls)
             if [[ -z "${COPT_HLS_URL:-}" ]]; then
                 die "HLS streaming requires --hls-url to be set."
             fi
-            COPT_OUTPUT="${COPT_HLS_URL%/}/${COPT_STREAM_NAME}?key=${COPT_YOUTUBE_KEY}"
-            ok "Streaming to YouTube Live via HLS"
+            # Use dummy file for dry-run testing
+            if [[ "${DRY_RUN:-0}" -eq 1 ]]; then
+                COPT_OUTPUT="/tmp/copt-dryrun-stream.m3u8"
+                ok "Streaming to YouTube Live via HLS (dry-run: output to /tmp)"
+            else
+                COPT_OUTPUT="${COPT_HLS_URL%/}/${COPT_STREAM_NAME}?key=${COPT_YOUTUBE_KEY}"
+                ok "Streaming to YouTube Live via HLS"
+            fi
             ;;
         *)
             die "Unknown streaming protocol: ${COPT_STREAM_TYPE}"
