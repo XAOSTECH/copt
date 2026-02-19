@@ -401,10 +401,35 @@ Then log out and log back in for group changes to take effect."
     fi
     echo ""
 
-    # Print the command
+    # Build test command for dry-run (add -t 5 after inputs)
+    local test_cmd=("${FFMPEG_CMD[@]}")
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+        local has_duration=0
+        for i in "${!test_cmd[@]}"; do
+            if [[ "${test_cmd[$i]}" == "-t" ]]; then
+                test_cmd[$((i+1))]="5"
+                has_duration=1
+                break
+            fi
+        done
+        # Add -t 5 after last input if not present
+        if [[ $has_duration -eq 0 ]]; then
+            local last_input_idx=0
+            for i in "${!test_cmd[@]}"; do
+                [[ "${test_cmd[$i]}" == "-i" ]] && last_input_idx=$((i+2))
+            done
+            test_cmd=("${test_cmd[@]:0:$last_input_idx}" "-t" "5" "${test_cmd[@]:$last_input_idx}")
+        fi
+        # For streaming, ensure output goes to /tmp
+        [[ "${COPT_IS_STREAMING:-0}" -eq 1 ]] && test_cmd[$((${#test_cmd[@]}-1))]="${COPT_OUTPUT}"
+    fi
+
+    # Print the command (test_cmd for dry-run, FFMPEG_CMD otherwise)
     printf "${C_CYN}ffmpeg command:${C_RST}\n"
     local cmd_str=""
-    for arg in "${FFMPEG_CMD[@]}"; do
+    local print_cmd=("${FFMPEG_CMD[@]}")
+    [[ "$DRY_RUN" -eq 1 ]] && print_cmd=("${test_cmd[@]}")
+    for arg in "${print_cmd[@]}"; do
         if [[ "$arg" == *" "* ]]; then
             cmd_str+=" '${arg}'"
         else
@@ -414,32 +439,7 @@ Then log out and log back in for group changes to take effect."
     printf "  %s\n\n" "${cmd_str# }"
 
     if [[ "$DRY_RUN" -eq 1 ]]; then
-        info "Dry run mode — testing FFmpeg command with 5-second capture to /tmp"
-        
-        # Override duration for dry-run test
-        local test_cmd=("${FFMPEG_CMD[@]}")
-        
-        # Find and replace output file or add -t flag
-        local has_duration=0
-        for i in "${!test_cmd[@]}"; do
-            if [[ "${test_cmd[$i]}" == "-t" ]]; then
-                test_cmd[$((i+1))]="5"
-                has_duration=1
-                break
-            fi
-        done
-        
-        # Add -t 5 if not present (insert before output)
-        if [[ $has_duration -eq 0 ]]; then
-            local out_idx=$((${#test_cmd[@]} - 1))
-            test_cmd=("${test_cmd[@]:0:$out_idx}" "-t" "5" "${test_cmd[$out_idx]}")
-        fi
-        
-        # For streaming, ensure output goes to /tmp
-        if [[ "${COPT_IS_STREAMING:-0}" -eq 1 ]]; then
-            test_cmd[$((${#test_cmd[@]} - 1))]="${COPT_OUTPUT}"
-        fi
-        
+        info "Dry run mode — testing FFmpeg command with 5-second capture"
         echo ""
         info "Executing test capture for 5 seconds…"
         "${test_cmd[@]}" && ok "Dry-run test successful!" || warn "Dry-run test failed (exit code: $?)"
