@@ -68,28 +68,27 @@ in_container() {
     [[ -f /run/.containerenv ]] || [[ -f /.dockerenv ]]
 }
 
-# Find running devcontainer; prints "runtime:containerid"
+# Find the copt devcontainer by image name; prints "runtime:containerid"
+# Image: devcontrol/streaming:latest  (set in .devcontainer/devcontainer.json)
+# Override: COPT_CONTAINER=podman:ID
 find_container() {
     local cid="" runtime
     for runtime in podman docker; do
         command -v "$runtime" &>/dev/null || continue
-        cid=$("$runtime" ps --filter "label=devcontainer.local_folder" \
+        cid=$("$runtime" ps \
+              --filter "ancestor=devcontrol/streaming:latest" \
+              --filter "status=running" \
               --format "{{.ID}}" 2>/dev/null | head -1) || true
-        if [[ -z "$cid" ]]; then
-            while IFS= read -r id; do
-                if "$runtime" inspect "$id" 2>/dev/null \
-                        | grep -qE '"(/workspaces/CST|/workspaces/copt)"'; then
-                    cid="$id"; break
-                fi
-            done < <("$runtime" ps --format "{{.ID}}" 2>/dev/null)
-        fi
         if [[ -n "$cid" ]]; then echo "$runtime:$cid"; return 0; fi
     done
     return 1
 }
 
-# Resolve /dev/videoX from VID:PID via sysfs — index-agnostic
+# Resolve capture device — stable udev symlink preferred, sysfs fallback
 find_video_device() {
+    # Prefer stable udev symlink (set up by 99-ugreen-capture.rules)
+    if [[ -e /dev/ugreen-capture ]]; then echo "/dev/ugreen-capture"; return 0; fi
+
     local vid="${1%%:*}" pid="${1##*:}" sys_dev
     for sys_dev in /sys/bus/usb/devices/*/; do
         local v p
