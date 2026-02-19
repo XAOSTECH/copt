@@ -47,12 +47,18 @@ if [[ -f "${COPT_CFG}/bandwidth_max.conf" ]]; then
 fi
 
 # Load .env for secrets (YT_HLS_URL, stream keys, etc.)
+info "Checking for .env at: ${COPT_CFG}/.env"
 if [[ -f "${COPT_CFG}/.env" ]]; then
     if [[ -r "${COPT_CFG}/.env" ]]; then
+        info "Sourcing .env file..."
         set -a
         source "${COPT_CFG}/.env" || warn "Failed to source ${COPT_CFG}/.env"
         set +a
-        [[ -n "${YT_HLS_URL:-}" ]] && info "Loaded YT_HLS_URL from .env"
+        if [[ -n "${YT_HLS_URL:-}" ]]; then
+            info "Loaded YT_HLS_URL from .env: ${YT_HLS_URL:0:50}..."
+        else
+            warn "YT_HLS_URL is empty after sourcing .env"
+        fi
     else
         warn ".env file exists but is not readable: ${COPT_CFG}/.env"
         warn "Run: sudo chmod 644 ${COPT_CFG}/.env"
@@ -318,13 +324,20 @@ main() {
     # Parse args once to extract --profile before load_profile is called.
     # Must use index arithmetic — shift/for-loop combination incorrectly
     # shifts $1 (not the loop cursor) so "$1" ends up pointing at the wrong arg.
+    info "copt.sh called with args: $*"
     local -a _args=("$@")
     for _i in "${!_args[@]}"; do
+        if [[ "${#_args[@]}" -eq 1 && "${_args[$_i]}" == *"-"* ]]; then
+            # Single hyphenated arg might be capture-mode value parsed as profile
+            warn "Suspicious single-arg parse: ${_args[$_i]}"
+        fi
         if [[ "${_args[$_i]}" == "--profile" ]]; then
             COPT_PROFILE="${_args[$((_i + 1))]:-}"
+            info "Pre-parsed profile from args: COPT_PROFILE='${COPT_PROFILE}'"
             break
         fi
     done
+    [[ -n "${COPT_PROFILE:-}" ]] || warn "No --profile found in args, COPT_PROFILE='${COPT_PROFILE:-}'"
     
     load_profile
     parse_args "$@"

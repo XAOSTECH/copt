@@ -6,7 +6,7 @@
 # Works with 'slop' (visual selection) or manual coordinate entry.
 #
 # Usage: sudo ./pick-logo-coords.sh [device]
-#        sudo ./pick-logo-coords.sh /dev/ugreen-capture
+#        sudo ./pick-logo-coords.sh /dev/usb-video-capture1
 #
 # Output: Prints coordinates to add to your profile config
 # ============================================================================
@@ -14,7 +14,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DEVICE="${1:-/dev/ugreen-capture}"
+DEVICE="${1:-/dev/usb-video-capture1}"
 
 # Colours
 C_GRN='\033[0;32m' C_CYN='\033[0;36m' C_RED='\033[0;31m' C_RST='\033[0m'

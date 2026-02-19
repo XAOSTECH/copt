@@ -6,15 +6,14 @@
 #
 # Execution mode (auto-detected, no flags required):
 #
-#   host  — On the host: runs copt.sh DIRECTLY on the host, so USB /dev/videoX
-#            is natively visible. DEFAULT when running from host.
+#   exec  — On the host: execs into the running devcontainer (DEFAULT).
+#            Uses the container's FFmpeg (NVENC SDK 13.0), CUDA, and all
+#            streaming tools. USB device must be in devcontainer.json runArgs.
 #
-#   local — Inside a devcontainer: runs copt.sh at its local path. USB device
-#            must already be passed in via devcontainer.json runArgs.
+#   local — Inside a devcontainer: runs copt.sh at its local path directly.
 #
-#   exec  — podman/docker exec into container (fallback when copt.sh not found
-#            on host, or forced via COPT_FORCE_CONTAINER=1). Requires device in
-#            devcontainer.json runArgs (rebuild container after adding device).
+#   host  — Fallback when no container is running. Warns that NVENC/CUDA
+#            support depends on what is installed on the host.
 #
 # Default stream: 4K 30fps HDR10 PQ → YouTube Live HLS
 #   Profile : usb-capture-4k30-hdr
@@ -33,8 +32,7 @@
 #
 # Environment overrides:
 #   COPT_USB_VID_PID      VID:PID of capture card (default: 3188:1000)
-#   COPT_CONTAINER        Force container  "runtime:id"
-#   COPT_FORCE_CONTAINER  Set 1 to force exec mode with --device passthrough
+#   COPT_CONTAINER        Force container "runtime:id" (e.g. podman:abc123)
 #   COPT_RESTART_DELAY    Seconds between restarts (default: 5)
 #   COPT_MAX_RETRIES      Max retries, 0=infinite (default: 0)
 #
@@ -86,8 +84,22 @@ find_container() {
 
 # Resolve capture device — stable udev symlink preferred, sysfs fallback
 find_video_device() {
-    # Prefer stable udev symlink (set up by 99-ugreen-capture.rules)
-    if [[ -e /dev/ugreen-capture ]]; then echo "/dev/ugreen-capture"; return 0; fi
+    # Prefer stable udev symlink (set up by 99-usb-video-capture.rules)
+    # Numbered to allow future devices: usb-video-capture2, etc.
+    local n=1
+    while [[ -e "/dev/usb-video-capture${n}" ]]; do
+        # Match VID:PID to find the right numbered symlink
+        local link_target real_dev real_vid real_pid
+        link_target=$(readlink -f "/dev/usb-video-capture${n}" 2>/dev/null) || { n=$((n+1)); continue; }
+        real_dev=$(basename "$link_target")
+        real_vid=$(cat "/sys/class/video4linux/${real_dev}/device/../../../idVendor" 2>/dev/null | tr -d '\n')
+        real_pid=$(cat "/sys/class/video4linux/${real_dev}/device/../../../idProduct" 2>/dev/null | tr -d '\n')
+        local want_vid="${1%%:*}" want_pid="${1##*:}"
+        if [[ "${real_vid,,}" == "${want_vid,,}" && "${real_pid,,}" == "${want_pid,,}" ]]; then
+            echo "/dev/usb-video-capture${n}"; return 0
+        fi
+        n=$((n+1))
+    done
 
     local vid="${1%%:*}" pid="${1##*:}" sys_dev
     for sys_dev in /sys/bus/usb/devices/*/; do
@@ -151,42 +163,17 @@ if in_container; then
     info "In-container mode — running copt.sh directly"
     ok "copt: ${COPT_SCRIPT}"
 else
-    # ── On the host — try host mode first (device natively visible) ───────────
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    HOST_SCRIPT="${SCRIPT_DIR}/copt.sh"
-    
-    # If copt.sh not found next to copt-host (e.g., symlink from ~/bin),
-    # search common workspace locations
-    if [[ ! -f "$HOST_SCRIPT" ]]; then
-        for candidate in \
-            ~/PRO/WEB/CST/copt/src/copt.sh \
-            /workspaces/CST/copt/src/copt.sh \
-            /workspaces/copt/src/copt.sh \
-            "${SCRIPT_DIR}/../copt/src/copt.sh" \
-            "${SCRIPT_DIR}/../../copt/src/copt.sh"
-        do
-            if [[ -f "$candidate" ]]; then
-                HOST_SCRIPT="$candidate"
-                break
-            fi
-        done
+    # ── On the host — exec into devcontainer (bleeding-edge FFmpeg/CUDA/NVENC) ─
+    # Container exec is always preferred: the devcontainer holds the compiled
+    # FFmpeg (NVENC SDK 13.0), CUDA, and all streaming tools. Running on the
+    # host directly would require duplicating all those installs there.
+    # Fallback to host-direct only when no container is running.
+    CONTAINER_RAW="${COPT_CONTAINER:-}"
+    if [[ -z "$CONTAINER_RAW" ]]; then
+        CONTAINER_RAW=$(find_container) || true
     fi
-    
-    if [[ -f "$HOST_SCRIPT" && -z "${COPT_FORCE_CONTAINER:-}" ]]; then
-        # Host mode: run script directly on host (USB device already visible)
-        EXEC_MODE=host
-        COPT_SCRIPT="$HOST_SCRIPT"
-        info "Host mode — running copt.sh directly (USB device natively visible)"
-        ok "copt: ${COPT_SCRIPT}"
-    else
-        # Exec mode: run inside container (requires device in devcontainer.json)
-        info "Container mode — device must be in devcontainer.json runArgs"
-        CONTAINER_RAW="${COPT_CONTAINER:-}"
-        if [[ -z "$CONTAINER_RAW" ]]; then
-            CONTAINER_RAW=$(find_container) || true
-        fi
-        [[ -n "$CONTAINER_RAW" ]] \
-            || die "No devcontainer found. Start VS Code devcontainer first.\nOr: COPT_CONTAINER=podman:ID copt-host ..."
+
+    if [[ -n "$CONTAINER_RAW" ]]; then
         RUNTIME="${CONTAINER_RAW%%:*}"
         CONTAINER_ID="${CONTAINER_RAW##*:}"
         ok "Container: ${CONTAINER_ID} (via ${RUNTIME})"
@@ -198,8 +185,28 @@ else
             fi
         done
         [[ -n "$COPT_SCRIPT" ]] \
-            || die "copt.sh not found in container at /workspaces/CST/copt/src/copt.sh"
+            || die "copt.sh not found in container. Expected: /workspaces/CST/copt/src/copt.sh"
+        info "Container mode — running inside devcontainer (FFmpeg/NVENC/CUDA)"
         ok "copt (in container): ${COPT_SCRIPT}"
+    else
+        # Fallback: no container running — run directly on host
+        warn "No devcontainer found — falling back to host-direct mode"
+        warn "Start the VS Code devcontainer for full NVENC/CUDA support"
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        HOST_SCRIPT="${SCRIPT_DIR}/copt.sh"
+        if [[ ! -f "$HOST_SCRIPT" ]]; then
+            for candidate in \
+                ~/PRO/WEB/CST/copt/src/copt.sh \
+                /workspaces/CST/copt/src/copt.sh \
+                /workspaces/copt/src/copt.sh
+            do
+                [[ -f "$candidate" ]] && { HOST_SCRIPT="$candidate"; break; }
+            done
+        fi
+        [[ -f "$HOST_SCRIPT" ]] || die "copt.sh not found on host and no container running."
+        EXEC_MODE=host
+        COPT_SCRIPT="$HOST_SCRIPT"
+        ok "copt (host fallback): ${COPT_SCRIPT}"
     fi
 fi
 

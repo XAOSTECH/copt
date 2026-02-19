@@ -6,16 +6,16 @@
 
 ```bash
 # Install the udev rule (run on HOST, not in container)
-sudo cp udev/99-ugreen-capture.rules /etc/udev/rules.d/
-sudo udevadm control --reload-rules
-sudo udevadm trigger --subsystem-match=video4linux
+sudo cp udev/99-usb-video-capture.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules && sudo udevadm trigger --subsystem-match=video4linux
 
 # Verify the symlink was created
-ls -la /dev/ugreen-capture
-# Should show: /dev/ugreen-capture -> video0 (or video1, etc.)
+ls -la /dev/usb-video-capture1
+# Should show: /dev/usb-video-capture1 -> video0 (or video1, etc.)
 ```
 
-This creates `/dev/ugreen-capture` → stable symlink that survives USB re-enumeration.
+This creates `/dev/usb-video-capture1` → stable symlink that survives USB re-enumeration.
+Numbered (N=1) to allow additional devices as `usb-video-capture2`, etc.
 
 ### 2. Add user to video group
 
@@ -57,7 +57,7 @@ Hide the UGREEN idle screen logo when no input is connected:
 # Visual selection (requires slop)
 sudo apt install slop
 cd /workspaces/CST/copt
-sudo ./scripts/pick-logo-coords.sh /dev/ugreen-capture
+sudo ./scripts/pick-logo-coords.sh /dev/usb-video-capture1
 ```
 
 Or use pre-extracted coordinates for UGREEN 25173:
@@ -85,7 +85,7 @@ COPT_LOGO_METHOD=drawbox              # Black box (cleanest)
 lsusb | grep 3188:1000
 
 # Check video node exists
-ls -la /dev/video* /dev/ugreen-capture
+ls -la /dev/video* /dev/usb-video-capture*
 
 # Reload udev rules
 sudo udevadm control --reload-rules
@@ -143,5 +143,5 @@ scripts/
   extract-logo-reference.sh         # Capture logo reference frame
 
 udev/
-  99-ugreen-capture.rules           # Udev rule for stable symlink
+  99-usb-video-capture.rules         # Udev rule for stable symlink (/dev/usb-video-captureN)
 ```

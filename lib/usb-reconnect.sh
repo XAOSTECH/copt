@@ -46,12 +46,22 @@ detect_usb_capture_device() {
         fi
     fi
 
-    # Prefer stable udev symlink (set up by 99-ugreen-capture.rules)
-    if [[ -e /dev/ugreen-capture ]]; then
-        COPT_USB_DEVICE="/dev/ugreen-capture"
-        ok "USB capture device → ${COPT_USB_DEVICE} (udev symlink)"
-        return 0
-    fi
+    # Prefer stable udev symlink (set up by 99-usb-video-capture.rules)
+    # Walk usb-video-capture1, usb-video-capture2, ... matching VID:PID
+    local n=1
+    while [[ -e "/dev/usb-video-capture${n}" ]]; do
+        local link_target real_dev real_vid real_pid
+        link_target=$(readlink -f "/dev/usb-video-capture${n}" 2>/dev/null) || { n=$((n+1)); continue; }
+        real_dev=$(basename "$link_target")
+        real_vid=$(cat "/sys/class/video4linux/${real_dev}/device/../../../idVendor" 2>/dev/null | tr -d '\n')
+        real_pid=$(cat "/sys/class/video4linux/${real_dev}/device/../../../idProduct" 2>/dev/null | tr -d '\n')
+        if [[ "${real_vid,,}" == "${COPT_USB_VID,,}" && "${real_pid,,}" == "${COPT_USB_PID,,}" ]]; then
+            COPT_USB_DEVICE="/dev/usb-video-capture${n}"
+            ok "USB capture device → ${COPT_USB_DEVICE} (udev symlink)"
+            return 0
+        fi
+        n=$((n+1))
+    done
 
     # Try to match VID:PID via udev / sysfs
     if [[ -n "$vid_pid" ]]; then

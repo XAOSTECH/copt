@@ -7,7 +7,7 @@
 # when it's actually showing (not during real content).
 #
 # Usage: sudo ./extract-logo-reference.sh [device]
-#        sudo ./extract-logo-reference.sh /dev/ugreen-capture
+#        sudo ./extract-logo-reference.sh /dev/usb-video-capture1
 #
 # Output: cfg/ugreen-logo-reference.png
 # ============================================================================
@@ -18,7 +18,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COPT_ROOT="$(dirname "$SCRIPT_DIR")"
 COPT_CFG="${COPT_ROOT}/cfg"
 
-DEVICE="${1:-/dev/ugreen-capture}"
+DEVICE="${1:-/dev/usb-video-capture1}"
 OUTPUT="${COPT_CFG}/ugreen-logo-reference.png"
 
 # Colours

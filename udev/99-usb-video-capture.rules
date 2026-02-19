@@ -1,0 +1,8 @@
+# Stable symlink for USB video capture devices (index-agnostic, n-based naming)
+# Install: sudo cp 99-usb-video-capture.rules /etc/udev/rules.d/
+#          sudo udevadm control --reload-rules && sudo udevadm trigger
+#
+# Creates /dev/usb-video-capture1 → /dev/videoX regardless of enumeration index.
+# Numbered to allow future devices: usb-video-capture2, usb-video-capture3, etc.
+# Use this path in devcontainer.json runArgs: --device=/dev/usb-video-capture1
+SUBSYSTEM=="video4linux", ENV{ID_VENDOR_ID}=="3188", ENV{ID_MODEL_ID}=="1000", KERNEL=="video[0-9]*", SYMLINK+="usb-video-capture1", TAG+="uaccess"
