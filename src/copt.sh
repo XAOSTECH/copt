@@ -61,6 +61,9 @@ source "${COPT_LIB}/ffmpeg.sh"
 # shellcheck source=../lib/probe.sh
 source "${COPT_LIB}/probe.sh"
 
+# shellcheck source=../lib/usb-reconnect.sh
+source "${COPT_LIB}/usb-reconnect.sh"
+
 # ----- load config file if present ------------------------------------------
 load_config() {
     if [[ -f "$COPT_CONFIG" ]]; then
@@ -156,6 +159,15 @@ ${C_BLD}STREAMING${C_RST}
     --hls-url URL            HLS endpoint URL
     --stream-name NAME       Stream name/key suffix (default: copt-stream)
 
+${C_BLD}USB CAPTURE (UGREEN 25173 / V4L2 devices)${C_RST}
+    --capture-mode MODE      Capture mode: kmsgrab (default) | usb
+    --usb-device  PATH       V4L2 device path         (default: auto-detect)
+    --usb-vid-pid VID:PID    USB VID:PID for reconnect (default: 3188:1000)
+    --input-format FMT       V4L2 input pixel format   (default: mjpeg)
+    --input-size  WxH        Capture resolution from device (default: output size)
+    --usb-reconnect          Enable auto-reconnect on USB disconnect (default: on)
+    --no-usb-reconnect       Disable auto-reconnect (exit on disconnect)
+
 ${C_BLD}GENERAL${C_RST}
     -c, --config  FILE       Config file path
     --probe                  Probe system and show detected devices, then exit
@@ -190,6 +202,16 @@ ${C_BLD}EXAMPLES${C_RST}
 
     # Stream to YouTube Live via HLS
     sudo copt -y YOUR_STREAM_KEY --hls --hls-url https://your-hls-url
+
+    # USB capture (UGREEN 25173) — 4K with auto-reconnect
+    sudo copt --capture-mode usb --profile usb-capture-4k30 -o ~/capture.mkv
+
+    # USB capture — stable 1080p on USB 3.0 back port
+    sudo copt --capture-mode usb --profile usb-capture-1080p30 -o ~/capture.mkv
+
+    # USB capture — explicit device + VID:PID, streaming to YouTube
+    sudo copt --capture-mode usb --usb-device /dev/video0 \\
+              --usb-vid-pid 3188:1000 -y YOUR_STREAM_KEY
 
 ${C_BLD}NOTES${C_RST}
     • Requires root (sudo) for KMS framebuffer access.
@@ -228,15 +250,27 @@ parse_args() {
             --hls)             COPT_STREAM_TYPE="hls"; shift ;;
             --rtmp-url)        COPT_RTMP_URL="$2"; shift 2 ;;
             --hls-url)         COPT_HLS_URL="$2"; shift 2 ;;
-            --stream-name)     COPT_STREAM_NAME="$2"; shift 2 ;;
-            --profile)         COPT_PROFILE="$2"; shift 2 ;;
-            -c|--config)       COPT_CONFIG="$2"; shift 2 ;;
-            --probe)           probe_system ;;
-            --dry-run)         DRY_RUN=1; shift ;;
-            --version)         echo "copt v${COPT_VERSION}"; exit 0 ;;
-            --help)            usage ;;
-            -*)                die "Unknown option: $1  (try --help)" ;;
-            *)                 COPT_OUTPUT="$1"; shift ;;   # positional = output
+            --stream-name)        COPT_STREAM_NAME="$2"; shift 2 ;;
+            --profile)            COPT_PROFILE="$2"; shift 2 ;;
+            -c|--config)          COPT_CONFIG="$2"; shift 2 ;;
+            # USB capture options
+            --capture-mode)       COPT_CAPTURE_MODE="$2"; shift 2 ;;
+            --usb-device)         COPT_USB_DEVICE="$2"; shift 2 ;;
+            --usb-vid-pid)        COPT_USB_VID_PID="$2"; shift 2 ;;
+            --input-format)       COPT_USB_INPUT_FORMAT="$2"; shift 2 ;;
+            --input-size)
+                COPT_USB_INPUT_W="${2%%x*}"
+                COPT_USB_INPUT_H="${2##*x}"
+                shift 2
+                ;;
+            --usb-reconnect)      COPT_USB_RECONNECT=1; shift ;;
+            --no-usb-reconnect)   COPT_USB_RECONNECT=0; shift ;;
+            --probe)              probe_system ;;
+            --dry-run)            DRY_RUN=1; shift ;;
+            --version)            echo "copt v${COPT_VERSION}"; exit 0 ;;
+            --help)               usage ;;
+            -*)                   die "Unknown option: $1  (try --help)" ;;
+            *)                    COPT_OUTPUT="$1"; shift ;;   # positional = output
         esac
     done
 }
@@ -278,39 +312,65 @@ main() {
     load_profile
     parse_args "$@"
 
-    # Ensure DRI device access (kmsgrab needs /dev/dri access)
-    # Check if user has read/write access to DRI devices
-    if [[ ! -r /dev/dri/card0 ]] && [[ ! -r /dev/dri/card1 ]] && [[ $EUID -ne 0 ]]; then
-        die "KMS grab requires DRI device access. Run with:  sudo copt $*
-        
-Or add your user to the 'video' and 'render' groups:
-  sudo usermod -aG video,render \$USER
-  
-Then log out and log back in for group changes to take effect."
-    fi
-
     # Check ffmpeg
     command -v ffmpeg &>/dev/null || die "ffmpeg not found in PATH."
 
-    info "copt v${COPT_VERSION} — Wayland KMS screen capture"
+    COPT_CAPTURE_MODE="${COPT_CAPTURE_MODE:-kmsgrab}"
 
-    detect_screen_resolution
-    detect_dri_device
-    detect_audio_device
-    detect_encoder
-    setup_streaming
-    adapt_profile_to_bandwidth
+    if [[ "$COPT_CAPTURE_MODE" == "usb" ]]; then
+        # ---- USB / V4L2 capture path (UGREEN 25173 etc.) ------------------
+        info "copt v${COPT_VERSION} — USB V4L2 capture (${COPT_USB_VID_PID:-no VID:PID set})"
 
-    build_ffmpeg_cmd
+        # USB mode does NOT need KMS / DRI access
+        detect_audio_device
+        detect_encoder
+        detect_usb_capture_device "${COPT_USB_VID_PID:-}"
+        setup_streaming
+        adapt_profile_to_bandwidth
+        build_ffmpeg_usb_cmd
+    else
+        # ---- KMS grab path (default — Wayland screen capture) -------------
+        # Ensure DRI device access
+        if [[ ! -r /dev/dri/card0 ]] && [[ ! -r /dev/dri/card1 ]] && [[ $EUID -ne 0 ]]; then
+            die "KMS grab requires DRI device access. Run with:  sudo copt $*
+
+Or add your user to the 'video' and 'render' groups:
+  sudo usermod -aG video,render \$USER
+
+Then log out and log back in for group changes to take effect."
+        fi
+
+        info "copt v${COPT_VERSION} — Wayland KMS screen capture"
+
+        detect_screen_resolution
+        detect_dri_device
+        detect_audio_device
+        detect_encoder
+        setup_streaming
+        adapt_profile_to_bandwidth
+        build_ffmpeg_cmd
+    fi
 
     echo ""
     printf "${C_CYN}Capture config:${C_RST}\n"
-    printf "  DRI device  : %s\n" "$COPT_DRI_DEVICE"
-    printf "  Screen      : %sx%s\n" "$COPT_SCREEN_W" "$COPT_SCREEN_H"
-    printf "  Crop region : x=%s y=%s w=%s h=%s\n" \
-        "$COPT_CROP_X" "$COPT_CROP_Y" \
-        "$([[ ${COPT_CROP_W} -eq 0 ]] && echo "$COPT_SCREEN_W" || echo "$COPT_CROP_W")" \
-        "$([[ ${COPT_CROP_H} -eq 0 ]] && echo "$COPT_SCREEN_H" || echo "$COPT_CROP_H")"
+    if [[ "$COPT_CAPTURE_MODE" == "usb" ]]; then
+        printf "  Mode        : USB V4L2 (%s)\n" "${COPT_USB_VID_PID:-unknown}"
+        printf "  Device      : %s\n" "${COPT_USB_DEVICE:-/dev/video0}"
+        printf "  Input fmt   : %s @ %sx%s\n" \
+            "${COPT_USB_INPUT_FORMAT:-mjpeg}" \
+            "${COPT_USB_INPUT_W:-${COPT_OUT_W}}" \
+            "${COPT_USB_INPUT_H:-${COPT_OUT_H}}"
+        printf "  Reconnect   : %s\n" \
+            "$([[ "${COPT_USB_RECONNECT:-1}" -eq 1 ]] && echo "enabled (infinite)" || echo "disabled")"
+    else
+        printf "  Mode        : KMS grab (Wayland screen capture)\n"
+        printf "  DRI device  : %s\n" "$COPT_DRI_DEVICE"
+        printf "  Screen      : %sx%s\n" "$COPT_SCREEN_W" "$COPT_SCREEN_H"
+        printf "  Crop region : x=%s y=%s w=%s h=%s\n" \
+            "$COPT_CROP_X" "$COPT_CROP_Y" \
+            "$([[ ${COPT_CROP_W} -eq 0 ]] && echo "$COPT_SCREEN_W" || echo "$COPT_CROP_W")" \
+            "$([[ ${COPT_CROP_H} -eq 0 ]] && echo "$COPT_SCREEN_H" || echo "$COPT_CROP_H")"
+    fi
     printf "  Output res  : %sx%s\n" "$COPT_OUT_W" "$COPT_OUT_H"
     printf "  Encoder     : %s\n" "$COPT_ENCODER"
     printf "  Framerate   : %s fps\n" "$COPT_FRAMERATE"
@@ -392,8 +452,12 @@ Then log out and log back in for group changes to take effect."
         mkdir -p "$(dirname "$COPT_OUTPUT")"
     fi
 
-    # Execute
-    exec "${FFMPEG_CMD[@]}"
+    # Execute — USB mode may loop for reconnects; KMS uses exec for zero overhead
+    if [[ "$COPT_CAPTURE_MODE" == "usb" && "${COPT_USB_RECONNECT:-1}" -eq 1 ]]; then
+        run_with_usb_reconnect
+    else
+        exec "${FFMPEG_CMD[@]}"
+    fi
 }
 
 main "$@"

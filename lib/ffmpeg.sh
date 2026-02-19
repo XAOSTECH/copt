@@ -179,3 +179,134 @@ build_ffmpeg_cmd() {
     # Return as a joined string for display, but we'll use the array to exec
     FFMPEG_CMD=("${cmd[@]}")
 }
+
+# ----- build ffmpeg command for USB V4L2 capture device ---------------------
+# Used for USB capture cards such as the UGREEN 25173 (VID:PID 3188:1000).
+# Input comes from a V4L2 node (/dev/videoX) rather than KMS grab.
+build_ffmpeg_usb_cmd() {
+    local cmd=()
+
+    # Core flags – nobuffer + genpts keep stream alive through micro-stalls
+    cmd+=(ffmpeg -hide_banner -loglevel info -y)
+    cmd+=(-fflags +genpts+discardcorrupt)
+    cmd+=(-use_wallclock_as_timestamps 1)
+
+    # -- Audio input (before video so audio stream index is 0) --
+    if [[ "$COPT_AUDIO" -eq 1 && -n "${COPT_AUDIO_DEVICE:-}" ]]; then
+        cmd+=(-thread_queue_size 512)
+        cmd+=(-f alsa -i "$COPT_AUDIO_DEVICE")
+    fi
+
+    # -- V4L2 video input --
+    # UGREEN 25173 provides MJPEG at 4K, YUYV422 at lower resolutions.
+    # Default to mjpeg (best bandwidth efficiency through USB-C).
+    local input_fmt="${COPT_USB_INPUT_FORMAT:-mjpeg}"
+    local input_w="${COPT_USB_INPUT_W:-${COPT_OUT_W}}"
+    local input_h="${COPT_USB_INPUT_H:-${COPT_OUT_H}}"
+
+    cmd+=(-thread_queue_size 512)
+    cmd+=(-f v4l2)
+    cmd+=(-input_format "$input_fmt")
+    cmd+=(-video_size "${input_w}x${input_h}")
+    cmd+=(-framerate "$COPT_FRAMERATE")
+    cmd+=(-i "${COPT_USB_DEVICE:-/dev/video0}")
+
+    # -- Duration --
+    if [[ "$COPT_DURATION" -gt 0 ]]; then
+        cmd+=(-t "$COPT_DURATION")
+    fi
+
+    # -- Map streams explicitly (audio first if present) --
+    if [[ "$COPT_AUDIO" -eq 1 && -n "${COPT_AUDIO_DEVICE:-}" ]]; then
+        cmd+=(-map 1:v:0 -map 0:a:0)
+    else
+        cmd+=(-map 0:v:0)
+    fi
+
+    # -- Video filter + encoder --
+    # For USB capture cards the input is already decoded (MJPEG→raw or YUYV).
+    # We upload to GPU or keep software for encoding.
+    case "$COPT_ENCODER" in
+        vaapi)
+            local vf="format=nv12,hwupload=extra_hw_frames=64"
+            # Scale only when output differs from input size
+            if [[ "$COPT_OUT_W" != "$input_w" || "$COPT_OUT_H" != "$input_h" ]]; then
+                vf+=",scale_vaapi=${COPT_OUT_W}:${COPT_OUT_H}"
+            fi
+            cmd+=(-vf "$vf")
+            cmd+=(-c:v h264_vaapi -qp "$COPT_QUALITY")
+            if [[ -n "${COPT_BITRATE_VIDEO:-}" ]]; then
+                cmd+=(-b:v "$COPT_BITRATE_VIDEO" -maxrate "$COPT_BITRATE_VIDEO")
+                [[ -n "${COPT_BUFFER_SIZE:-}" ]] && cmd+=(-bufsize "$COPT_BUFFER_SIZE")
+            fi
+            [[ -n "${COPT_GOP_SIZE:-}" ]] && cmd+=(-g "$COPT_GOP_SIZE")
+            ;;
+        nvenc)
+            local vf="format=nv12,hwupload"
+            if [[ "$COPT_OUT_W" != "$input_w" || "$COPT_OUT_H" != "$input_h" ]]; then
+                vf+=",scale_cuda=${COPT_OUT_W}:${COPT_OUT_H}"
+            fi
+            cmd+=(-vf "$vf")
+            cmd+=(-c:v h264_nvenc -preset p4 -qp "$COPT_QUALITY" -bf 0)
+            if [[ -n "${COPT_BITRATE_VIDEO:-}" ]]; then
+                cmd+=(-b:v "$COPT_BITRATE_VIDEO" -maxrate "$COPT_BITRATE_VIDEO")
+                [[ -n "${COPT_BUFFER_SIZE:-}" ]] && cmd+=(-bufsize "$COPT_BUFFER_SIZE")
+            fi
+            [[ -n "${COPT_GOP_SIZE:-}" ]] && cmd+=(-g "$COPT_GOP_SIZE")
+            ;;
+        x264)
+            local vf="format=yuv420p"
+            if [[ "$COPT_OUT_W" != "$input_w" || "$COPT_OUT_H" != "$input_h" ]]; then
+                vf+=",scale=${COPT_OUT_W}:${COPT_OUT_H}"
+            fi
+            cmd+=(-vf "$vf")
+            cmd+=(-c:v libx264 -preset fast -crf "$COPT_QUALITY" -pix_fmt yuv420p)
+            if [[ -n "${COPT_BITRATE_VIDEO:-}" ]]; then
+                cmd+=(-b:v "$COPT_BITRATE_VIDEO" -maxrate "$COPT_BITRATE_VIDEO")
+                [[ -n "${COPT_BUFFER_SIZE:-}" ]] && cmd+=(-bufsize "$COPT_BUFFER_SIZE")
+            fi
+            [[ -n "${COPT_GOP_SIZE:-}" ]] && cmd+=(-g "$COPT_GOP_SIZE")
+            ;;
+        x265)
+            local vf="format=yuv420p"
+            if [[ "$COPT_OUT_W" != "$input_w" || "$COPT_OUT_H" != "$input_h" ]]; then
+                vf+=",scale=${COPT_OUT_W}:${COPT_OUT_H}"
+            fi
+            cmd+=(-vf "$vf")
+            cmd+=(-c:v libx265 -preset fast -crf "$COPT_QUALITY" -pix_fmt yuv420p)
+            if [[ -n "${COPT_BITRATE_VIDEO:-}" ]]; then
+                cmd+=(-b:v "$COPT_BITRATE_VIDEO" -maxrate "$COPT_BITRATE_VIDEO")
+                [[ -n "${COPT_BUFFER_SIZE:-}" ]] && cmd+=(-bufsize "$COPT_BUFFER_SIZE")
+            fi
+            [[ -n "${COPT_GOP_SIZE:-}" ]] && cmd+=(-g "$COPT_GOP_SIZE")
+            ;;
+        *)
+            die "Unknown encoder for USB capture: $COPT_ENCODER (use vaapi|nvenc|x264|x265)"
+            ;;
+    esac
+
+    # -- Audio codec --
+    if [[ "$COPT_AUDIO" -eq 1 && -n "${COPT_AUDIO_DEVICE:-}" ]]; then
+        case "$COPT_AUDIO_CODEC" in
+            aac)
+                cmd+=(-c:a aac)
+                cmd+=(-b:a "${COPT_BITRATE_AUDIO:-192k}")
+                ;;
+            opus)
+                cmd+=(-c:a libopus)
+                cmd+=(-b:a "${COPT_BITRATE_AUDIO:-128k}")
+                ;;
+            mp3)
+                cmd+=(-c:a libmp3lame)
+                cmd+=(-b:a "${COPT_BITRATE_AUDIO:-192k}")
+                ;;
+            copy) cmd+=(-c:a copy) ;;
+            *)    die "Unknown audio codec: $COPT_AUDIO_CODEC" ;;
+        esac
+    fi
+
+    # -- Output --
+    cmd+=("$COPT_OUTPUT")
+
+    FFMPEG_CMD=("${cmd[@]}")
+}

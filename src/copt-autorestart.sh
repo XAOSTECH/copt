@@ -30,6 +30,8 @@ fi
 # Configuration
 readonly MAX_RETRIES="${COPT_MAX_RETRIES:-0}"        # 0 = infinite
 readonly RESTART_DELAY="${COPT_RESTART_DELAY:-5}"   # seconds between restarts
+readonly USB_AWARE="${COPT_USB_AUTORESTART:-1}"     # 1 = log USB disconnect patterns
+readonly USB_VID_PID="${COPT_USB_VID_PID:-3188:1000}"  # USB device to watch for (UGREEN 25173)
 # Use /var/log if writable (system install) or /tmp with unique name
 if [[ -w /var/log ]]; then
     readonly LOG_FILE="${COPT_LOG_FILE:-/var/log/copt-autorestart.log}"
@@ -108,11 +110,41 @@ while true; do
         warn "Restarting copt (attempt #${retry_count})"
     fi
     
-    # Run copt and capture exit code
+    # Run copt; stdout+stderr go to terminal AND the log file
     set +e
     "$COPT_BIN" "$@" 2>&1 | tee -a "$LOG_FILE"
     exit_code=$?
     set -e
+
+    # --- USB disconnect detection (from log tail) ---
+    # copt's built-in run_with_usb_reconnect handles device-level reconnects,
+    # but if it exhausts COPT_USB_MAX_RECONNECTS the whole process exits.
+    # Detect that here so we can give a targeted message and wait longer.
+    usb_disconnect=0
+    if [[ "${USB_AWARE}" -eq 1 ]]; then
+        if tail -200 "$LOG_FILE" 2>/dev/null | grep -qiE \
+            'Device.*disconnected|select timed out|No such device|USB.*lost|Maximum USB reconnect'; then
+            usb_disconnect=1
+        fi
+    fi
+
+    if [[ $usb_disconnect -eq 1 ]]; then
+        warn "USB capture device disconnect detected in log"
+        warn "Device: ${USB_VID_PID} — waiting for it to reappear before restarting..."
+        # Poll lsusb until the device shows up (or 120s max)
+        usb_elapsed=0
+        while [[ $usb_elapsed -lt 120 ]]; do
+            if lsusb 2>/dev/null | grep -qi "$USB_VID_PID"; then
+                ok "USB device ${USB_VID_PID} found on bus — proceeding to restart"
+                sleep 3   # settle delay
+                break
+            fi
+            sleep 2; usb_elapsed=$((usb_elapsed + 2))
+        done
+        if [[ $usb_elapsed -ge 120 ]]; then
+            err "USB device ${USB_VID_PID} did not reappear in 120s"
+        fi
+    fi
     
     # Analyse exit code
     case $exit_code in
@@ -132,6 +164,17 @@ while true; do
         143)
             info "copt terminated by SIGTERM"
             exit 0
+            ;;
+        7)
+            # SIGBUS — can occur when the USB device is yanked mid-DMA
+            warn "copt terminated by SIGBUS (exit 7) — possible hardware/USB fault"
+            [[ $usb_disconnect -eq 1 ]] && warn "Consistent with USB-C bus instability"
+            ;;
+        11)
+            # SIGSEGV — the 'double free or corruption' crash
+            warn "copt segfaulted (exit 11) — possible 'double free or corruption' from USB disconnect"
+            [[ $usb_disconnect -eq 1 ]] && warn "Consistent with UGREEN 25173 USB-C instability"
+            warn "Hardware tip: replace USB-C cable / update motherboard BIOS / use USB 3.0 port"
             ;;
         *)
             warn "copt crashed with exit code: $exit_code"
