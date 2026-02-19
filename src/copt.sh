@@ -46,6 +46,13 @@ if [[ -f "${COPT_CFG}/bandwidth_max.conf" ]]; then
     set +a
 fi
 
+# Load .env for secrets (YT_HLS_URL, stream keys, etc.)
+if [[ -f "${COPT_CFG}/.env" ]]; then
+    set -a
+    source "${COPT_CFG}/.env"
+    set +a
+fi
+
 # shellcheck source=../lib/detect.sh
 source "${COPT_LIB}/detect.sh"
 

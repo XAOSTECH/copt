@@ -33,7 +33,11 @@ setup_streaming() {
             ;;
         hls)
             if [[ -z "${COPT_HLS_URL:-}" ]]; then
-                die "HLS streaming requires --hls-url to be set."
+                # Fallback to YT_HLS_URL from .env if available
+                COPT_HLS_URL="${YT_HLS_URL:-}"
+            fi
+            if [[ -z "${COPT_HLS_URL:-}" ]]; then
+                die "HLS streaming requires --hls-url or YT_HLS_URL in cfg/.env"
             fi
             # Use dummy file for dry-run testing
             if [[ "${DRY_RUN:-0}" -eq 1 ]]; then

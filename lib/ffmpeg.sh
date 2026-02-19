@@ -299,9 +299,10 @@ build_ffmpeg_usb_cmd() {
             encoders=$(ffmpeg -hide_banner -encoders 2>/dev/null || true)
 
             if echo "$encoders" | grep -q hevc_nvenc; then
-                local vf="setparams=${hdr_params},format=p010le,hwupload"
+                # hevc_nvenc handles CPU→GPU upload internally - no hwupload needed
+                local vf="setparams=${hdr_params},format=p010le"
                 if [[ "$COPT_OUT_W" != "$input_w" || "$COPT_OUT_H" != "$input_h" ]]; then
-                    vf+=",scale_cuda=${COPT_OUT_W}:${COPT_OUT_H}:format=p010le"
+                    vf+=",scale=${COPT_OUT_W}:${COPT_OUT_H}"
                 fi
                 cmd+=(-vf "$vf")
                 cmd+=(-c:v hevc_nvenc -preset p4 -profile:v main10 -pix_fmt p010le -bf 0)
