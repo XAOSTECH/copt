@@ -79,9 +79,15 @@ build_ffmpeg_cmd() {
                     cmd+=(-color_range "${COPT_COLOR_RANGE:-tv}")
                 fi
                 if [[ -n "${COPT_HDR_MASTER_DISPLAY:-}" ]]; then
-                    cmd+=(-sei hdr10)
-                    cmd+=(-master_display "${COPT_HDR_MASTER_DISPLAY}")
-                    [[ -n "${COPT_HDR_MAX_CLL:-}" ]] && cmd+=(-max_cll "${COPT_HDR_MAX_CLL}")
+                    local nvenc_opts
+                    nvenc_opts=$(ffmpeg -hide_banner -h encoder=hevc_nvenc 2>/dev/null || true)
+                    if echo "$nvenc_opts" | grep -q 'master.display\|-sei'; then
+                        cmd+=(-sei hdr10)
+                        cmd+=(-master_display "${COPT_HDR_MASTER_DISPLAY}")
+                        [[ -n "${COPT_HDR_MAX_CLL:-}" ]] && cmd+=(-max_cll "${COPT_HDR_MAX_CLL}")
+                    else
+                        warn "hevc_nvenc: -master_display not supported in this FFmpeg build — HDR colour tags only"
+                    fi
                 fi
             elif echo "$encoders" | grep -q hevc_vaapi; then
                 local vf="hwmap=derive_device=vaapi"
@@ -306,9 +312,17 @@ build_ffmpeg_usb_cmd() {
                 cmd+=(-colorspace "${COPT_COLORSPACE:-bt2020nc}")
                 cmd+=(-color_range "${COPT_COLOR_RANGE:-tv}")
                 if [[ -n "${COPT_HDR_MASTER_DISPLAY:-}" ]]; then
-                    cmd+=(-sei hdr10)
-                    cmd+=(-master_display "${COPT_HDR_MASTER_DISPLAY}")
-                    [[ -n "${COPT_HDR_MAX_CLL:-}" ]] && cmd+=(-max_cll "${COPT_HDR_MAX_CLL}")
+                    # -sei hdr10, -master_display and -max_cll are hevc_nvenc
+                    # private options; not available in all FFmpeg builds.
+                    local nvenc_opts
+                    nvenc_opts=$(ffmpeg -hide_banner -h encoder=hevc_nvenc 2>/dev/null || true)
+                    if echo "$nvenc_opts" | grep -q 'master.display\|-sei'; then
+                        cmd+=(-sei hdr10)
+                        cmd+=(-master_display "${COPT_HDR_MASTER_DISPLAY}")
+                        [[ -n "${COPT_HDR_MAX_CLL:-}" ]] && cmd+=(-max_cll "${COPT_HDR_MAX_CLL}")
+                    else
+                        warn "hevc_nvenc: -master_display not supported in this FFmpeg build — HDR colour tags only"
+                    fi
                 fi
             elif echo "$encoders" | grep -q hevc_vaapi; then
                 local vf="setparams=${hdr_params},format=p010le,hwupload=extra_hw_frames=64"

@@ -56,7 +56,6 @@ VID_PID="${COPT_USB_VID_PID:-3188:1000}"
 RESTART_DELAY="${COPT_RESTART_DELAY:-5}"
 MAX_RETRIES="${COPT_MAX_RETRIES:-0}"
 DEFAULT_PROFILE="usb-capture-4k30-hdr"
-FORCE_CONTAINER="${COPT_FORCE_CONTAINER:-0}"
 
 USB_DISCONNECT_RE='Device.*disconnected|select timed out|Input/output error|No such device|failed to reset|double free'
 
@@ -87,14 +86,6 @@ find_container() {
         if [[ -n "$cid" ]]; then echo "$runtime:$cid"; return 0; fi
     done
     return 1
-}
-
-# Print the host-side source path for a container bind-mount destination
-container_mount_source() {
-    local runtime="$1" cid="$2" dest="$3"
-    "$runtime" inspect "$cid" \
-        --format "{{range .Mounts}}{{if eq .Destination \"${dest}\"}}{{.Source}}{{end}}{{end}}" \
-        2>/dev/null | tr -d '\n'
 }
 
 # Resolve /dev/videoX from VID:PID via sysfs — index-agnostic
@@ -153,7 +144,7 @@ CONTAINER_ID=""
 COPT_SCRIPT=""
 
 if in_container; then
-    # ── local: already inside the devcontainer ────────────────────────────────
+    # ── local: already inside the devcontainer — run copt.sh directly ─────────
     EXEC_MODE=local
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     COPT_SCRIPT="${SCRIPT_DIR}/copt.sh"
@@ -161,7 +152,7 @@ if in_container; then
     info "In-container mode — running copt.sh directly"
     ok "copt: ${COPT_SCRIPT}"
 else
-    # ── On the host — locate the devcontainer ────────────────────────────────
+    # ── On the host — exec into devcontainer (device is accessible there) ─────
     info "Locating devcontainer..."
     CONTAINER_RAW="${COPT_CONTAINER:-}"
     if [[ -z "$CONTAINER_RAW" ]]; then
@@ -173,45 +164,15 @@ else
     CONTAINER_ID="${CONTAINER_RAW##*:}"
     ok "Container: ${CONTAINER_ID} (via ${RUNTIME})"
 
-    # Resolve copt.sh path as seen from inside the container
-    COPT_SCRIPT_IN_CONTAINER=""
+    EXEC_MODE=exec
     for candidate in /workspaces/CST/copt/src/copt.sh /workspaces/copt/src/copt.sh; do
         if "$RUNTIME" exec "$CONTAINER_ID" test -f "$candidate" 2>/dev/null; then
-            COPT_SCRIPT_IN_CONTAINER="$candidate"; break
+            COPT_SCRIPT="$candidate"; break
         fi
     done
-    [[ -n "$COPT_SCRIPT_IN_CONTAINER" ]] \
+    [[ -n "$COPT_SCRIPT" ]] \
         || die "copt.sh not found in container at /workspaces/CST/copt/src/copt.sh"
-
-    if [[ "$FORCE_CONTAINER" -eq 1 ]]; then
-        # ── exec: forced — pass USB device into container ─────────────────────
-        EXEC_MODE=exec
-        COPT_SCRIPT="$COPT_SCRIPT_IN_CONTAINER"
-        info "Exec mode (COPT_FORCE_CONTAINER=1) — using --device passthrough"
-    else
-        # ── host: derive HOST path from bind-mount and run directly ───────────
-        # The workspace is a bind-mount: container sees /workspaces/CST,
-        # host sees e.g. /home/user/PRO.  Extract source via inspect.
-        EXEC_MODE=host
-        COPT_SCRIPT=""
-        for ws_dest in /workspaces/CST /workspaces/copt; do
-            host_src=$(container_mount_source "$RUNTIME" "$CONTAINER_ID" "$ws_dest")
-            [[ -z "$host_src" ]] && continue
-            [[ "$ws_dest" == "/workspaces/CST" ]] \
-                && candidate="${host_src}/copt/src/copt.sh" \
-                || candidate="${host_src}/src/copt.sh"
-            if [[ -f "$candidate" ]]; then COPT_SCRIPT="$candidate"; break; fi
-        done
-
-        if [[ -z "$COPT_SCRIPT" ]]; then
-            warn "Could not resolve host workspace path from bind-mounts"
-            warn "Falling back to exec mode (--device passthrough)"
-            EXEC_MODE=exec
-            COPT_SCRIPT="$COPT_SCRIPT_IN_CONTAINER"
-        else
-            ok "Host mode: ${COPT_SCRIPT}"
-        fi
-    fi
+    ok "copt (in container): ${COPT_SCRIPT}"
 fi
 
 # ── USB device ────────────────────────────────────────────────────────────────
@@ -258,15 +219,14 @@ while true; do
 
     set +e
     case "$EXEC_MODE" in
-        host|local)
-            # Run directly — USB device is natively accessible
+        local)
+            # Inside container already — run directly
             sudo bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
                 2> >(tee -a "$tmplog" >&2)
             ;;
         exec)
-            # Container exec with explicit device passthrough
+            # Exec into container — device already accessible there
             "$RUNTIME" exec \
-                --device "${VIDEO_DEV}:${VIDEO_DEV}" \
                 --env DISPLAY="${DISPLAY:-:0}" \
                 --env WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}" \
                 --env XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}" \
