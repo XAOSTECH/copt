@@ -1,7 +1,7 @@
 # Stable symlink for UGREEN 25173 USB capture card (VID:PID 3188:1000)
 # Install: sudo cp 99-ugreen-capture.rules /etc/udev/rules.d/
-#          sudo udevadm control --reload && sudo udevadm trigger
+#          sudo udevadm control --reload-rules && sudo udevadm trigger
 #
 # Creates /dev/ugreen-capture → /dev/videoX regardless of enumeration index.
 # Use this path in devcontainer.json runArgs: --device=/dev/ugreen-capture
-SUBSYSTEM=="video4linux", ATTRS{idVendor}=="3188", ATTRS{idProduct}=="1000", SYMLINK+="ugreen-capture", TAG+="uaccess"
+SUBSYSTEM=="video4linux", ENV{ID_VENDOR_ID}=="3188", ENV{ID_MODEL_ID}=="1000", KERNEL=="video0", SYMLINK+="ugreen-capture", TAG+="uaccess"
