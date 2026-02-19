@@ -224,8 +224,9 @@ while true; do
                 2> >(tee -a "$tmplog" >&2)
             ;;
         exec)
-            # Exec into container — device already accessible there
+            # Exec into container with device passthrough
             "$RUNTIME" exec \
+                --device "${VIDEO_DEV}:${VIDEO_DEV}" \
                 --env DISPLAY="${DISPLAY:-:0}" \
                 --env WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}" \
                 --env XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}" \
