@@ -46,6 +46,13 @@ detect_usb_capture_device() {
         fi
     fi
 
+    # Prefer stable udev symlink (set up by 99-ugreen-capture.rules)
+    if [[ -e /dev/ugreen-capture ]]; then
+        COPT_USB_DEVICE="/dev/ugreen-capture"
+        ok "USB capture device → ${COPT_USB_DEVICE} (udev symlink)"
+        return 0
+    fi
+
     # Try to match VID:PID via udev / sysfs
     if [[ -n "$vid_pid" ]]; then
         local vid pid

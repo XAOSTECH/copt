@@ -155,6 +155,23 @@ else
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     HOST_SCRIPT="${SCRIPT_DIR}/copt.sh"
     
+    # If copt.sh not found next to copt-host (e.g., symlink from ~/bin),
+    # search common workspace locations
+    if [[ ! -f "$HOST_SCRIPT" ]]; then
+        for candidate in \
+            ~/PRO/WEB/CST/copt/src/copt.sh \
+            /workspaces/CST/copt/src/copt.sh \
+            /workspaces/copt/src/copt.sh \
+            "${SCRIPT_DIR}/../copt/src/copt.sh" \
+            "${SCRIPT_DIR}/../../copt/src/copt.sh"
+        do
+            if [[ -f "$candidate" ]]; then
+                HOST_SCRIPT="$candidate"
+                break
+            fi
+        done
+    fi
+    
     if [[ -f "$HOST_SCRIPT" && -z "${COPT_FORCE_CONTAINER:-}" ]]; then
         # Host mode: run script directly on host (USB device already visible)
         EXEC_MODE=host
