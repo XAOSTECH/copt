@@ -48,9 +48,17 @@ fi
 
 # Load .env for secrets (YT_HLS_URL, stream keys, etc.)
 if [[ -f "${COPT_CFG}/.env" ]]; then
-    set -a
-    source "${COPT_CFG}/.env"
-    set +a
+    if [[ -r "${COPT_CFG}/.env" ]]; then
+        set -a
+        source "${COPT_CFG}/.env" || warn "Failed to source ${COPT_CFG}/.env"
+        set +a
+        [[ -n "${YT_HLS_URL:-}" ]] && info "Loaded YT_HLS_URL from .env"
+    else
+        warn ".env file exists but is not readable: ${COPT_CFG}/.env"
+        warn "Run: sudo chmod 644 ${COPT_CFG}/.env"
+    fi
+else
+    info "No .env file found at: ${COPT_CFG}/.env"
 fi
 
 # shellcheck source=../lib/detect.sh
