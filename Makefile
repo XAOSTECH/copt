@@ -48,15 +48,16 @@ install-deps:
 		build-essential \
 		pkg-config \
 		git \
-		ffmpeg \
-		lib alsa-tools \
+		libasound2-dev \
+		alsa-tools \
 		libdrm-dev \
 		libva-dev \
-		nvidia-cuda-toolkit \
-		nvidia-driver-565 \
-		libnvidia-encode-565
+		nvidia-cuda-toolkit
 	@echo ""
 	@echo "✓ Dependencies installed"
+	@echo ""
+	@echo "NOTE: You still need to build FFmpeg with kmsgrab support."
+	@echo "See BUILD.md for FFmpeg build instructions."
 	@echo ""
 	@echo "Note: You may need to build FFmpeg from source with:"
 	@echo "  - --enable-libdrm"
