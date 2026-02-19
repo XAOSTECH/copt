@@ -1,0 +1,27 @@
+# UGREEN Logo Coordinates (3840x2160 @ 4K)
+# Extracted from idle screen analysis
+# ============================================================================
+
+# Logo text region (centered "UGREEN" text)
+# Visual analysis of provided screenshot
+LOGO_X=576
+LOGO_Y=980
+LOGO_WIDTH=2688
+LOGO_HEIGHT=200
+
+# Single-line format for profiles:
+COPT_LOGO_COORDS="576:980:2688:200"
+
+# Logo color (for future color-based detection)
+# Yellowish olive/khaki color
+LOGO_COLOR_HEX="#B8B478"
+LOGO_COLOR_RGB="184,180,120"
+
+# Alternative: Tighter bounding box (just the letters)
+# If you want minimal coverage:
+COPT_LOGO_COORDS_TIGHT="800:1000:2240:180"
+
+# Usage in profile:
+# COPT_LOGO_DETECT=1
+# COPT_LOGO_COORDS="576:980:2688:200"
+# COPT_LOGO_METHOD=drawbox   # Black box recommended for clean look
