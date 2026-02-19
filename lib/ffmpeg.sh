@@ -280,8 +280,70 @@ build_ffmpeg_usb_cmd() {
             fi
             [[ -n "${COPT_GOP_SIZE:-}" ]] && cmd+=(-g "$COPT_GOP_SIZE")
             ;;
+        hevc)
+            # HEVC for HDR10 — input is 8-bit yuv420p carrying BT.2020/PQ-encoded values.
+            # setparams overrides the V4L2 default BT.709 tag so the filter graph and
+            # encoder inherit the correct colourspace before the bit-depth expansion.
+            # format=p010le is a left-shift (×4) from 8→10 bit — no tone-mapping.
+            local hdr_params="color_primaries=${COPT_COLOR_PRIMARIES:-bt2020}"
+            hdr_params+=":color_trc=${COPT_COLOR_TRC:-smpte2084}"
+            hdr_params+=":colorspace=${COPT_COLORSPACE:-bt2020nc}"
+
+            local encoders
+            encoders=$(ffmpeg -hide_banner -encoders 2>/dev/null || true)
+
+            if echo "$encoders" | grep -q hevc_nvenc; then
+                local vf="setparams=${hdr_params},format=p010le,hwupload"
+                if [[ "$COPT_OUT_W" != "$input_w" || "$COPT_OUT_H" != "$input_h" ]]; then
+                    vf+=",scale_cuda=${COPT_OUT_W}:${COPT_OUT_H}:format=p010le"
+                fi
+                cmd+=(-vf "$vf")
+                cmd+=(-c:v hevc_nvenc -preset p4 -profile:v main10 -pix_fmt p010le -bf 0)
+                cmd+=(-qp "$COPT_QUALITY")
+                # HDR10 static metadata via SEI
+                cmd+=(-color_primaries "${COPT_COLOR_PRIMARIES:-bt2020}")
+                cmd+=(-color_trc "${COPT_COLOR_TRC:-smpte2084}")
+                cmd+=(-colorspace "${COPT_COLORSPACE:-bt2020nc}")
+                cmd+=(-color_range "${COPT_COLOR_RANGE:-tv}")
+                if [[ -n "${COPT_HDR_MASTER_DISPLAY:-}" ]]; then
+                    cmd+=(-sei hdr10)
+                    cmd+=(-master_display "${COPT_HDR_MASTER_DISPLAY}")
+                    [[ -n "${COPT_HDR_MAX_CLL:-}" ]] && cmd+=(-max_cll "${COPT_HDR_MAX_CLL}")
+                fi
+            elif echo "$encoders" | grep -q hevc_vaapi; then
+                local vf="setparams=${hdr_params},format=p010le,hwupload=extra_hw_frames=64"
+                if [[ "$COPT_OUT_W" != "$input_w" || "$COPT_OUT_H" != "$input_h" ]]; then
+                    vf+=",scale_vaapi=${COPT_OUT_W}:${COPT_OUT_H}:p010le"
+                fi
+                cmd+=(-vf "$vf")
+                cmd+=(-c:v hevc_vaapi -profile:v main10 -pix_fmt p010le)
+                cmd+=(-qp "$COPT_QUALITY")
+                cmd+=(-color_primaries "${COPT_COLOR_PRIMARIES:-bt2020}")
+                cmd+=(-color_trc "${COPT_COLOR_TRC:-smpte2084}")
+                cmd+=(-colorspace "${COPT_COLORSPACE:-bt2020nc}")
+                cmd+=(-color_range "${COPT_COLOR_RANGE:-tv}")
+            else
+                # Software fallback: libx265 can encode Main10 from p010le
+                local vf="setparams=${hdr_params},format=p010le"
+                if [[ "$COPT_OUT_W" != "$input_w" || "$COPT_OUT_H" != "$input_h" ]]; then
+                    vf+=",scale=${COPT_OUT_W}:${COPT_OUT_H}"
+                fi
+                cmd+=(-vf "$vf")
+                cmd+=(-c:v libx265 -preset fast -crf "$COPT_QUALITY" -pix_fmt yuv420p10le)
+                cmd+=(-x265-params "colorprim=bt2020:transfer=smpte2084:colormatrix=bt2020nc")
+                [[ -n "${COPT_HDR_MASTER_DISPLAY:-}" ]] && \
+                    cmd+=(-x265-params "master-display=${COPT_HDR_MASTER_DISPLAY}:max-cll=${COPT_HDR_MAX_CLL:-1000,400}")
+                warn "No hardware HEVC encoder found — using libx265 (CPU, slow for 4K)"
+            fi
+
+            if [[ -n "${COPT_BITRATE_VIDEO:-}" ]]; then
+                cmd+=(-b:v "$COPT_BITRATE_VIDEO" -maxrate "$COPT_BITRATE_VIDEO")
+                [[ -n "${COPT_BUFFER_SIZE:-}" ]] && cmd+=(-bufsize "$COPT_BUFFER_SIZE")
+            fi
+            [[ -n "${COPT_GOP_SIZE:-}" ]] && cmd+=(-g "$COPT_GOP_SIZE")
+            ;;
         *)
-            die "Unknown encoder for USB capture: $COPT_ENCODER (use vaapi|nvenc|x264|x265)"
+            die "Unknown encoder for USB capture: $COPT_ENCODER (use vaapi|nvenc|hevc|x264|x265)"
             ;;
     esac
 
