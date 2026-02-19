@@ -229,12 +229,33 @@ build_ffmpeg_usb_cmd() {
         cmd+=(-map 0:v:0)
     fi
 
+    # -- Logo detection filter (prepended to video filter chain) --
+    local logo_filter=""
+    if [[ "${COPT_LOGO_DETECT:-0}" -eq 1 && -n "${COPT_LOGO_COORDS:-}" ]]; then
+        local x y w h
+        IFS=: read -r x y w h <<< "$COPT_LOGO_COORDS"
+        
+        case "${COPT_LOGO_METHOD:-drawbox}" in
+            drawbox)
+                # Black box over logo (simple, clean)
+                logo_filter="drawbox=x=${x}:y=${y}:w=${w}:h=${h}:color=black@1:t=fill"
+                ;;
+            delogo)
+                # Blur/interpolate logo area (FFmpeg delogo filter)
+                logo_filter="delogo=x=${x}:y=${y}:w=${w}:h=${h}:show=0"
+                ;;
+        esac
+        info "Logo detection enabled: ${logo_filter}"
+    fi
+
     # -- Video filter + encoder --
     # For USB capture cards the input is already decoded (MJPEG→raw or YUYV).
     # We upload to GPU or keep software for encoding.
     case "$COPT_ENCODER" in
         vaapi)
-            local vf="format=nv12,hwupload=extra_hw_frames=64"
+            local vf=""
+            [[ -n "$logo_filter" ]] && vf="${logo_filter},"
+            vf+="format=nv12,hwupload=extra_hw_frames=64"
             # Scale only when output differs from input size
             if [[ "$COPT_OUT_W" != "$input_w" || "$COPT_OUT_H" != "$input_h" ]]; then
                 vf+=",scale_vaapi=${COPT_OUT_W}:${COPT_OUT_H}"
@@ -248,7 +269,9 @@ build_ffmpeg_usb_cmd() {
             [[ -n "${COPT_GOP_SIZE:-}" ]] && cmd+=(-g "$COPT_GOP_SIZE")
             ;;
         nvenc)
-            local vf="format=nv12,hwupload"
+            local vf=""
+            [[ -n "$logo_filter" ]] && vf="${logo_filter},"
+            vf+="format=nv12,hwupload"
             if [[ "$COPT_OUT_W" != "$input_w" || "$COPT_OUT_H" != "$input_h" ]]; then
                 vf+=",scale_cuda=${COPT_OUT_W}:${COPT_OUT_H}"
             fi
@@ -261,7 +284,9 @@ build_ffmpeg_usb_cmd() {
             [[ -n "${COPT_GOP_SIZE:-}" ]] && cmd+=(-g "$COPT_GOP_SIZE")
             ;;
         x264)
-            local vf="format=yuv420p"
+            local vf=""
+            [[ -n "$logo_filter" ]] && vf="${logo_filter},"
+            vf+="format=yuv420p"
             if [[ "$COPT_OUT_W" != "$input_w" || "$COPT_OUT_H" != "$input_h" ]]; then
                 vf+=",scale=${COPT_OUT_W}:${COPT_OUT_H}"
             fi
@@ -274,7 +299,9 @@ build_ffmpeg_usb_cmd() {
             [[ -n "${COPT_GOP_SIZE:-}" ]] && cmd+=(-g "$COPT_GOP_SIZE")
             ;;
         x265)
-            local vf="format=yuv420p"
+            local vf=""
+            [[ -n "$logo_filter" ]] && vf="${logo_filter},"
+            vf+="format=yuv420p"
             if [[ "$COPT_OUT_W" != "$input_w" || "$COPT_OUT_H" != "$input_h" ]]; then
                 vf+=",scale=${COPT_OUT_W}:${COPT_OUT_H}"
             fi
@@ -300,7 +327,9 @@ build_ffmpeg_usb_cmd() {
 
             if echo "$encoders" | grep -q hevc_nvenc; then
                 # hevc_nvenc handles CPU→GPU upload internally - no hwupload needed
-                local vf="setparams=${hdr_params},format=p010le"
+                local vf=""
+                [[ -n "$logo_filter" ]] && vf="${logo_filter},"
+                vf+="setparams=${hdr_params},format=p010le"
                 if [[ "$COPT_OUT_W" != "$input_w" || "$COPT_OUT_H" != "$input_h" ]]; then
                     vf+=",scale=${COPT_OUT_W}:${COPT_OUT_H}"
                 fi
@@ -326,7 +355,9 @@ build_ffmpeg_usb_cmd() {
                     fi
                 fi
             elif echo "$encoders" | grep -q hevc_vaapi; then
-                local vf="setparams=${hdr_params},format=p010le,hwupload=extra_hw_frames=64"
+                local vf=""
+                [[ -n "$logo_filter" ]] && vf="${logo_filter},"
+                vf+="setparams=${hdr_params},format=p010le,hwupload=extra_hw_frames=64"
                 if [[ "$COPT_OUT_W" != "$input_w" || "$COPT_OUT_H" != "$input_h" ]]; then
                     vf+=",scale_vaapi=${COPT_OUT_W}:${COPT_OUT_H}:p010le"
                 fi
@@ -339,7 +370,9 @@ build_ffmpeg_usb_cmd() {
                 cmd+=(-color_range "${COPT_COLOR_RANGE:-tv}")
             else
                 # Software fallback: libx265 can encode Main10 from p010le
-                local vf="setparams=${hdr_params},format=p010le"
+                local vf=""
+                [[ -n "$logo_filter" ]] && vf="${logo_filter},"
+                vf+="setparams=${hdr_params},format=p010le"
                 if [[ "$COPT_OUT_W" != "$input_w" || "$COPT_OUT_H" != "$input_h" ]]; then
                     vf+=",scale=${COPT_OUT_W}:${COPT_OUT_H}"
                 fi
