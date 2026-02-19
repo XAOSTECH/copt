@@ -266,6 +266,14 @@ while true; do
             info "Total runtime: $(($(date +%s) - start_time))s"
             exit 0
             ;;
+        1)
+            # Exit 1 from copt = configuration / startup error (bad profile,
+            # missing device, ffmpeg not found, etc.) — not a transient crash.
+            # Don't loop; surface the error immediately.
+            err "copt exited with a configuration error (exit 1) — not restarting."
+            err "Check the output above for the root cause."
+            exit 1
+            ;;
         130|143)
             info "Interrupted by user — stopping."
             exit 0

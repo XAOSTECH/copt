@@ -300,11 +300,13 @@ main() {
     load_env_file
     load_config
     
-    # Parse args once to check for --profile flag
-    for arg in "$@"; do
-        if [[ "$arg" == "--profile" ]]; then
-            shift
-            COPT_PROFILE="$1"
+    # Parse args once to extract --profile before load_profile is called.
+    # Must use index arithmetic — shift/for-loop combination incorrectly
+    # shifts $1 (not the loop cursor) so "$1" ends up pointing at the wrong arg.
+    local -a _args=("$@")
+    for _i in "${!_args[@]}"; do
+        if [[ "${_args[$_i]}" == "--profile" ]]; then
+            COPT_PROFILE="${_args[$((_i + 1))]:-}"
             break
         fi
     done
