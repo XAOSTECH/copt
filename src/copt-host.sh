@@ -6,15 +6,15 @@
 #
 # Execution mode (auto-detected, no flags required):
 #
-#   host  — On the host: derives workspace path from the container bind-mount
-#            table and runs copt.sh DIRECTLY on the host, so USB /dev/videoX
-#            is natively visible. DEFAULT.
+#   host  — On the host: runs copt.sh DIRECTLY on the host, so USB /dev/videoX
+#            is natively visible. DEFAULT when running from host.
 #
 #   local — Inside a devcontainer: runs copt.sh at its local path. USB device
 #            must already be passed in via devcontainer.json runArgs.
 #
-#   exec  — podman/docker exec with --device passthrough (fallback when host
-#            path cannot be resolved, or forced via COPT_FORCE_CONTAINER=1).
+#   exec  — podman/docker exec into container (fallback when copt.sh not found
+#            on host, or forced via COPT_FORCE_CONTAINER=1). Requires device in
+#            devcontainer.json runArgs (rebuild container after adding device).
 #
 # Default stream: 4K 30fps HDR10 PQ → YouTube Live HLS
 #   Profile : usb-capture-4k30-hdr
@@ -151,27 +151,39 @@ if in_container; then
     info "In-container mode — running copt.sh directly"
     ok "copt: ${COPT_SCRIPT}"
 else
-    # ── On the host — exec into devcontainer (device is accessible there) ─────
-    info "Locating devcontainer..."
-    CONTAINER_RAW="${COPT_CONTAINER:-}"
-    if [[ -z "$CONTAINER_RAW" ]]; then
-        CONTAINER_RAW=$(find_container) || true
-    fi
-    [[ -n "$CONTAINER_RAW" ]] \
-        || die "No devcontainer found. Start VS Code devcontainer first.\nOr: COPT_CONTAINER=podman:ID copt-host ..."
-    RUNTIME="${CONTAINER_RAW%%:*}"
-    CONTAINER_ID="${CONTAINER_RAW##*:}"
-    ok "Container: ${CONTAINER_ID} (via ${RUNTIME})"
-
-    EXEC_MODE=exec
-    for candidate in /workspaces/CST/copt/src/copt.sh /workspaces/copt/src/copt.sh; do
-        if "$RUNTIME" exec "$CONTAINER_ID" test -f "$candidate" 2>/dev/null; then
-            COPT_SCRIPT="$candidate"; break
+    # ── On the host — try host mode first (device natively visible) ───────────
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    HOST_SCRIPT="${SCRIPT_DIR}/copt.sh"
+    
+    if [[ -f "$HOST_SCRIPT" && -z "${COPT_FORCE_CONTAINER:-}" ]]; then
+        # Host mode: run script directly on host (USB device already visible)
+        EXEC_MODE=host
+        COPT_SCRIPT="$HOST_SCRIPT"
+        info "Host mode — running copt.sh directly (USB device natively visible)"
+        ok "copt: ${COPT_SCRIPT}"
+    else
+        # Exec mode: run inside container (requires device in devcontainer.json)
+        info "Container mode — device must be in devcontainer.json runArgs"
+        CONTAINER_RAW="${COPT_CONTAINER:-}"
+        if [[ -z "$CONTAINER_RAW" ]]; then
+            CONTAINER_RAW=$(find_container) || true
         fi
-    done
-    [[ -n "$COPT_SCRIPT" ]] \
-        || die "copt.sh not found in container at /workspaces/CST/copt/src/copt.sh"
-    ok "copt (in container): ${COPT_SCRIPT}"
+        [[ -n "$CONTAINER_RAW" ]] \
+            || die "No devcontainer found. Start VS Code devcontainer first.\nOr: COPT_CONTAINER=podman:ID copt-host ..."
+        RUNTIME="${CONTAINER_RAW%%:*}"
+        CONTAINER_ID="${CONTAINER_RAW##*:}"
+        ok "Container: ${CONTAINER_ID} (via ${RUNTIME})"
+
+        EXEC_MODE=exec
+        for candidate in /workspaces/CST/copt/src/copt.sh /workspaces/copt/src/copt.sh; do
+            if "$RUNTIME" exec "$CONTAINER_ID" test -f "$candidate" 2>/dev/null; then
+                COPT_SCRIPT="$candidate"; break
+            fi
+        done
+        [[ -n "$COPT_SCRIPT" ]] \
+            || die "copt.sh not found in container at /workspaces/CST/copt/src/copt.sh"
+        ok "copt (in container): ${COPT_SCRIPT}"
+    fi
 fi
 
 # ── USB device ────────────────────────────────────────────────────────────────
@@ -223,10 +235,14 @@ while true; do
             sudo bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
                 2> >(tee -a "$tmplog" >&2)
             ;;
+        host)
+            # On host — run directly (USB device natively visible)
+            sudo bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
+                2> >(tee -a "$tmplog" >&2)
+            ;;
         exec)
-            # Exec into container with device passthrough
+            # Exec into container (device must be in devcontainer.json)
             "$RUNTIME" exec \
-                --device "${VIDEO_DEV}:${VIDEO_DEV}" \
                 --env DISPLAY="${DISPLAY:-:0}" \
                 --env WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}" \
                 --env XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}" \
