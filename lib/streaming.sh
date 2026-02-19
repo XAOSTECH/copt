@@ -7,13 +7,17 @@
 
 # ----- setup streaming ------------------------------------------------------
 setup_streaming() {
-    if [[ -z "${COPT_YOUTUBE_KEY:-}" ]]; then
-        return
-    fi
-
-    # Validate stream key
-    if [[ ${#COPT_YOUTUBE_KEY} -lt 20 ]]; then
-        die "Invalid YouTube stream key (too short). Check your key."
+    # Check if streaming is configured
+    # HLS: requires COPT_HLS_URL or YT_HLS_URL (checked later)
+    # RTMP: requires COPT_YOUTUBE_KEY
+    if [[ "${COPT_STREAM_TYPE}" == "rtmp" ]]; then
+        if [[ -z "${COPT_YOUTUBE_KEY:-}" ]]; then
+            return
+        fi
+        # Validate stream key for RTMP
+        if [[ ${#COPT_YOUTUBE_KEY} -lt 20 ]]; then
+            die "Invalid YouTube stream key (too short). Check your key."
+        fi
     fi
 
     # Set stream name if not provided
@@ -44,7 +48,9 @@ setup_streaming() {
                 COPT_OUTPUT="/tmp/copt-dryrun-stream.m3u8"
                 ok "Streaming to YouTube Live via HLS (dry-run: output to /tmp)"
             else
-                COPT_OUTPUT="${COPT_HLS_URL%/}/${COPT_STREAM_NAME}?key=${COPT_YOUTUBE_KEY}"
+                # YouTube HLS URL already contains everything (cid, etc.)
+                # Just append the filename - URL ends with "&file="
+                COPT_OUTPUT="${COPT_HLS_URL}stream.m3u8"
                 ok "Streaming to YouTube Live via HLS"
             fi
             ;;
