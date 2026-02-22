@@ -2,7 +2,7 @@
 # Extracted from idle screen analysis
 # ============================================================================
 
-# Logo text region (centered "UGREEN" text)
+# Logo text region (centred "UGREEN" text)
 # Visual analysis of provided screenshot
 LOGO_X=576
 LOGO_Y=980
@@ -12,8 +12,8 @@ LOGO_HEIGHT=200
 # Single-line format for profiles:
 COPT_LOGO_COORDS="576:980:2688:200"
 
-# Logo color (for future color-based detection)
-# Yellowish olive/khaki color
+# Logo colour (for future colour-based detection)
+# Yellowish olive/khaki colour
 LOGO_COLOR_HEX="#B8B478"
 LOGO_COLOR_RGB="184,180,120"
 

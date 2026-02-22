@@ -227,7 +227,7 @@ build_ffmpeg_usb_cmd() {
         case "${COPT_LOGO_METHOD:-drawbox}" in
             drawbox)
                 # Black box over logo (simple, clean)
-                logo_filter="drawbox=x=${x}:y=${y}:w=${w}:h=${h}:color=black@1:t=fill"
+                logo_filter="drawbox=x=${x}:y=${y}:w=${w}:h=${h}:colour=black@1:t=fill"
                 ;;
             delogo)
                 # Blur/interpolate logo area (FFmpeg delogo filter)
