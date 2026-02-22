@@ -378,19 +378,23 @@ while true; do
     if [[ ${#PREVIEW_ENV_ARGS[@]} -gt 0 ]]; then
         env_prefix=(env "${PREVIEW_ENV_ARGS[@]}")
     fi
+    sudo_prefix=()
+    if [[ "${COPT_SUDO:-0}" -eq 1 && $EUID -ne 0 ]]; then
+        sudo_prefix=(sudo)
+    fi
 
     set +e
     case "$EXEC_MODE" in
         local)
             # Inside container already — run directly
-            setsid sudo "${env_prefix[@]}" bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
+            setsid "${sudo_prefix[@]}" "${env_prefix[@]}" bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
                 2> >(tee -a "$tmplog" >&2) &
             CHILD_PID=$!
             CHILD_PGID=$CHILD_PID
             ;;
         host)
             # On host — run directly (USB device natively visible)
-            setsid sudo "${env_prefix[@]}" bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
+            setsid "${sudo_prefix[@]}" "${env_prefix[@]}" bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
                 2> >(tee -a "$tmplog" >&2) &
             CHILD_PID=$!
             CHILD_PGID=$CHILD_PID
@@ -409,7 +413,7 @@ while true; do
             setsid "$RUNTIME" exec \
                 "${exec_env_args[@]}" \
                 -it "$CONTAINER_ID" \
-                sudo "${env_prefix[@]}" bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
+                "${sudo_prefix[@]}" "${env_prefix[@]}" bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
                 2> >(tee -a "$tmplog" >&2) &
             CHILD_PID=$!
             CHILD_PGID=$CHILD_PID
