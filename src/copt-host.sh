@@ -26,9 +26,15 @@
 #
 # Usage:
 #   copt-host --hls --hls-url https://... -y STREAM_KEY   # HDR stream
+#   copt-host --preview --hls -y STREAM_KEY               # with preview window
 #   copt-host -o ~/capture.mkv                            # record to file
 #   copt-host --dry-run -o /tmp/test.mkv                  # 5s test clip
 #   copt-host --profile usb-capture-1080p30 -y KEY        # 1080p stable
+#
+# Options:
+#   --preview             Launch preview window alongside stream
+#   --profile NAME        Override default profile (usb-capture-4k30-hdr)
+#   (all other args passed to copt.sh)
 #
 # Environment overrides:
 #   COPT_USB_VID_PID      VID:PID of capture card (default: 3188:1000)
@@ -54,12 +60,55 @@ VID_PID="${COPT_USB_VID_PID:-3188:1000}"
 RESTART_DELAY="${COPT_RESTART_DELAY:-5}"
 MAX_RETRIES="${COPT_MAX_RETRIES:-0}"
 DEFAULT_PROFILE="usb-capture-4k30-hdr"
+PREVIEW_ENABLED=0
+PREVIEW_PID=""
 
 USB_DISCONNECT_RE='Device.*disconnected|select timed out|Input/output error|No such device|failed to reset|double free'
 
 # ============================================================================
 # Helpers
 # ============================================================================
+
+# Start preview window if --preview flag was passed
+start_preview() {
+    local preview_script=""
+    
+    # Find copt-preview.sh in the same location as this script
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    if [[ -f "${script_dir}/copt-preview.sh" ]]; then
+        preview_script="${script_dir}/copt-preview.sh"
+    elif command -v copt-preview &>/dev/null; then
+        preview_script=$(command -v copt-preview)
+    else
+        warn "copt-preview.sh not found - skipping preview"
+        return 1
+    fi
+    
+    info "Starting preview window..."
+    "$preview_script" start --device "$VIDEO_DEV" &>/dev/null &
+    sleep 1
+    
+    # Check if preview started successfully
+    if "$preview_script" status &>/dev/null; then
+        PREVIEW_PID=$(cat /tmp/copt-preview.pid 2>/dev/null || echo "")
+        ok "Preview window opened (PID: ${PREVIEW_PID})"
+    else
+        warn "Preview failed to start (stream will continue)"
+    fi
+}
+
+# Stop preview window
+stop_preview() {
+    if [[ -n "$PREVIEW_PID" ]] || [[ -f /tmp/copt-preview.pid ]]; then
+        info "Stopping preview window..."
+        local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        if [[ -f "${script_dir}/copt-preview.sh" ]]; then
+            "${script_dir}/copt-preview.sh" stop &>/dev/null || true
+        elif command -v copt-preview &>/dev/null; then
+            copt-preview stop &>/dev/null || true
+        fi
+    fi
+}
 
 # True when this process is running inside a container
 in_container() {
@@ -212,14 +261,24 @@ ok "Video device: ${VIDEO_DEV}"
 # ── Build copt arg list ───────────────────────────────────────────────────────
 USER_ARGS=("$@")
 has_profile=0
+FILTERED_ARGS=()
+
+# Parse user args: extract --preview and --profile flags
 for _a in "${USER_ARGS[@]+"${USER_ARGS[@]}"}"; do
-    [[ "$_a" == "--profile" ]] && { has_profile=1; break; }
+    if [[ "$_a" == "--profile" ]]; then
+        has_profile=1
+        FILTERED_ARGS+=("$_a")
+    elif [[ "$_a" == "--preview" ]]; then
+        PREVIEW_ENABLED=1
+    else
+        FILTERED_ARGS+=("$_a")
+    fi
 done
 
 rebuild_args() {
     BASE_ARGS=(--capture-mode usb --usb-device "$VIDEO_DEV" --usb-vid-pid "$VID_PID")
     [[ $has_profile -eq 0 ]] && BASE_ARGS+=(--profile "$DEFAULT_PROFILE")
-    COPT_ARGS=("${BASE_ARGS[@]}" "${USER_ARGS[@]+"${USER_ARGS[@]}"}")
+    COPT_ARGS=("${BASE_ARGS[@]}" "${FILTERED_ARGS[@]+"${FILTERED_ARGS[@]}"}")
 }
 rebuild_args
 
@@ -227,10 +286,17 @@ rebuild_args
 retry_count=0
 start_time=$(date +%s)
 tmplog=$(mktemp /tmp/copt-host-XXXXXX.log)
-trap 'rm -f "$tmplog"' EXIT
+trap 'stop_preview; rm -f "$tmplog"' EXIT
 
 info "Exec mode: ${EXEC_MODE}  |  autorestart: enabled  |  max: ${MAX_RETRIES:-infinite}"
+[[ $PREVIEW_ENABLED -eq 1 ]] && info "Preview: enabled (window will open)"
 echo ""
+
+# Start preview window if requested
+if [[ $PREVIEW_ENABLED -eq 1 ]]; then
+    start_preview || warn "Preview unavailable - continuing with stream only"
+    echo ""
+fi
 
 while true; do
     retry_count=$((retry_count + 1))
