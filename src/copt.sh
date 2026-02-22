@@ -128,16 +128,6 @@ stop_preview() {
 # Fast exit handler (Ctrl+C)
 on_interrupt() {
     STOP_REQUESTED=1
-    if [[ -n "$CHILD_PGID" ]]; then
-        kill -TERM -- "-$CHILD_PGID" 2>/dev/null || true
-        wait "$CHILD_PID" 2>/dev/null || true
-        CHILD_PID=""
-        CHILD_PGID=""
-    elif [[ -n "$CHILD_PID" ]]; then
-        kill -TERM "$CHILD_PID" 2>/dev/null || true
-        wait "$CHILD_PID" 2>/dev/null || true
-        CHILD_PID=""
-    fi
     stop_preview
     exit 0
 }
@@ -379,7 +369,7 @@ while true; do
         env_prefix=(env "${PREVIEW_ENV_ARGS[@]}")
     fi
     sudo_prefix=()
-    if [[ "${COPT_SUDO:-0}" -eq 1 && $EUID -ne 0 ]]; then
+    if [[ $EUID -ne 0 ]]; then
         sudo_prefix=(sudo)
     fi
 
@@ -387,17 +377,13 @@ while true; do
     case "$EXEC_MODE" in
         local)
             # Inside container already — run directly
-            setsid "${sudo_prefix[@]}" "${env_prefix[@]}" bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
-                2> >(tee -a "$tmplog" >&2) &
-            CHILD_PID=$!
-            CHILD_PGID=$CHILD_PID
+            "${sudo_prefix[@]}" "${env_prefix[@]}" bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
+                2> >(tee -a "$tmplog" >&2)
             ;;
         host)
             # On host — run directly (USB device natively visible)
-            setsid "${sudo_prefix[@]}" "${env_prefix[@]}" bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
-                2> >(tee -a "$tmplog" >&2) &
-            CHILD_PID=$!
-            CHILD_PGID=$CHILD_PID
+            "${sudo_prefix[@]}" "${env_prefix[@]}" bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
+                2> >(tee -a "$tmplog" >&2)
             ;;
         exec)
             # Exec into container (device must be in devcontainer.json)
@@ -410,19 +396,14 @@ while true; do
             for env_kv in "${PREVIEW_ENV_ARGS[@]}"; do
                 exec_env_args+=(--env "$env_kv")
             done
-            setsid "$RUNTIME" exec \
+            "$RUNTIME" exec \
                 "${exec_env_args[@]}" \
                 -it "$CONTAINER_ID" \
                 "${sudo_prefix[@]}" "${env_prefix[@]}" bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
-                2> >(tee -a "$tmplog" >&2) &
-            CHILD_PID=$!
-            CHILD_PGID=$CHILD_PID
+                2> >(tee -a "$tmplog" >&2)
             ;;
     esac
-    wait "$CHILD_PID"
     exit_code=$?
-    CHILD_PID=""
-    CHILD_PGID=""
     set -e
 
     case $exit_code in

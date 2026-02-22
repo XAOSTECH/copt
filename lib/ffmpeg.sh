@@ -330,7 +330,7 @@ build_ffmpeg_usb_cmd() {
                 # hevc_nvenc handles CPU→GPU upload internally - no hwupload needed
                 local vf=""
                 [[ -n "$logo_filter" ]] && vf="${logo_filter},"
-                vf+="format=yuv420p,hwupload_cuda,scale_cuda=${COPT_OUT_W}:${COPT_OUT_H}:format=p010le"
+                vf+="hwupload_cuda,scale_cuda=${COPT_OUT_W}:${COPT_OUT_H}:format=p010le"
                 cmd+=(-vf "$vf")
                 cmd+=(-c:v hevc_nvenc -preset p4 -profile:v main10 -pix_fmt p010le -bf 0)
                 cmd+=(-qp "$COPT_QUALITY")
