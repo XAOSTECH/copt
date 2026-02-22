@@ -145,6 +145,59 @@ COPT_LOGO_METHOD=drawbox              # Black box (cleanest)
 
 ## Troubleshooting
 
+### YouTube HDR Not Showing / Shows as SDR
+
+YouTube requires several conditions for HDR processing:
+
+**Stream Duration:**
+- Short test streams (< 5-10 minutes) may not trigger HDR processing
+- YouTube needs time to analyze and process HDR metadata
+- Allow at least 10-15 minutes for initial HDR detection
+
+**Resolution & Bitrate:**
+- YouTube requires 4K resolution for HDR (3840x2160)
+- Minimum bitrate: 20 Mbps for 4K30 HDR (we use 25 Mbps)
+- Lower resolutions/bitrates may be downgraded to SDR
+
+**Check Encoding Settings:**
+```bash
+# Verify you're using the HDR profile
+copt-host --dry-run -o /tmp/test.mkv
+
+# Check output metadata
+ffprobe /tmp/test.mkv 2>&1 | grep -E "color_transfer|color_primaries|colorspace"
+
+# Should show:
+#   color_transfer     : smpte2084 (PQ)
+#   color_primaries    : bt2020
+#   colorspace         : bt2020nc
+```
+
+**YouTube Studio Check:**
+1. Go to YouTube Studio → Content
+2. Click on your stream/VOD
+3. Check "Details" → "Stream health" → "Video codec"
+4. Should show: "vp9.2" or "av01.2" (HDR-capable codecs)
+5. Processing may take 15-60 minutes after stream ends
+
+**Verify copt-host Isn't Downscaling:**
+```bash
+# Run with --dry-run and check resolution
+copt-host --preview --dry-run -o /tmp/test.mkv 2>&1 | grep "Output res"
+
+# Should show: Output res  : 3840x2160
+```
+
+**Test with --host Flag (Lower Latency):**
+```bash
+# Run directly on host (no container overhead)
+copt-host --host --preview --hls -y STREAM_KEY
+
+# Check ffmpeg version on host
+ffmpeg -version | head -1
+# Should be >= 6.0 for full HDR support
+```
+
 ### Device not found errors
 
 ```bash
