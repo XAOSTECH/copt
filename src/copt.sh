@@ -70,6 +70,7 @@ PREVIEW_ENV_ARGS=()
 FORCE_HOST_MODE=0
 STOP_REQUESTED=0
 CHILD_PID=""
+CHILD_PGID=""
 
 USB_DISCONNECT_RE='Device.*disconnected|select timed out|Input/output error|No such device|failed to reset|double free'
 
@@ -127,7 +128,12 @@ stop_preview() {
 # Fast exit handler (Ctrl+C)
 on_interrupt() {
     STOP_REQUESTED=1
-    if [[ -n "$CHILD_PID" ]]; then
+    if [[ -n "$CHILD_PGID" ]]; then
+        kill -TERM -- "-$CHILD_PGID" 2>/dev/null || true
+        wait "$CHILD_PID" 2>/dev/null || true
+        CHILD_PID=""
+        CHILD_PGID=""
+    elif [[ -n "$CHILD_PID" ]]; then
         kill -TERM "$CHILD_PID" 2>/dev/null || true
         wait "$CHILD_PID" 2>/dev/null || true
         CHILD_PID=""
@@ -377,15 +383,17 @@ while true; do
     case "$EXEC_MODE" in
         local)
             # Inside container already — run directly
-            sudo "${env_prefix[@]}" bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
+            setsid sudo "${env_prefix[@]}" bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
                 2> >(tee -a "$tmplog" >&2) &
             CHILD_PID=$!
+            CHILD_PGID=$CHILD_PID
             ;;
         host)
             # On host — run directly (USB device natively visible)
-            sudo "${env_prefix[@]}" bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
+            setsid sudo "${env_prefix[@]}" bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
                 2> >(tee -a "$tmplog" >&2) &
             CHILD_PID=$!
+            CHILD_PGID=$CHILD_PID
             ;;
         exec)
             # Exec into container (device must be in devcontainer.json)
@@ -398,17 +406,19 @@ while true; do
             for env_kv in "${PREVIEW_ENV_ARGS[@]}"; do
                 exec_env_args+=(--env "$env_kv")
             done
-            "$RUNTIME" exec \
+            setsid "$RUNTIME" exec \
                 "${exec_env_args[@]}" \
                 -it "$CONTAINER_ID" \
                 sudo "${env_prefix[@]}" bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
                 2> >(tee -a "$tmplog" >&2) &
             CHILD_PID=$!
+            CHILD_PGID=$CHILD_PID
             ;;
     esac
     wait "$CHILD_PID"
     exit_code=$?
     CHILD_PID=""
+    CHILD_PGID=""
     set -e
 
     case $exit_code in

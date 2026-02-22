@@ -173,7 +173,7 @@ build_ffmpeg_cmd() {
         local main_fmt=""
         case "${COPT_STREAM_TYPE:-}" in
             rtmp) main_fmt="flv" ;;
-            hls)  main_fmt="mpegts" ;;
+            hls)  main_fmt="hls:method=PUT:hls_time=2:hls_list_size=6:hls_flags=delete_segments+omit_endlist" ;;
         esac
         local preview_fmt="${COPT_PREVIEW_FORMAT:-mpegts}"
         local tee_outputs=""
@@ -330,10 +330,7 @@ build_ffmpeg_usb_cmd() {
                 # hevc_nvenc handles CPU→GPU upload internally - no hwupload needed
                 local vf=""
                 [[ -n "$logo_filter" ]] && vf="${logo_filter},"
-                vf+="format=p010le"
-                if [[ "$COPT_OUT_W" != "$input_w" || "$COPT_OUT_H" != "$input_h" ]]; then
-                    vf+=",scale=${COPT_OUT_W}:${COPT_OUT_H}"
-                fi
+                vf+="format=yuv420p,hwupload_cuda,scale_cuda=${COPT_OUT_W}:${COPT_OUT_H}:format=p010le"
                 cmd+=(-vf "$vf")
                 cmd+=(-c:v hevc_nvenc -preset p4 -profile:v main10 -pix_fmt p010le -bf 0)
                 cmd+=(-qp "$COPT_QUALITY")
@@ -408,7 +405,7 @@ build_ffmpeg_usb_cmd() {
         local main_fmt=""
         case "${COPT_STREAM_TYPE:-}" in
             rtmp) main_fmt="flv" ;;
-            hls)  main_fmt="mpegts" ;;
+            hls)  main_fmt="hls:method=PUT:hls_time=2:hls_list_size=6:hls_flags=delete_segments+omit_endlist" ;;
         esac
         local preview_fmt="${COPT_PREVIEW_FORMAT:-mpegts}"
         local tee_outputs=""
