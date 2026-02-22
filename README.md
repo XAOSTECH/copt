@@ -6,10 +6,10 @@
     <img alt="GitHub repo" src="https://img.shields.io/badge/GitHub-XAOSTECH%2F-copt-181717?style=for-the-badge&logo=github">
   </a>
   <a href="https://github.com/XAOSTECH/copt/releases">
-    <img alt="GitHub release" src="https://img.shields.io/github/v/release/XAOSTECH/copt?style=for-the-badge&logo=semantic-release&color=blue">
+    <img alt="GitHub release" src="https://img.shields.io/github/v/release/XAOSTECH/copt?style=for-the-badge&logo=semantic-release&colour=blue">
   </a>
   <a href="https://github.com/XAOSTECH/copt/blob/main/LICENSE">
-    <img alt="License" src="https://img.shields.io/github/license/XAOSTECH/copt?style=for-the-badge&color=green">
+    <img alt="License" src="https://img.shields.io/github/license/XAOSTECH/copt?style=for-the-badge&colour=green">
   </a>
 </p>
 
@@ -18,13 +18,13 @@
     <img alt="CI Status" src="https://github.com/XAOSTECH/copt/actions/workflows/bash-lint.yml/badge.svg?branch=Main>
   </a>
   <a href="https://github.com/XAOSTECH/copt/issues">
-    <img alt="Issues" src="https://img.shields.io/github/issues/XAOSTECH/copt?style=flat-square&logo=github&color=yellow">
+    <img alt="Issues" src="https://img.shields.io/github/issues/XAOSTECH/copt?style=flat-square&logo=github&colour=yellow">
   </a>
   <a href="https://github.com/XAOSTECH/copt/pulls">
-    <img alt="Pull Requests" src="https://img.shields.io/github/issues-pr/XAOSTECH/copt?style=flat-square&logo=github&color=purple">
+    <img alt="Pull Requests" src="https://img.shields.io/github/issues-pr/XAOSTECH/copt?style=flat-square&logo=github&colour=purple">
   </a>
   <a href="https://github.com/XAOSTECH/copt/stargazers">
-    <img alt="Stars" src="https://img.shields.io/github/stars/XAOSTECH/copt?style=flat-square&logo=github&color=gold">
+    <img alt="Stars" src="https://img.shields.io/github/stars/XAOSTECH/copt?style=flat-square&logo=github&colour=gold">
   </a>
   <a href="https://github.com/XAOSTECH/copt/network/members">
     <img alt="Forks" src="https://img.shields.io/github/forks/XAOSTECH/copt?style=flat-square&logo=github">
@@ -32,15 +32,15 @@
 </p>
 
 <p align="center">
-  <img alt="Last Commit" src="https://img.shields.io/github/last-commit/XAOSTECH/copt?style=flat-square&logo=git&color=blue">
-  <img alt="Repo Size" src="https://img.shields.io/github/repo-size/XAOSTECH/copt?style=flat-square&logo=files&color=teal">
-  <img alt="Code Size" src="https://img.shields.io/github/languages/code-size/XAOSTECH/copt?style=flat-square&logo=files&color=orange">
-  <img alt="Contributors" src="https://img.shields.io/github/contributors/XAOSTECH/copt?style=flat-square&logo=github&color=green">
+  <img alt="Last Commit" src="https://img.shields.io/github/last-commit/XAOSTECH/copt?style=flat-square&logo=git&colour=blue">
+  <img alt="Repo Size" src="https://img.shields.io/github/repo-size/XAOSTECH/copt?style=flat-square&logo=files&colour=teal">
+  <img alt="Code Size" src="https://img.shields.io/github/languages/code-size/XAOSTECH/copt?style=flat-square&logo=files&colour=orange">
+  <img alt="Contributors" src="https://img.shields.io/github/contributors/XAOSTECH/copt?style=flat-square&logo=github&colour=green">
 </p>
 
 <!-- Optional: Stability/Maturity Badge -->
 <p align="center">
-  <img alt="Stability" src="https://img.shields.io/badge/stability-beta-yellow?style=flat-square">
+  <img alt="Stability" src="https://img.shields.io/badge/stability-stable-green?style=flat-square">
   <img alt="Maintenance" src="https://img.shields.io/maintenance/yes/2026?style=flat-square">
 </p>
 
@@ -70,25 +70,21 @@
 
 ## 🔍 Overview
 
-Low-level Wayland screen capture tool for UNIX systems. Uses FFmpeg's KMS grab to capture the framebuffer directly, with hardware-accelerated encoding via VAAPI or NVENC, plus ALSA audio capture.
+Capture Operations
 
 ### Why copt?
 
-Wayland compositors don't expose the X11 screen-grab APIs that traditional tools rely on. `copt` uses the kernel's KMS (Kernel Mode Setting) framebuffer interface through FFmpeg's `kmsgrab` device, giving you zero-copy GPU capture with hardware encoding — no Xwayland needed.
+{{WHY_PROJECT}}
 
 ---
 
 ## ✨ Features
 
-- **KMS Grab** — Capture the Wayland framebuffer via `/dev/dri` without compositor cooperation
-- **Hardware Encoding** — VAAPI (Intel/AMD) and NVENC (NVIDIA) with automatic detection
-- **Software Fallback** — Falls back to libx264/libx265 when no hardware encoder is available
-- **ALSA Audio** — Captures system audio via ALSA with auto-detection of devices
-- **Region Crop** — Capture a specific region of the screen with configurable X/Y/W/H
-- **Resolution Scaling** — Scale down from native resolution to any output size
-- **Config File** — Persistent settings in `~/.config/copt/copt.conf`
-- **Dry Run** — Preview the FFmpeg command without executing
-- **System Probe** — Detect GPUs, DRI devices, audio hardware, and available encoders
+- 🚀 **Feature 1** - Description of feature 1
+- 🔧 **Feature 2** - Description of feature 2
+- 📦 **Feature 3** - Description of feature 3
+- 🔒 **Feature 4** - Description of feature 4
+- ⚡ **Feature 5** - Description of feature 5
 
 ---
 
@@ -96,10 +92,9 @@ Wayland compositors don't expose the X11 screen-grab APIs that traditional tools
 
 ### Prerequisites
 
-- Linux with KMS support (kernel 5.x+)
-- FFmpeg built with `--enable-libx264` and kmsgrab support
-- GPU drivers (Mesa for VAAPI, or NVIDIA proprietary for NVENC)
-- Root/sudo access (required for KMS framebuffer reads)
+- {{PREREQUISITE_1}}
+- {{PREREQUISITE_2}}
+- {{PREREQUISITE_3}}
 
 ### Quick Start
 
@@ -108,20 +103,27 @@ Wayland compositors don't expose the X11 screen-grab APIs that traditional tools
 git clone https://github.com/XAOSTECH/copt.git
 cd copt
 
-# Install to /usr/local/bin
+# Run installation
 ./install.sh
 
-# Or just run directly
-chmod +x copt
-sudo ./copt --help
+# Or manual installation
+{{MANUAL_INSTALL_STEPS}}
 ```
 
-### Manual Install
+### Package Managers
 
 ```bash
-sudo install -Dm755 copt /usr/local/bin/copt
-mkdir -p ~/.config/copt
-cp copt.conf.example ~/.config/copt/copt.conf
+# npm
+npm install {{PACKAGE_NAME}}
+
+# yarn
+yarn add {{PACKAGE_NAME}}
+
+# apt (Debian/Ubuntu)
+sudo apt install {{PACKAGE_NAME}}
+
+# brew (macOS)
+brew install {{PACKAGE_NAME}}
 ```
 
 ---
@@ -131,53 +133,31 @@ cp copt.conf.example ~/.config/copt/copt.conf
 ### Basic Usage
 
 ```bash
-# Full screen capture with auto-detection of GPU, encoder, and audio
-sudo copt -o ~/recording.mkv
+{{BASIC_USAGE_EXAMPLE}}
 ```
 
 ### Advanced Usage
 
 ```bash
-# Capture a 1920x1080 region from offset (100,200), encode with NVENC, no audio
-sudo copt --crop-x 100 --crop-y 200 --crop-w 1920 --crop-h 1080 \
-    -e nvenc -A -o /tmp/region.mkv
+{{ADVANCED_USAGE_EXAMPLE}}
 ```
 
 ### Examples
 
 <details>
-<summary>📘 Example 1: Full Screen (3456x2160 → 1440x900)</summary>
+<summary>📘 Example 1: {{EXAMPLE_1_TITLE}}</summary>
 
 ```bash
-sudo copt -W 3456 -H 2160 -w 1440 -h 900 \
-    -d /dev/dri/card1 -a hw:0,6 -o ~/screen.mkv
+{{EXAMPLE_1_CODE}}
 ```
 
 </details>
 
 <details>
-<summary>📗 Example 2: 30fps clip, 60 second duration, software encoder</summary>
+<summary>📗 Example 2: {{EXAMPLE_2_TITLE}}</summary>
 
 ```bash
-sudo copt -r 30 -t 60 -e x264 -q 23 -o /tmp/clip.mkv
-```
-
-</details>
-
-<details>
-<summary>📙 Example 3: Probe your system to find devices</summary>
-
-```bash
-sudo copt --probe
-```
-
-</details>
-
-<details>
-<summary>📕 Example 4: Dry run — see the ffmpeg command without executing</summary>
-
-```bash
-sudo copt --crop-w 1920 --crop-h 1080 --dry-run
+{{EXAMPLE_2_CODE}}
 ```
 
 </details>
@@ -188,52 +168,28 @@ sudo copt --crop-w 1920 --crop-h 1080 --dry-run
 
 ### Environment Variables
 
-All settings can be set via environment variables prefixed with `COPT_`:
-
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `COPT_DRI_DEVICE` | DRI card device path | auto-detect |
-| `COPT_SCREEN_W` | Source screen width | `3456` |
-| `COPT_SCREEN_H` | Source screen height | `2160` |
-| `COPT_OUT_W` | Output video width | `1440` |
-| `COPT_OUT_H` | Output video height | `900` |
-| `COPT_CROP_X` | Crop region X offset | `0` |
-| `COPT_CROP_Y` | Crop region Y offset | `0` |
-| `COPT_CROP_W` | Crop region width | screen width |
-| `COPT_CROP_H` | Crop region height | screen height |
-| `COPT_ENCODER` | Encoder: auto/vaapi/nvenc/x264/x265 | `auto` |
-| `COPT_QUALITY` | CRF/QP value (0-51) | `20` |
-| `COPT_FRAMERATE` | Capture framerate | `60` |
-| `COPT_AUDIO` | Enable audio (1/0) | `1` |
-| `COPT_AUDIO_DEVICE` | ALSA device | auto-detect |
-| `COPT_AUDIO_CODEC` | Audio codec: aac/opus/mp3/copy | `aac` |
-| `COPT_OUTPUT` | Output file path | `/tmp/copt-output.mkv` |
-| `COPT_DURATION` | Duration in seconds (0=unlimited) | `0` |
+| `{{ENV_VAR_1}}` | {{ENV_VAR_1_DESC}} | `{{ENV_VAR_1_DEFAULT}}` |
+| `{{ENV_VAR_2}}` | {{ENV_VAR_2_DESC}} | `{{ENV_VAR_2_DEFAULT}}` |
 
 ### Configuration File
 
-```bash
-# ~/.config/copt/copt.conf
-COPT_DRI_DEVICE="/dev/dri/card1"
-COPT_SCREEN_W=3456
-COPT_SCREEN_H=2160
-COPT_OUT_W=1440
-COPT_OUT_H=900
-COPT_ENCODER=vaapi
-COPT_AUDIO_DEVICE="hw:0,6"
+```yaml
+# config.yml
+{{CONFIG_FILE_EXAMPLE}}
 ```
-
-See `copt.conf.example` for all options with documentation.
 
 ---
 
-## 📝 Notes
+## 📚 Documentation
 
-- **Root required**: kmsgrab reads the KMS framebuffer directly and needs root privileges.
-- **Multi-GPU**: If `/dev/dri/card0` doesn't work, try `card1` (common on hybrid GPU laptops).
-- **Audio devices**: Check `cat /proc/asound/cards` and `cat /proc/asound/devices` to find yours.
-- **Mouse cursor**: kmsgrab does **not** capture the mouse cursor (kernel limitation).
-- **Wayland only**: This uses KMS grab, not PipeWire or X11 screen capture.
+| Document | Description |
+|----------|-------------|
+| [📖 Getting Started](docs/GETTING_STARTED.md) | Quick start guide |
+| [📋 API Reference](docs/API.md) | Complete API documentation |
+| [🔧 Configuration](docs/CONFIGURATION.md) | Configuration options |
+| [❓ FAQ](docs/FAQ.md) | Frequently asked questions |
 
 ---
 
@@ -253,14 +209,11 @@ See also: [Code of Conduct](CODE_OF_CONDUCT.md) | [Security Policy](SECURITY.md)
 
 ## 🗺️ Roadmap
 
-- [x] KMS grab screen capture with VAAPI encoding
-- [x] NVENC and software encoder fallback
-- [x] ALSA audio capture with auto-detection
-- [x] Configurable crop regions and output scaling
-- [ ] PipeWire audio capture support
-- [ ] Multi-monitor / specific output selection
-- [ ] Overlay / mouse cursor compositing
-- [ ] RTMP/SRT live streaming output
+- [x] {{COMPLETED_FEATURE_1}}
+- [x] {{COMPLETED_FEATURE_2}}
+- [ ] {{PLANNED_FEATURE_1}}
+- [ ] {{PLANNED_FEATURE_2}}
+- [ ] {{PLANNED_FEATURE_3}}
 
 See the [open issues](https://github.com/XAOSTECH/copt/issues) for a full list of proposed features and known issues.
 
@@ -268,8 +221,10 @@ See the [open issues](https://github.com/XAOSTECH/copt/issues) for a full list o
 
 ## 💬 Support
 
+- 📧 **Email**: {{SUPPORT_EMAIL}}
 - 💻 **Issues**: [GitHub Issues](https://github.com/XAOSTECH/copt/issues)
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/XAOSTECH/copt/discussions)
+- 📝 **Wiki**: [GitHub Wiki](https://github.com/XAOSTECH/copt/wiki)
 
 ---
 
@@ -281,10 +236,9 @@ Distributed under the GPL-3.0 License. See [`LICENSE`](LICENSE) for more informa
 
 ## 🙏 Acknowledgements
 
-- [FFmpeg](https://ffmpeg.org/) — the backbone of all encoding
-- [KMS/DRM](https://www.kernel.org/doc/html/latest/gpu/drm-kms.html) — Linux kernel modesetting API
-- [VAAPI](https://github.com/intel/libva) — Video Acceleration API
-- [NVIDIA NVENC](https://developer.nvidia.com/nvidia-video-codec-sdk) — NVIDIA hardware video encoder
+- {{ACKNOWLEDGMENT_1}}
+- {{ACKNOWLEDGMENT_2}}
+- {{ACKNOWLEDGMENT_3}}
 
 ---
 
