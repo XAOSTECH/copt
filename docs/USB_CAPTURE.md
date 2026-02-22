@@ -31,9 +31,9 @@ sudo usermod -aG video $USER
 mkdir -p ~/bin
 
 # Copy scripts
-cp ~/PRO/WEB/CST/copt/src/copt-host.sh ~/bin/copt-host
+cp ~/PRO/WEB/CST/copt/src/copt.sh ~/bin/copt
 cp ~/PRO/WEB/CST/copt/src/copt-preview.sh ~/bin/copt-preview
-chmod +x ~/bin/copt-host ~/bin/copt-preview
+chmod +x ~/bin/copt ~/bin/copt-preview
 
 # Ensure ~/bin is in PATH (add to ~/.bashrc if needed)
 export PATH="$HOME/bin:$PATH"
@@ -43,10 +43,10 @@ export PATH="$HOME/bin:$PATH"
 
 ```bash
 # From source directory
-WEB/CST/copt/src/copt-host.sh --dry-run -o /tmp/test.mkv
+WEB/CST/copt/src/copt.sh --dry-run -o /tmp/test.mkv
 
 # Or from installed symlink
-copt-host --dry-run -o /tmp/test.mkv
+copt --dry-run -o /tmp/test.mkv
 ```
 
 ### 5. Stream to YouTube (with HDR)
@@ -57,7 +57,7 @@ echo "YT_HLS_URL=https://a.upload.youtube.com/http_upload_hls" >> cfg/.env
 echo "YT_API_KEY=your-stream-key-here" >> cfg/.env
 
 # Start streaming
-copt-host --hls -y YOUR_STREAM_KEY
+copt --hls -y YOUR_STREAM_KEY
 ```
 
 ### 6. Preview Window (Optional)
@@ -162,7 +162,7 @@ YouTube requires several conditions for HDR processing:
 **Check Encoding Settings:**
 ```bash
 # Verify you're using the HDR profile
-copt-host --dry-run -o /tmp/test.mkv
+copt --dry-run -o /tmp/test.mkv
 
 # Check output metadata
 ffprobe /tmp/test.mkv 2>&1 | grep -E "color_transfer|color_primaries|colorspace"
@@ -180,10 +180,10 @@ ffprobe /tmp/test.mkv 2>&1 | grep -E "color_transfer|color_primaries|colorspace"
 4. Should show: "vp9.2" or "av01.2" (HDR-capable codecs)
 5. Processing may take 15-60 minutes after stream ends
 
-**Verify copt-host Isn't Downscaling:**
+**Verify copt Isn't Downscaling:**
 ```bash
 # Run with --dry-run and check resolution
-copt-host --preview --dry-run -o /tmp/test.mkv 2>&1 | grep "Output res"
+copt --preview --dry-run -o /tmp/test.mkv 2>&1 | grep "Output res"
 
 # Should show: Output res  : 3840x2160
 ```
@@ -191,7 +191,7 @@ copt-host --preview --dry-run -o /tmp/test.mkv 2>&1 | grep "Output res"
 **Test with --host Flag (Lower Latency):**
 ```bash
 # Run directly on host (no container overhead)
-copt-host --host --preview --hls -y STREAM_KEY
+copt --host --preview --hls -y STREAM_KEY
 
 # Check ffmpeg version on host
 ffmpeg -version | head -1
@@ -219,10 +219,10 @@ If you see "Exec mode: exec" but want "Host mode":
 ```bash
 # Run from source directory (not symlink)
 cd ~/PRO/WEB/CST/copt
-./src/copt-host.sh --dry-run -o /tmp/test.mkv
+./src/copt.sh --dry-run -o /tmp/test.mkv
 
 # Or update symlink to point to source
-ln -sf ~/PRO/WEB/CST/copt/src/copt-host.sh ~/bin/copt-host
+ln -sf ~/PRO/WEB/CST/copt/src/copt.sh ~/bin/copt
 ```
 
 ### USB disconnect/reconnect loop
@@ -249,8 +249,9 @@ cfg/
     usb-capture-1080p30.conf        # 1080p 30fps (stable)
 
 src/
-  copt.sh                           # Main capture script
-  copt-host.sh                      # Host launcher with auto-restart
+  copt.sh                           # Main entry with auto-restart & container exec
+  copt-worker.sh                    # FFmpeg command builder/executor
+  copt-preview.sh                   # Preview window launcher
   copt-autorestart.sh               # Process-level restart wrapper
 
 lib/
