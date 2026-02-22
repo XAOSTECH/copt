@@ -2,9 +2,9 @@
 # Release Workflow Template (release.yml)
 # ============================================================================
 #
-# ORIGIN: https://github.com/xaoscience/dev-control
+# ORIGIN: https://github.com/XAOSTECH/dev-control
 # This workflow template is part of the dev-control toolkit.
-# See: https://github.com/xaoscience/dev-control/blob/main/workflows-templates/
+# See: https://github.com/XAOSTECH/dev-control/blob/main/workflows-templates/
 #
 # ============================================================================
 #
@@ -433,6 +433,11 @@ jobs:
       - name: Build full tarball
         if: steps.check_release.outputs.exists != 'true'
         run: |
+          if [[ ! -f "scripts/packaging.sh" ]]; then
+            echo "⚠️ No packaging.sh found - skipping tarball build"
+            echo "build_skipped=true" >> $GITHUB_ENV
+            exit 0
+          fi
           chmod +x scripts/packaging.sh scripts/lib/*.sh 2>/dev/null || true
           bash scripts/packaging.sh --tarball --verbose
           echo "✅ Full tarball built successfully"
@@ -480,11 +485,18 @@ jobs:
         if: steps.check_release.outputs.exists != 'true'
         run: |
           VERSION="${{ steps.version.outputs.version }}"
+          
+          if [[ ! -d "dist" ]]; then
+            echo "⚠️ No dist/ directory - no tarballs were built"
+            echo "tarball_count=0" >> $GITHUB_ENV
+            exit 0
+          fi
+          
           echo "📦 Build artifacts:"
-          ls -la dist/
+          ls -la dist/ || true
           
           # Get main tarball info (first .tar.gz that's not a sub-package)
-          TARBALL=$(ls dist/*.tar.gz 2>/dev/null | head -1)
+          TARBALL=$(ls dist/*.tar.gz 2>/dev/null | head -1 || echo "")
           if [[ -n "$TARBALL" ]]; then
             echo "tarball_path=${TARBALL}" >> $GITHUB_ENV
             echo "tarball_name=$(basename "$TARBALL")" >> $GITHUB_ENV
@@ -497,7 +509,7 @@ jobs:
           fi
           
           # Count all tarballs for summary
-          TARBALL_COUNT=$(ls dist/*.tar.gz 2>/dev/null | wc -l)
+          TARBALL_COUNT=$(ls dist/*.tar.gz 2>/dev/null | wc -l || echo "0")
           echo "tarball_count=${TARBALL_COUNT}" >> $GITHUB_ENV
 
       - name: Generate release notes
@@ -528,7 +540,9 @@ jobs:
             git log --pretty=format:"- %s (%h)" -10 >> "$NOTES_FILE"
           fi
           
-          cat >> "$NOTES_FILE" << EOF
+          # Add installation instructions only if tarball exists
+          if [[ -n "${tarball_name:-}" && -n "${tarball_sha256:-}" ]]; then
+            cat >> "$NOTES_FILE" << EOF
           
           ## Installation
           
@@ -542,13 +556,35 @@ jobs:
           | File | SHA256 |
           |------|--------|
           | ${tarball_name} | \`${tarball_sha256}\` |
+          EOF
+          else
+            # No custom tarball - show git installation
+            cat >> "$NOTES_FILE" << EOF
+          
+          ## Installation
+          
+          ### From Source
+          \`\`\`bash
+          git clone https://github.com/$GITHUB_REPOSITORY.git
+          cd $(basename $GITHUB_REPOSITORY)
+          git checkout ${TAG_NAME}
+          \`\`\`
+          
+          ### Download Release Archive
+          \`\`\`bash
+          curl -fsSL https://github.com/$GITHUB_REPOSITORY/archive/refs/tags/${TAG_NAME}.tar.gz | tar xz
+          \`\`\`
+          EOF
+          fi
+          
+          cat >> "$NOTES_FILE" << EOF
           
           ---
           
           **Full Changelog**: https://github.com/$GITHUB_REPOSITORY/compare/${PREV_TAG}...${TAG_NAME}
           
           ---
-          *Release workflow powered by [dev-control](https://github.com/xaoscience/dev-control)*
+          *Release workflow powered by [dev-control](https://github.com/XAOSTECH/dev-control)*
           EOF
           
           # Output for next step
@@ -566,20 +602,65 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           NOTES_FILE="${{ steps.release_notes.outputs.notes_file }}"
           
-          # Build file list
-          FILES=$(find dist/ -name "*.tar.gz" -o -name "*.sha256" 2>/dev/null | tr '\n' ' ')
+          # Build file list (may be empty if no tarb alls)
+          FILES=$(find dist/ -name "*.tar.gz" -o -name "*.sha256" 2>/dev/null | tr '\n' ' ' || echo "")
           
           # Create release (idempotent — skip if already exists)
           if gh release view "$TAG_NAME" &>/dev/null; then
-            echo "✅ Release $TAG_NAME already exists — skipping creation"
+            echo "✅ Release $TAG_NAME already exists— skipping creation"
           else
-            gh release create "$TAG_NAME" \
-              --title "Release $TAG_NAME" \
-              --notes-file "$NOTES_FILE" \
-              ${{ github.event.inputs.draft == 'true' && '--draft' || '' }} \
-              ${{ github.event.inputs.prerelease == 'true' && '--prerelease' || '' }} \
-              $FILES
+            if [[ -n "$FILES" ]]; then
+              gh release create "$TAG_NAME" \
+                --title "Release $TAG_NAME" \
+                --notes-file "$NOTES_FILE" \
+                ${{ github.event.inputs.draft == 'true' && '--draft' || '' }} \
+                ${{ github.event.inputs.prerelease == 'true' && '--prerelease' || '' }} \
+                $FILES
+            else
+              # Release without attachments (notes only)
+              gh release create "$TAG_NAME" \
+                --title "Release $TAG_NAME" \
+                --notes-file "$NOTES_FILE" \
+                ${{ github.event.inputs.draft == 'true' && '--draft' || '' }} \
+                ${{ github.event.inputs.prerelease == 'true' && '--prerelease' || '' }}
+            fi
             echo "✅ Release created: $TAG_NAME"
+          fi
+
+      - name: Add source archive checksums
+        if: steps.check_release.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
+        run: |
+          TAG_NAME="${{ steps.version.outputs.tag_name }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          
+          # Only add checksums if no custom tarball was built
+          if [[ -z "${tarball_name:-}" ]]; then
+            echo "📦 Calculating SHA256 for GitHub-generated source archives..."
+            
+            # Download and checksum the archives
+            TAR_URL="https://github.com/$GITHUB_REPOSITORY/archive/refs/tags/${TAG_NAME}.tar.gz"
+            ZIP_URL="https://github.com/$GITHUB_REPOSITORY/archive/refs/tags/${TAG_NAME}.zip"
+            
+            TAR_SHA=$(curl -fsSL "$TAR_URL" | sha256sum | awk '{print $1}')
+            ZIP_SHA=$(curl -fsSL "$ZIP_URL" | sha256sum | awk '{print $1}')
+            
+            echo "🔐 Source archive SHA256:"
+            echo "  tar.gz: $TAR_SHA"
+            echo "  zip: $ZIP_SHA"
+            
+            # Get current release notes and append checksums
+            CURRENT_NOTES=$(gh release view "$TAG_NAME" --json body --jq '.body')
+            
+            # Update release notes with checksums table
+            printf -v NEW_NOTES "%s\n\n## Checksums\n\n| File | SHA256 |\n|------|--------|\n| Source code (tar.gz) | \`%s\` |\n| Source code (zip) | \`%s\` |\n" \
+              "$CURRENT_NOTES" "$TAR_SHA" "$ZIP_SHA"
+            
+            gh release edit "$TAG_NAME" --notes "$NEW_NOTES"
+            echo "✅ Updated release notes with source archive checksums"
+          else
+            echo "⏭️ Custom tarball exists - source archive checksums not needed"
           fi
 
       - name: Update 'latest' tag
@@ -617,6 +698,7 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           TAG_NAME="${{ steps.version.outputs.tag_name }}"
+          TARBALL_COUNT="${tarball_count:-0}"
           
           echo "## 🎉 Release Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -624,11 +706,13 @@ jobs:
           echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| Version | ${VERSION} |" >> $GITHUB_STEP_SUMMARY
           echo "| Tag | ${TAG_NAME} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Artifacts | ${tarball_count} tarball(s) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Artifacts | ${TARBALL_COUNT} tarball(s) |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Links" >> $GITHUB_STEP_SUMMARY
           echo "- [Release](https://github.com/$GITHUB_REPOSITORY/releases/tag/${TAG_NAME})" >> $GITHUB_STEP_SUMMARY
-          echo "- [Download](https://github.com/$GITHUB_REPOSITORY/releases/download/${TAG_NAME}/${tarball_name})" >> $GITHUB_STEP_SUMMARY
+          if [[ -n "${tarball_name:-}" ]]; then
+            echo "- [Download](https://github.com/$GITHUB_REPOSITORY/releases/download/${TAG_NAME}/${tarball_name})" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "*Workflow template from [dev-control](https://github.com/xaoscience/dev-control)*" >> $GITHUB_STEP_SUMMARY
+          echo "*Workflow template from [dev-control](https://github.com/XAOSTECH/dev-control)*" >> $GITHUB_STEP_SUMMARY
