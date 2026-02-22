@@ -30,10 +30,12 @@
 #   copt-host -o ~/capture.mkv                            # record to file
 #   copt-host --dry-run -o /tmp/test.mkv                  # 5s test clip
 #   copt-host --profile usb-capture-1080p30 -y KEY        # 1080p stable
+#   copt-host --host -y STREAM_KEY                        # force host execution
 #
 # Options:
 #   --preview             Launch preview window alongside stream
 #   --profile NAME        Override default profile (usb-capture-4k30-hdr)
+#   --host                Force host execution (skip container, lower latency)
 #   (all other args passed to copt.sh)
 #
 # Environment overrides:
@@ -62,6 +64,7 @@ MAX_RETRIES="${COPT_MAX_RETRIES:-0}"
 DEFAULT_PROFILE="usb-capture-4k30-hdr"
 PREVIEW_ENABLED=0
 PREVIEW_PID=""
+FORCE_HOST_MODE=0
 
 USB_DISCONNECT_RE='Device.*disconnected|select timed out|Input/output error|No such device|failed to reset|double free'
 
@@ -201,35 +204,9 @@ if in_container; then
     info "In-container mode — running copt.sh directly"
     ok "copt: ${COPT_SCRIPT}"
 else
-    # ── On the host — exec into devcontainer (bleeding-edge FFmpeg/CUDA/NVENC) ─
-    # Container exec is always preferred: the devcontainer holds the compiled
-    # FFmpeg (NVENC SDK 13.0), CUDA, and all streaming tools. Running on the
-    # host directly would require duplicating all those installs there.
-    # Fallback to host-direct only when no container is running.
-    CONTAINER_RAW="${COPT_CONTAINER:-}"
-    if [[ -z "$CONTAINER_RAW" ]]; then
-        CONTAINER_RAW=$(find_container) || true
-    fi
-
-    if [[ -n "$CONTAINER_RAW" ]]; then
-        RUNTIME="${CONTAINER_RAW%%:*}"
-        CONTAINER_ID="${CONTAINER_RAW##*:}"
-        ok "Container: ${CONTAINER_ID} (via ${RUNTIME})"
-
-        EXEC_MODE=exec
-        for candidate in /workspaces/CST/copt/src/copt.sh /workspaces/copt/src/copt.sh; do
-            if "$RUNTIME" exec "$CONTAINER_ID" test -f "$candidate" 2>/dev/null; then
-                COPT_SCRIPT="$candidate"; break
-            fi
-        done
-        [[ -n "$COPT_SCRIPT" ]] \
-            || die "copt.sh not found in container. Expected: /workspaces/CST/copt/src/copt.sh"
-        info "Container mode — running inside devcontainer (FFmpeg/NVENC/CUDA)"
-        ok "copt (in container): ${COPT_SCRIPT}"
-    else
-        # Fallback: no container running — run directly on host
-        warn "No devcontainer found — falling back to host-direct mode"
-        warn "Start the VS Code devcontainer for full NVENC/CUDA support"
+    # ── On the host — check if forced to host-only mode ───────────────────────
+    if [[ $FORCE_HOST_MODE -eq 1 ]]; then
+        info "Host-only mode forced (--host flag)"
         SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
         HOST_SCRIPT="${SCRIPT_DIR}/copt.sh"
         if [[ ! -f "$HOST_SCRIPT" ]]; then
@@ -241,10 +218,56 @@ else
                 [[ -f "$candidate" ]] && { HOST_SCRIPT="$candidate"; break; }
             done
         fi
-        [[ -f "$HOST_SCRIPT" ]] || die "copt.sh not found on host and no container running."
+        [[ -f "$HOST_SCRIPT" ]] || die "copt.sh not found. Try without --host flag."
         EXEC_MODE=host
         COPT_SCRIPT="$HOST_SCRIPT"
-        ok "copt (host fallback): ${COPT_SCRIPT}"
+        ok "copt (host-only): ${COPT_SCRIPT}"
+        info "Lower latency mode - using host FFmpeg/NVENC directly"
+    else
+        # ── Default: exec into devcontainer (bleeding-edge FFmpeg/CUDA/NVENC) ──
+        # Container exec is preferred when available: the devcontainer holds
+        # compiled FFmpeg (NVENC SDK 13.0), CUDA, and all streaming tools.
+        # Fallback to host-direct only when no container is running.
+        CONTAINER_RAW="${COPT_CONTAINER:-}"
+        if [[ -z "$CONTAINER_RAW" ]]; then
+            CONTAINER_RAW=$(find_container) || true
+        fi
+
+        if [[ -n "$CONTAINER_RAW" ]]; then
+            RUNTIME="${CONTAINER_RAW%%:*}"
+            CONTAINER_ID="${CONTAINER_RAW##*:}"
+            ok "Container: ${CONTAINER_ID} (via ${RUNTIME})"
+
+            EXEC_MODE=exec
+            for candidate in /workspaces/CST/copt/src/copt.sh /workspaces/copt/src/copt.sh; do
+                if "$RUNTIME" exec "$CONTAINER_ID" test -f "$candidate" 2>/dev/null; then
+                    COPT_SCRIPT="$candidate"; break
+                fi
+            done
+            [[ -n "$COPT_SCRIPT" ]] \
+                || die "copt.sh not found in container. Expected: /workspaces/CST/copt/src/copt.sh"
+            info "Container mode — running inside devcontainer (FFmpeg/NVENC/CUDA)"
+            ok "copt (in container): ${COPT_SCRIPT}"
+        else
+            # Fallback: no container running — run directly on host
+            warn "No devcontainer found — falling back to host-direct mode"
+            warn "Start the VS Code devcontainer for full NVENC/CUDA support"
+            SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+            HOST_SCRIPT="${SCRIPT_DIR}/copt.sh"
+            if [[ ! -f "$HOST_SCRIPT" ]]; then
+                for candidate in \
+                    ~/PRO/WEB/CST/copt/src/copt.sh \
+                    /workspaces/CST/copt/src/copt.sh \
+                    /workspaces/copt/src/copt.sh
+                do
+                    [[ -f "$candidate" ]] && { HOST_SCRIPT="$candidate"; break; }
+                done
+            fi
+            [[ -f "$HOST_SCRIPT" ]] || die "copt.sh not found on host and no container running."
+            EXEC_MODE=host
+            COPT_SCRIPT="$HOST_SCRIPT"
+            ok "copt (host fallback): ${COPT_SCRIPT}"
+        fi
     fi
 fi
 
@@ -263,13 +286,15 @@ USER_ARGS=("$@")
 has_profile=0
 FILTERED_ARGS=()
 
-# Parse user args: extract --preview and --profile flags
+# Parse user args: extract --preview, --host, and --profile flags
 for _a in "${USER_ARGS[@]+"${USER_ARGS[@]}"}"; do
     if [[ "$_a" == "--profile" ]]; then
         has_profile=1
         FILTERED_ARGS+=("$_a")
     elif [[ "$_a" == "--preview" ]]; then
         PREVIEW_ENABLED=1
+    elif [[ "$_a" == "--host" ]]; then
+        FORCE_HOST_MODE=1
     else
         FILTERED_ARGS+=("$_a")
     fi
