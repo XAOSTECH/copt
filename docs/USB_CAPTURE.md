@@ -104,7 +104,7 @@ The device handles HDR encoding internally. No colorspace reinterpretation neede
 
 ```bash
 # Check device colorspace
-v4l2-ctl -d /dev/usb-video-capture1 --all | grep -i "color\|transfer\|primaries"
+v4l2-ctl -d /dev/usb-video-capture1 --all | grep -i "colour\|transfer\|primaries"
 
 # Expected output:
 #   Colorspace: sRGB
@@ -151,7 +151,7 @@ YouTube requires several conditions for HDR processing:
 
 **Stream Duration:**
 - Short test streams (< 5-10 minutes) may not trigger HDR processing
-- YouTube needs time to analyze and process HDR metadata
+- YouTube needs time to analyse and process HDR metadata
 - Allow at least 10-15 minutes for initial HDR detection
 
 **Resolution & Bitrate:**
