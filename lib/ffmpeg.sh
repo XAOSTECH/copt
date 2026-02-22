@@ -303,14 +303,10 @@ build_ffmpeg_usb_cmd() {
             [[ -n "${COPT_GOP_SIZE:-}" ]] && cmd+=(-g "$COPT_GOP_SIZE")
             ;;
         hevc)
-            # HEVC for HDR10 — input is 8-bit yuv420p carrying BT.2020/PQ-encoded values.
-            # setparams overrides the V4L2 default BT.709 tag so the filter graph and
-            # encoder inherit the correct colourspace before the bit-depth expansion.
-            # format=p010le is a left-shift (×4) from 8→10 bit — no tone-mapping.
-            local hdr_params="color_primaries=${COPT_COLOR_PRIMARIES:-bt2020}"
-            hdr_params+=":color_trc=${COPT_COLOR_TRC:-smpte2084}"
-            hdr_params+=":colorspace=${COPT_COLORSPACE:-bt2020nc}"
-
+            # HEVC for HDR10 — input is 8-bit yuv420p with HDR already encoded by device.
+            # V4L2 reports Rec.709 tags but HDR-capable capture cards encode 10-bit HDR
+            # in 8-bit stream with LUT/codec. Just expand to p010le and tag OUTPUT as HDR.
+            # No setparams needed - device handles HDR encoding, we just tag the output.
             local encoders
             encoders=$(ffmpeg -hide_banner -encoders 2>/dev/null || true)
 
@@ -318,7 +314,7 @@ build_ffmpeg_usb_cmd() {
                 # hevc_nvenc handles CPU→GPU upload internally - no hwupload needed
                 local vf=""
                 [[ -n "$logo_filter" ]] && vf="${logo_filter},"
-                vf+="setparams=${hdr_params},format=p010le"
+                vf+="format=p010le"
                 if [[ "$COPT_OUT_W" != "$input_w" || "$COPT_OUT_H" != "$input_h" ]]; then
                     vf+=",scale=${COPT_OUT_W}:${COPT_OUT_H}"
                 fi
@@ -333,7 +329,7 @@ build_ffmpeg_usb_cmd() {
             elif echo "$encoders" | grep -q hevc_vaapi; then
                 local vf=""
                 [[ -n "$logo_filter" ]] && vf="${logo_filter},"
-                vf+="setparams=${hdr_params},format=p010le,hwupload=extra_hw_frames=64"
+                vf+="format=p010le,hwupload=extra_hw_frames=64"
                 if [[ "$COPT_OUT_W" != "$input_w" || "$COPT_OUT_H" != "$input_h" ]]; then
                     vf+=",scale_vaapi=${COPT_OUT_W}:${COPT_OUT_H}:p010le"
                 fi
@@ -348,7 +344,7 @@ build_ffmpeg_usb_cmd() {
                 # Software fallback: libx265 can encode Main10 from p010le
                 local vf=""
                 [[ -n "$logo_filter" ]] && vf="${logo_filter},"
-                vf+="setparams=${hdr_params},format=p010le"
+                vf+="format=p010le"
                 if [[ "$COPT_OUT_W" != "$input_w" || "$COPT_OUT_H" != "$input_h" ]]; then
                     vf+=",scale=${COPT_OUT_W}:${COPT_OUT_H}"
                 fi

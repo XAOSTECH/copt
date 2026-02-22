@@ -47,6 +47,35 @@ copt-host --hls -y YOUR_STREAM_KEY
 
 ---
 
+## HDR Capture Explained
+
+### How HDR-Capable Capture Cards Work
+
+The UGREEN 25173 and similar devices encode 10-bit HDR into an 8-bit YUV 4:2:0 stream:
+
+- **V4L2 reports**: sRGB/Rec.709 colorspace (Standard Dynamic Range tags)
+- **Actual content**: HDR signal with LUT/codec embedded in 8-bit values
+- **ffmpeg pipeline**: Extract 8-bit → expand to p010le (10-bit) → tag output as BT.2020/PQ
+
+The device handles HDR encoding internally. No colorspace reinterpretation needed - we just:
+1. Read 8-bit yuv420p from V4L2
+2. Expand to p010le (10-bit, left-shift only)
+3. Tag OUTPUT stream with HDR metadata (BT.2020/SMPTE 2084/PQ)
+
+### Verification
+
+```bash
+# Check device colorspace
+v4l2-ctl -d /dev/usb-video-capture1 --all | grep -i "color\|transfer\|primaries"
+
+# Expected output:
+#   Colorspace: sRGB
+#   Transfer Function: Rec. 709
+# (This is normal for HDR-capable cards - ignore these tags)
+```
+
+---
+
 ## Logo Detection (Optional)
 
 Hide the UGREEN idle screen logo when no input is connected:
