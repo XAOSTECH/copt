@@ -22,8 +22,27 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly COPT_ROOT="$(dirname "$SCRIPT_DIR")"
+# Detect copt installation location
+if [[ -n "${COPT_ROOT:-}" ]]; then
+    # Already set (e.g., by copt-host)
+    :
+elif [[ -f "$(dirname "${BASH_SOURCE[0]}")/../lib/colours.sh" ]]; then
+    # Running from source tree
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    COPT_ROOT="$(dirname "$SCRIPT_DIR")"
+elif [[ -f "${HOME}/PRO/WEB/CST/copt/lib/colours.sh" ]]; then
+    # Installed to ~/bin, use known copt location
+    COPT_ROOT="${HOME}/PRO/WEB/CST/copt"
+elif [[ -f "/usr/local/share/copt/lib/colours.sh" ]]; then
+    # System-wide install
+    COPT_ROOT="/usr/local/share/copt"
+else
+    echo "ERROR: Could not find copt installation" >&2
+    echo "Set COPT_ROOT environment variable to copt directory" >&2
+    exit 1
+fi
+
+readonly COPT_ROOT
 readonly COPT_LIB="${COPT_ROOT}/lib"
 
 # shellcheck source=../lib/colours.sh
