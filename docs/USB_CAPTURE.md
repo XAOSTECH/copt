@@ -24,7 +24,22 @@ sudo usermod -aG video $USER
 # Log out and back in for group change to take effect
 ```
 
-### 3. Test capture
+### 3. Install scripts to ~/bin (optional)
+
+```bash
+# Create ~/bin if it doesn't exist
+mkdir -p ~/bin
+
+# Copy scripts
+cp ~/PRO/WEB/CST/copt/src/copt-host.sh ~/bin/copt-host
+cp ~/PRO/WEB/CST/copt/src/copt-preview.sh ~/bin/copt-preview
+chmod +x ~/bin/copt-host ~/bin/copt-preview
+
+# Ensure ~/bin is in PATH (add to ~/.bashrc if needed)
+export PATH="$HOME/bin:$PATH"
+```
+
+### 4. Test capture
 
 ```bash
 # From source directory
@@ -34,7 +49,7 @@ WEB/CST/copt/src/copt-host.sh --dry-run -o /tmp/test.mkv
 copt-host --dry-run -o /tmp/test.mkv
 ```
 
-### 4. Stream to YouTube (with HDR)
+### 5. Stream to YouTube (with HDR)
 
 ```bash
 # Set your HLS endpoint in cfg/.env
@@ -44,6 +59,29 @@ echo "YT_API_KEY=your-stream-key-here" >> cfg/.env
 # Start streaming
 copt-host --hls -y YOUR_STREAM_KEY
 ```
+
+### 6. Preview Window (Optional)
+
+Launch a live preview window like OBS (can be closed/reopened independently):
+
+```bash
+# Start preview
+copt-preview start
+
+# Start with custom size
+copt-preview start --size 1920x1080
+
+# Fullscreen preview
+copt-preview start --fullscreen
+
+# Stop preview (stream continues)
+copt-preview stop
+
+# Restart preview
+copt-preview restart
+```
+
+The preview window runs independently and can be closed/reopened without affecting your stream.
 
 ---
 
