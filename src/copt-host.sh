@@ -85,21 +85,10 @@ find_container() {
 # Resolve capture device — stable udev symlink preferred, sysfs fallback
 find_video_device() {
     # Prefer stable udev symlink (set up by 99-usb-video-capture.rules)
-    # Numbered to allow future devices: usb-video-capture2, etc.
-    local n=1
-    while [[ -e "/dev/usb-video-capture${n}" ]]; do
-        # Match VID:PID to find the right numbered symlink
-        local link_target real_dev real_vid real_pid
-        link_target=$(readlink -f "/dev/usb-video-capture${n}" 2>/dev/null) || { n=$((n+1)); continue; }
-        real_dev=$(basename "$link_target")
-        real_vid=$(cat "/sys/class/video4linux/${real_dev}/device/../../../idVendor" 2>/dev/null | tr -d '\n')
-        real_pid=$(cat "/sys/class/video4linux/${real_dev}/device/../../../idProduct" 2>/dev/null | tr -d '\n')
-        local want_vid="${1%%:*}" want_pid="${1##*:}"
-        if [[ "${real_vid,,}" == "${want_vid,,}" && "${real_pid,,}" == "${want_pid,,}" ]]; then
-            echo "/dev/usb-video-capture${n}"; return 0
-        fi
-        n=$((n+1))
-    done
+    # The udev rule already filters by VID:PID, so if it exists, use it.
+    if [[ -e /dev/usb-video-capture1 ]]; then
+        echo "/dev/usb-video-capture1"; return 0
+    fi
 
     local vid="${1%%:*}" pid="${1##*:}" sys_dev
     for sys_dev in /sys/bus/usb/devices/*/; do

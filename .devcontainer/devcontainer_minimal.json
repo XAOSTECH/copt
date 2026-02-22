@@ -5,10 +5,10 @@
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/copt,type=bind,consistency=cached",
   "workspaceFolder": "/workspaces/copt",
   "runArgs": [
-    "--userns=keep-id","--shm-size=1g","--device=/dev/dri","--device=/dev/nvidia0","--device=/dev/nvidiactl","--device=/dev/nvidia-modeset","--device=/dev/nvidia-uvm","--device=/dev/nvidia-uvm-tools","--group-add=video","--group-add=render","--security-opt=label=disable"
+    "--shm-size=1g","--device=/dev/dri","--device=/dev/nvidia0","--device=/dev/nvidiactl","--device=/dev/nvidia-modeset","--device=/dev/nvidia-uvm","--device=/dev/nvidia-uvm-tools","--group-add=video","--group-add=render","--security-opt=label=disable","--device=/dev/usb-video-capture1"
   ],
   "mounts": [
-    "source=/run/user/1000/podman/podman.sock,target=/var/run/docker.sock,type=bind","source=${localEnv:XDG_RUNTIME_DIR}/${localEnv:WAYLAND_DISPLAY},target=/tmp/wayland-0,type=bind,readonly","source=/run/user/1000/wayland-0.lock,target=/tmp/wayland-0.lock,type=bind","source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind","source=/usr/lib/x86_64-linux-gnu/libcuda.so.1,target=/usr/lib/x86_64-linux-gnu/libcuda.so.1,type=bind,readonly","source=/usr/lib/x86_64-linux-gnu/libnvcuvid.so.1,target=/usr/lib/x86_64-linux-gnu/libnvcuvid.so.1,type=bind,readonly"
+    "source=/run/user/1000/podman/podman.sock,target=/var/run/docker.sock,type=bind","source=${localEnv:XDG_RUNTIME_DIR}/${localEnv:WAYLAND_DISPLAY},target=/tmp/wayland-0,type=bind,readonly","source=/run/user/1000/wayland-0.lock,target=/tmp/wayland-0.lock,type=bind","source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind","source=/usr/lib/x86_64-linux-gnu/libcuda.so.1,target=/usr/lib/x86_64-linux-gnu/libcuda.so.1,type=bind,readonly","source=/usr/lib/x86_64-linux-gnu/libnvcuvid.so.1,target=/usr/lib/x86_64-linux-gnu/libnvcuvid.so.1,type=bind,readonly","source=/usr/lib/x86_64-linux-gnu/libnvidia-encode.so.1,target=/usr/lib/x86_64-linux-gnu/libnvidia-encode.so.1,type=bind,readonly"
   ],
   "containerEnv": {
     "GPG_KEY_ID": "",
