@@ -66,7 +66,10 @@ DEFAULT_PROFILE="usb-capture-4k30-hdr"
 PREVIEW_ENABLED=0
 PREVIEW_PID=""
 PREVIEW_SOURCE=""
+PREVIEW_ENV_ARGS=()
 FORCE_HOST_MODE=0
+STOP_REQUESTED=0
+CHILD_PID=""
 
 USB_DISCONNECT_RE='Device.*disconnected|select timed out|Input/output error|No such device|failed to reset|double free'
 
@@ -120,6 +123,19 @@ stop_preview() {
         fi
     fi
 }
+
+# Fast exit handler (Ctrl+C)
+on_interrupt() {
+    STOP_REQUESTED=1
+    if [[ -n "$CHILD_PID" ]]; then
+        kill -TERM "$CHILD_PID" 2>/dev/null || true
+        wait "$CHILD_PID" 2>/dev/null || true
+        CHILD_PID=""
+    fi
+    stop_preview
+    exit 0
+}
+trap on_interrupt INT TERM
 
 # True when this process is running inside a container
 in_container() {
@@ -315,8 +331,8 @@ done
 # When preview is enabled for streaming, use stream-based preview (no device grab)
 if [[ $PREVIEW_ENABLED -eq 1 && $STREAMING_HINT -eq 1 ]]; then
     PREVIEW_SOURCE="udp://127.0.0.1:11000?pkt_size=1316"
-    export COPT_PREVIEW_OUTPUT="$PREVIEW_SOURCE"
-    export COPT_PREVIEW_FORMAT="mpegts"
+    PREVIEW_ENV_ARGS+=("COPT_PREVIEW_OUTPUT=${PREVIEW_SOURCE}")
+    PREVIEW_ENV_ARGS+=("COPT_PREVIEW_FORMAT=mpegts")
 fi
 
 rebuild_args() {
@@ -351,31 +367,47 @@ while true; do
                               || warn "Restart attempt #${retry_count}"
     : > "$tmplog"
 
+    env_prefix=()
+    if [[ ${#PREVIEW_ENV_ARGS[@]} -gt 0 ]]; then
+        env_prefix=(env "${PREVIEW_ENV_ARGS[@]}")
+    fi
+
     set +e
     case "$EXEC_MODE" in
         local)
             # Inside container already — run directly
-            sudo bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
-                2> >(tee -a "$tmplog" >&2)
+            sudo "${env_prefix[@]}" bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
+                2> >(tee -a "$tmplog" >&2) &
+            CHILD_PID=$!
             ;;
         host)
             # On host — run directly (USB device natively visible)
-            sudo bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
-                2> >(tee -a "$tmplog" >&2)
+            sudo "${env_prefix[@]}" bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
+                2> >(tee -a "$tmplog" >&2) &
+            CHILD_PID=$!
             ;;
         exec)
             # Exec into container (device must be in devcontainer.json)
+            exec_env_args=(
+                --env DISPLAY="${DISPLAY:-:0}"
+                --env WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}"
+                --env XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+                --env COPT_USB_VID_PID="$VID_PID"
+            )
+            for env_kv in "${PREVIEW_ENV_ARGS[@]}"; do
+                exec_env_args+=(--env "$env_kv")
+            done
             "$RUNTIME" exec \
-                --env DISPLAY="${DISPLAY:-:0}" \
-                --env WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}" \
-                --env XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}" \
-                --env COPT_USB_VID_PID="$VID_PID" \
+                "${exec_env_args[@]}" \
                 -it "$CONTAINER_ID" \
-                sudo bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
-                2> >(tee -a "$tmplog" >&2)
+                sudo "${env_prefix[@]}" bash "$COPT_SCRIPT" "${COPT_ARGS[@]}" \
+                2> >(tee -a "$tmplog" >&2) &
+            CHILD_PID=$!
             ;;
     esac
+    wait "$CHILD_PID"
     exit_code=$?
+    CHILD_PID=""
     set -e
 
     case $exit_code in
