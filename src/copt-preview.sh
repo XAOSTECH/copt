@@ -130,6 +130,12 @@ start_preview() {
         die "ffplay not found. Install: sudo apt install ffmpeg"
     fi
 
+    # Check if DISPLAY is set (X11/Wayland)
+    if [[ -z "${DISPLAY:-}" && -z "${WAYLAND_DISPLAY:-}" ]]; then
+        warn "No DISPLAY or WAYLAND_DISPLAY environment variable set"
+        info "This may prevent the preview window from appearing"
+    fi
+
     # Parse size
     local width height
     if [[ "$PREVIEW_SIZE" =~ ^([0-9]+)x([0-9]+)$ ]]; then
@@ -174,6 +180,24 @@ start_preview() {
 
     # Launch in background
     info "Command: ffplay ${ffplay_opts[*]}"
+    
+    # Ensure display environment is set
+    export DISPLAY="${DISPLAY:-:0}"
+    export WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}"
+    
+    # SDL video driver selection (Wayland first, then X11)
+    if [[ -n "${WAYLAND_DISPLAY}" ]] && [[ -S "${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}" ]]; then
+        export SDL_VIDEODRIVER=wayland
+    else
+        export SDL_VIDEODRIVER=x11
+    fi
+    
+    # SDL hints for ffplay window behavior
+    export SDL_VIDEO_ALLOW_SCREENSAVER=1
+    
+    info "Using SDL_VIDEODRIVER=${SDL_VIDEODRIVER}"
+    
+    # Run with display server access (redirect stdin to prevent blocking)
     ffplay "${ffplay_opts[@]}" </dev/null &>/tmp/copt-preview.log &
     local pid=$!
 
@@ -186,8 +210,16 @@ start_preview() {
         ok "Preview started (PID: $pid)"
         info "Press 'q' or ESC in preview window to close"
         info "Or run: copt-preview stop"
+        
+        # Wait a moment to see if window opens
+        sleep 1
+        if ! kill -0 "$pid" 2>/dev/null; then
+            rm -f "$PID_FILE"
+            die "Preview exited immediately. Check log: tail /tmp/copt-preview.log"
+        fi
     else
-        die "Preview failed to start. Check /tmp/copt-preview.log"
+        cat /tmp/copt-preview.log
+        die "Preview failed to start. Check log above"
     fi
 }
 
