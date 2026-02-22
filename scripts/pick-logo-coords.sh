@@ -53,7 +53,7 @@ if [[ "$choice" =~ ^[Yy]$ ]]; then
         -i "$DEVICE" &>/dev/null &
     FF_PID=$!
     
-    sleep 2  # Let preview initialize
+    sleep 2  # Let preview initialise
     
     info "Preview running (PID: ${FF_PID})"
     info "Use slop to select the logo rectangle..."

@@ -192,7 +192,7 @@ start_preview() {
         export SDL_VIDEODRIVER=x11
     fi
     
-    # SDL hints for ffplay window behavior
+    # SDL hints for ffplay window behaviour
     export SDL_VIDEO_ALLOW_SCREENSAVER=1
     
     info "Using SDL_VIDEODRIVER=${SDL_VIDEODRIVER}"
