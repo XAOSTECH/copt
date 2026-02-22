@@ -71,6 +71,7 @@ FORCE_HOST_MODE=0
 STOP_REQUESTED=0
 CHILD_PID=""
 CHILD_PGID=""
+KILL_STALE_FFMPEG="${COPT_KILL_STALE:-1}"
 
 USB_DISCONNECT_RE='Device.*disconnected|select timed out|Input/output error|No such device|failed to reset|double free'
 
@@ -122,6 +123,18 @@ stop_preview() {
         elif command -v copt-preview &>/dev/null; then
             copt-preview stop &>/dev/null || true
         fi
+    fi
+}
+
+# Kill stale ffmpeg processes that still hold the device
+kill_stale_ffmpeg() {
+    [[ "$KILL_STALE_FFMPEG" -eq 1 ]] || return 0
+    local pattern="ffmpeg.*${VIDEO_DEV}"
+    if pgrep -f "$pattern" &>/dev/null; then
+        warn "Found stale ffmpeg using ${VIDEO_DEV} — stopping"
+        pkill -TERM -f "$pattern" 2>/dev/null || true
+        sleep 1
+        pkill -KILL -f "$pattern" 2>/dev/null || true
     fi
 }
 
@@ -343,7 +356,7 @@ rebuild_args
 retry_count=0
 start_time=$(date +%s)
 tmplog=$(mktemp /tmp/copt-host-XXXXXX.log)
-trap 'stop_preview; rm -f "$tmplog"' EXIT
+trap 'kill_stale_ffmpeg; stop_preview; rm -f "$tmplog"' EXIT
 
 info "Exec mode: ${EXEC_MODE}  |  autorestart: enabled  |  max: ${MAX_RETRIES:-infinite}"
 [[ $PREVIEW_ENABLED -eq 1 ]] && info "Preview: enabled (window will open)"
@@ -363,6 +376,9 @@ while true; do
     [[ $retry_count -eq 1 ]] && ok "Attempt #${retry_count}" \
                               || warn "Restart attempt #${retry_count}"
     : > "$tmplog"
+
+    # Ensure no stale ffmpeg holds the device before starting
+    kill_stale_ffmpeg
 
     env_prefix=()
     if [[ ${#PREVIEW_ENV_ARGS[@]} -gt 0 ]]; then
