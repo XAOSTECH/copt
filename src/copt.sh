@@ -65,6 +65,7 @@ MAX_RETRIES="${COPT_MAX_RETRIES:-0}"
 DEFAULT_PROFILE="usb-capture-4k30-hdr"
 PREVIEW_ENABLED=0
 PREVIEW_PID=""
+PREVIEW_SOURCE=""
 FORCE_HOST_MODE=0
 
 USB_DISCONNECT_RE='Device.*disconnected|select timed out|Input/output error|No such device|failed to reset|double free'
@@ -89,7 +90,13 @@ start_preview() {
     fi
     
     info "Starting preview window..."
-    "$preview_script" start --device "$VIDEO_DEV" &>/dev/null &
+    local preview_args=(start)
+    if [[ -n "$PREVIEW_SOURCE" ]]; then
+        preview_args+=(--source "$PREVIEW_SOURCE")
+    else
+        preview_args+=(--device "$VIDEO_DEV")
+    fi
+    "$preview_script" "${preview_args[@]}" &>/dev/null &
     sleep 1
     
     # Check if preview started successfully
@@ -287,7 +294,8 @@ USER_ARGS=("$@")
 has_profile=0
 FILTERED_ARGS=()
 
-# Parse user args: extract --preview, --host, and --profile flags
+# Parse user args: extract --preview, --host, --profile, and streaming flags
+STREAMING_HINT=0
 for _a in "${USER_ARGS[@]+"${USER_ARGS[@]}"}"; do
     if [[ "$_a" == "--profile" ]]; then
         has_profile=1
@@ -296,10 +304,20 @@ for _a in "${USER_ARGS[@]+"${USER_ARGS[@]}"}"; do
         PREVIEW_ENABLED=1
     elif [[ "$_a" == "--host" ]]; then
         FORCE_HOST_MODE=1
+    elif [[ "$_a" == "--hls" || "$_a" == "--rtmp" || "$_a" == "-y" || "$_a" == "--youtube-key" || "$_a" == "--hls-url" || "$_a" == "--rtmp-url" ]]; then
+        STREAMING_HINT=1
+        FILTERED_ARGS+=("$_a")
     else
         FILTERED_ARGS+=("$_a")
     fi
 done
+
+# When preview is enabled for streaming, use stream-based preview (no device grab)
+if [[ $PREVIEW_ENABLED -eq 1 && $STREAMING_HINT -eq 1 ]]; then
+    PREVIEW_SOURCE="udp://127.0.0.1:11000?pkt_size=1316"
+    export COPT_PREVIEW_OUTPUT="$PREVIEW_SOURCE"
+    export COPT_PREVIEW_FORMAT="mpegts"
+fi
 
 rebuild_args() {
     BASE_ARGS=(--capture-mode usb --usb-device "$VIDEO_DEV" --usb-vid-pid "$VID_PID")

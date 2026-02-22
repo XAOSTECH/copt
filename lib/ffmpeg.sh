@@ -169,7 +169,23 @@ build_ffmpeg_cmd() {
     fi
 
     # -- Output --
-    cmd+=("$COPT_OUTPUT")
+    if [[ -n "${COPT_PREVIEW_OUTPUT:-}" && "${COPT_IS_STREAMING:-0}" -eq 1 && "${DRY_RUN:-0}" -eq 0 ]]; then
+        local main_fmt=""
+        case "${COPT_STREAM_TYPE:-}" in
+            rtmp) main_fmt="flv" ;;
+            hls)  main_fmt="mpegts" ;;
+        esac
+        local preview_fmt="${COPT_PREVIEW_FORMAT:-mpegts}"
+        local tee_outputs=""
+        if [[ -n "$main_fmt" ]]; then
+            tee_outputs="[f=${main_fmt}]${COPT_OUTPUT}|[f=${preview_fmt}]${COPT_PREVIEW_OUTPUT}"
+        else
+            tee_outputs="${COPT_OUTPUT}|[f=${preview_fmt}]${COPT_PREVIEW_OUTPUT}"
+        fi
+        cmd+=(-f tee "$tee_outputs")
+    else
+        cmd+=("$COPT_OUTPUT")
+    fi
 
     # Return as a joined string for display, but we'll use the array to exec
     FFMPEG_CMD=("${cmd[@]}")
@@ -388,7 +404,23 @@ build_ffmpeg_usb_cmd() {
     fi
 
     # -- Output --
-    cmd+=("$COPT_OUTPUT")
+    if [[ -n "${COPT_PREVIEW_OUTPUT:-}" && "${COPT_IS_STREAMING:-0}" -eq 1 && "${DRY_RUN:-0}" -eq 0 ]]; then
+        local main_fmt=""
+        case "${COPT_STREAM_TYPE:-}" in
+            rtmp) main_fmt="flv" ;;
+            hls)  main_fmt="mpegts" ;;
+        esac
+        local preview_fmt="${COPT_PREVIEW_FORMAT:-mpegts}"
+        local tee_outputs=""
+        if [[ -n "$main_fmt" ]]; then
+            tee_outputs="[f=${main_fmt}]${COPT_OUTPUT}|[f=${preview_fmt}]${COPT_PREVIEW_OUTPUT}"
+        else
+            tee_outputs="${COPT_OUTPUT}|[f=${preview_fmt}]${COPT_PREVIEW_OUTPUT}"
+        fi
+        cmd+=(-f tee "$tee_outputs")
+    else
+        cmd+=("$COPT_OUTPUT")
+    fi
 
     FFMPEG_CMD=("${cmd[@]}")
 }

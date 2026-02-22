@@ -53,6 +53,7 @@ readonly PID_FILE="/tmp/copt-preview.pid"
 
 # Default options
 PREVIEW_DEVICE="/dev/usb-video-capture1"
+PREVIEW_SOURCE=""
 PREVIEW_SIZE="1280x720"
 PREVIEW_FULLSCREEN=0
 PREVIEW_ALWAYSONTOP=0
@@ -71,6 +72,7 @@ ${C_BLD}USAGE${C_RST}
 
 ${C_BLD}OPTIONS${C_RST}
     --device PATH         V4L2 device (default: /dev/usb-video-capture1)
+    --source URL          Stream source (udp://..., rtmp://..., file)
     --size WxH            Window size (default: 1280x720)
     --fullscreen          Open fullscreen
     --alwaysontop         Keep window on top
@@ -79,6 +81,9 @@ ${C_BLD}OPTIONS${C_RST}
 ${C_BLD}EXAMPLES${C_RST}
     # Start preview of USB capture device
     copt-preview start
+
+    # Start preview from stream source (no device grab)
+    copt-preview start --source udp://127.0.0.1:11000
 
     # Start with custom size
     copt-preview start --size 1920x1080
@@ -92,7 +97,7 @@ ${C_BLD}EXAMPLES${C_RST}
 ${C_BLD}NOTES${C_RST}
     - Preview runs independently from main capture/stream
     - Can be closed/reopened without affecting stream
-    - Minimal performance impact (direct V4L2 read)
+    - Minimal performance impact (direct V4L2 read or stream read)
     - Press 'q' or ESC in preview window to close
 
 EOF
@@ -120,8 +125,8 @@ start_preview() {
         exit 1
     fi
 
-    # Check if device exists
-    if [[ ! -e "$PREVIEW_DEVICE" ]]; then
+    # Check if device exists (when using device mode)
+    if [[ -z "$PREVIEW_SOURCE" && ! -e "$PREVIEW_DEVICE" ]]; then
         die "Device not found: $PREVIEW_DEVICE"
     fi
 
@@ -145,19 +150,38 @@ start_preview() {
         die "Invalid size format: $PREVIEW_SIZE (use WIDTHxHEIGHT)"
     fi
 
-    info "Starting preview: $PREVIEW_DEVICE @ $PREVIEW_SIZE"
+    if [[ -n "$PREVIEW_SOURCE" ]]; then
+        info "Starting preview: $PREVIEW_SOURCE @ $PREVIEW_SIZE"
+    else
+        info "Starting preview: $PREVIEW_DEVICE @ $PREVIEW_SIZE"
+    fi
 
     # Build ffplay command
-    local ffplay_opts=(
-        -f v4l2
-        -input_format yuv420p
-        -video_size 3840x2160
-        -framerate 30
-        -i "$PREVIEW_DEVICE"
-    )
+    local ffplay_opts=()
+    if [[ -n "$PREVIEW_SOURCE" ]]; then
+        ffplay_opts+=(
+            -fflags nobuffer
+            -flags low_delay
+            -probesize 32
+            -analyzeduration 0
+            -i "$PREVIEW_SOURCE"
+        )
+    else
+        ffplay_opts+=(
+            -f v4l2
+            -input_format yuv420p
+            -video_size 3840x2160
+            -framerate 30
+            -i "$PREVIEW_DEVICE"
+        )
+    fi
 
     # Window options
-    ffplay_opts+=(-window_title "copt preview — $PREVIEW_DEVICE")
+    if [[ -n "$PREVIEW_SOURCE" ]]; then
+        ffplay_opts+=(-window_title "copt preview — stream")
+    else
+        ffplay_opts+=(-window_title "copt preview — $PREVIEW_DEVICE")
+    fi
     
     if [[ "$PREVIEW_FULLSCREEN" -eq 1 ]]; then
         ffplay_opts+=(-fs)
@@ -264,7 +288,11 @@ show_status() {
         local pid
         pid=$(cat "$PID_FILE")
         ok "Preview running (PID: $pid)"
-        info "Device: $PREVIEW_DEVICE"
+        if [[ -n "$PREVIEW_SOURCE" ]]; then
+            info "Source: $PREVIEW_SOURCE"
+        else
+            info "Device: $PREVIEW_DEVICE"
+        fi
         
         # Show process info
         if ps -p "$pid" -o comm=,args= 2>/dev/null | grep -q ffplay; then
@@ -298,6 +326,10 @@ main() {
                     ;;
                 --size)
                     PREVIEW_SIZE="$2"
+                    shift 2
+                    ;;
+                --source)
+                    PREVIEW_SOURCE="$2"
                     shift 2
                     ;;
                 --fullscreen)
