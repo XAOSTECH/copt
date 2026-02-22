@@ -213,6 +213,36 @@ echo "  USB device : ${VID_PID}"
 echo "  Profile    : ${DEFAULT_PROFILE} (override with --profile)"
 echo ""
 
+# ── Parse flags early (needed for --host) ───────────────────────────────────
+USER_ARGS=("$@")
+has_profile=0
+FILTERED_ARGS=()
+
+# Parse user args: extract --preview, --host, --profile, and streaming flags
+STREAMING_HINT=0
+for _a in "${USER_ARGS[@]+"${USER_ARGS[@]}"}"; do
+    if [[ "$_a" == "--profile" ]]; then
+        has_profile=1
+        FILTERED_ARGS+=("$_a")
+    elif [[ "$_a" == "--preview" ]]; then
+        PREVIEW_ENABLED=1
+    elif [[ "$_a" == "--host" ]]; then
+        FORCE_HOST_MODE=1
+    elif [[ "$_a" == "--hls" || "$_a" == "--rtmp" || "$_a" == "-y" || "$_a" == "--youtube-key" || "$_a" == "--hls-url" || "$_a" == "--rtmp-url" ]]; then
+        STREAMING_HINT=1
+        FILTERED_ARGS+=("$_a")
+    else
+        FILTERED_ARGS+=("$_a")
+    fi
+done
+
+# When preview is enabled for streaming, use stream-based preview (no device grab)
+if [[ $PREVIEW_ENABLED -eq 1 && $STREAMING_HINT -eq 1 ]]; then
+    PREVIEW_SOURCE="udp://127.0.0.1:11000?pkt_size=1316"
+    PREVIEW_ENV_ARGS+=("COPT_PREVIEW_OUTPUT=${PREVIEW_SOURCE}")
+    PREVIEW_ENV_ARGS+=("COPT_PREVIEW_FORMAT=mpegts")
+fi
+
 # ── Determine execution mode and resolve copt-worker.sh path ────────────────
 EXEC_MODE=""
 RUNTIME=""
@@ -306,35 +336,6 @@ ok "Video device: ${VIDEO_DEV}"
     || die "Cannot read ${VIDEO_DEV}.\n  sudo usermod -aG video \$USER  (then log out/in)"
 
 # ── Build copt arg list ───────────────────────────────────────────────────────
-USER_ARGS=("$@")
-has_profile=0
-FILTERED_ARGS=()
-
-# Parse user args: extract --preview, --host, --profile, and streaming flags
-STREAMING_HINT=0
-for _a in "${USER_ARGS[@]+"${USER_ARGS[@]}"}"; do
-    if [[ "$_a" == "--profile" ]]; then
-        has_profile=1
-        FILTERED_ARGS+=("$_a")
-    elif [[ "$_a" == "--preview" ]]; then
-        PREVIEW_ENABLED=1
-    elif [[ "$_a" == "--host" ]]; then
-        FORCE_HOST_MODE=1
-    elif [[ "$_a" == "--hls" || "$_a" == "--rtmp" || "$_a" == "-y" || "$_a" == "--youtube-key" || "$_a" == "--hls-url" || "$_a" == "--rtmp-url" ]]; then
-        STREAMING_HINT=1
-        FILTERED_ARGS+=("$_a")
-    else
-        FILTERED_ARGS+=("$_a")
-    fi
-done
-
-# When preview is enabled for streaming, use stream-based preview (no device grab)
-if [[ $PREVIEW_ENABLED -eq 1 && $STREAMING_HINT -eq 1 ]]; then
-    PREVIEW_SOURCE="udp://127.0.0.1:11000?pkt_size=1316"
-    PREVIEW_ENV_ARGS+=("COPT_PREVIEW_OUTPUT=${PREVIEW_SOURCE}")
-    PREVIEW_ENV_ARGS+=("COPT_PREVIEW_FORMAT=mpegts")
-fi
-
 rebuild_args() {
     BASE_ARGS=(--capture-mode usb --usb-device "$VIDEO_DEV" --usb-vid-pid "$VID_PID")
     [[ $has_profile -eq 0 ]] && BASE_ARGS+=(--profile "$DEFAULT_PROFILE")
