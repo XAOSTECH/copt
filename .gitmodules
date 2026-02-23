@@ -1,0 +1,3 @@
+[submodule "P010_for_V4L2"]
+	path = P010_for_V4L2
+	url = https://github.com/awawa-dev/P010_for_V4L2.git
