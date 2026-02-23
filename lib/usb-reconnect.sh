@@ -216,13 +216,7 @@ run_with_usb_reconnect() {
             return 0
         fi
 
-        # Clean exit (unlikely mid-stream but handle it)
-        if [[ $rc -eq 0 ]]; then
-            rm -f "$tmplog"
-            return 0
-        fi
-
-        # Decide whether this was a USB disconnect or another kind of crash
+        # Check for USB disconnect first (even if rc=0, FFmpeg can exit "cleanly" after device loss)
         if _log_has_disconnect "$tmplog"; then
             warn "USB capture device disconnected (exit code: $rc)"
             warn "This is the known UGREEN 25173 USB-C instability issue."
@@ -240,6 +234,12 @@ run_with_usb_reconnect() {
                 rm -f "$tmplog"
                 return 1
             fi
+        fi
+
+        # Clean exit (no errors in log)
+        if [[ $rc -eq 0 ]]; then
+            rm -f "$tmplog"
+            return 0
         fi
 
         # Non-disconnect crash

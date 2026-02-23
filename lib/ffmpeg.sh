@@ -8,7 +8,9 @@
 # ----- build ffmpeg command -------------------------------------------------
 build_ffmpeg_cmd() {
     local cmd=()
-    cmd+=(ffmpeg -hide_banner -loglevel info -y)
+    local ffmpeg_bin="${COPT_FFMPEG_BIN:-ffmpeg}"
+    [[ -x "$HOME/.local/bin/ffmpeg" ]] && ffmpeg_bin="$HOME/.local/bin/ffmpeg"
+    cmd+=("$ffmpeg_bin" -hide_banner -loglevel info -y)
 
     # -- Audio input --
     if [[ "$COPT_AUDIO" -eq 1 && -n "${COPT_AUDIO_DEVICE:-}" ]]; then
@@ -36,7 +38,7 @@ build_ffmpeg_cmd() {
             vf+=",crop=x=${COPT_CROP_X}:y=${COPT_CROP_Y}:w=${cw}:h=${ch}"
             vf+=",scale_vaapi=${COPT_OUT_W}:${COPT_OUT_H}:${COPT_PIXEL_FMT}"
             cmd+=(-vf "$vf")
-            cmd+=(-c:v h264_vaapi -qp "$COPT_QUALITY")
+            cmd+=(-c:v hevc_vaapi -qp "$COPT_QUALITY")
             
             # Add bitrate control if specified (streaming)
             if [[ -n "${COPT_BITRATE_VIDEO:-}" ]]; then
@@ -50,7 +52,7 @@ build_ffmpeg_cmd() {
             vf+=",crop=x=${COPT_CROP_X}:y=${COPT_CROP_Y}:w=${cw}:h=${ch}"
             vf+=",scale_cuda=${COPT_OUT_W}:${COPT_OUT_H}:${COPT_PIXEL_FMT}"
             cmd+=(-vf "$vf")
-            cmd+=(-c:v h264_nvenc -preset p4 -qp "$COPT_QUALITY" -bf 0)
+            cmd+=(-c:v hevc_nvenc -preset p4 -qp "$COPT_QUALITY" -bf 0)
             
             # Add bitrate control if specified
             if [[ -n "${COPT_BITRATE_VIDEO:-}" ]]; then
@@ -62,7 +64,7 @@ build_ffmpeg_cmd() {
         hevc)
             # HEVC for HDR (NVENC or VAAPI)
             local encoders
-            encoders=$(ffmpeg -hide_banner -encoders 2>/dev/null || true)
+            encoders=$("$ffmpeg_bin" -hide_banner -encoders 2>/dev/null || true)
             
             if echo "$encoders" | grep -q hevc_nvenc; then
                 local vf="hwmap=derive_device=cuda"
@@ -70,6 +72,9 @@ build_ffmpeg_cmd() {
                 vf+=",scale_cuda=${COPT_OUT_W}:${COPT_OUT_H}:${COPT_PIXEL_FMT}"
                 cmd+=(-vf "$vf")
                 cmd+=(-c:v hevc_nvenc -preset p4 -qp "$COPT_QUALITY" -profile:v main10)
+                
+                # RTX-optimized encoding settings
+                cmd+=(-rc vbr -surfaces 32 -b_ref_mode each -aq-strength 15 -rc-lookahead 32)
                 
                 # HDR metadata
                 if [[ -n "${COPT_COLORSPACE:-}" ]]; then
@@ -196,27 +201,25 @@ build_ffmpeg_cmd() {
 # Input comes from a V4L2 node (/dev/videoX) rather than KMS grab.
 build_ffmpeg_usb_cmd() {
     local cmd=()
+    local ffmpeg_bin="${COPT_FFMPEG_BIN:-ffmpeg}"
+    [[ -x "$HOME/.local/bin/ffmpeg" ]] && ffmpeg_bin="$HOME/.local/bin/ffmpeg"
+    local encoders
+    encoders=$("$ffmpeg_bin" -hide_banner -encoders 2>/dev/null || true)
 
-    # Core flags – nobuffer + genpts keep stream alive through micro-stalls
-    cmd+=(ffmpeg -hide_banner -loglevel info -y)
-    cmd+=(-fflags +genpts+discardcorrupt)
-    cmd+=(-use_wallclock_as_timestamps 1)
+    # Absolute minimum: ffmpeg + inputs + encoder. Nothing else.
+    cmd+=("$ffmpeg_bin")
 
-    # -- Audio input (before video so audio stream index is 0) --
+    # -- Audio input --
     if [[ "$COPT_AUDIO" -eq 1 && -n "${COPT_AUDIO_DEVICE:-}" ]]; then
-        cmd+=(-thread_queue_size 512)
         cmd+=(-f alsa -i "$COPT_AUDIO_DEVICE")
     fi
 
     # -- V4L2 video input --
-    # UGREEN 25173 provides MJPEG at 4K, YUYV422 at lower resolutions.
-    # Default to mjpeg (best bandwidth efficiency through USB-C).
-    local input_fmt="${COPT_USB_INPUT_FORMAT:-mjpeg}"
+    local input_fmt="${COPT_USB_INPUT_FORMAT:-nv12}"
     local input_w="${COPT_USB_INPUT_W:-${COPT_OUT_W}}"
     local input_h="${COPT_USB_INPUT_H:-${COPT_OUT_H}}"
 
-    cmd+=(-thread_queue_size 512)
-    cmd+=(-f v4l2)
+    cmd+=(-f v4l2 -thread_queue_size 1024)
     cmd+=(-input_format "$input_fmt")
     cmd+=(-video_size "${input_w}x${input_h}")
     cmd+=(-framerate "$COPT_FRAMERATE")
@@ -266,7 +269,7 @@ build_ffmpeg_usb_cmd() {
                 vf+=",scale_vaapi=${COPT_OUT_W}:${COPT_OUT_H}"
             fi
             cmd+=(-vf "$vf")
-            cmd+=(-c:v h264_vaapi -qp "$COPT_QUALITY")
+            cmd+=(-c:v hevc_vaapi -qp "$COPT_QUALITY")
             if [[ -n "${COPT_BITRATE_VIDEO:-}" ]]; then
                 cmd+=(-b:v "$COPT_BITRATE_VIDEO" -maxrate "$COPT_BITRATE_VIDEO")
                 [[ -n "${COPT_BUFFER_SIZE:-}" ]] && cmd+=(-bufsize "$COPT_BUFFER_SIZE")
@@ -281,7 +284,7 @@ build_ffmpeg_usb_cmd() {
                 vf+=",scale_cuda=${COPT_OUT_W}:${COPT_OUT_H}"
             fi
             cmd+=(-vf "$vf")
-            cmd+=(-c:v h264_nvenc -preset p4 -qp "$COPT_QUALITY" -bf 0)
+            cmd+=(-c:v hevc_nvenc -preset p4 -qp "$COPT_QUALITY" -bf 0)
             if [[ -n "${COPT_BITRATE_VIDEO:-}" ]]; then
                 cmd+=(-b:v "$COPT_BITRATE_VIDEO" -maxrate "$COPT_BITRATE_VIDEO")
                 [[ -n "${COPT_BUFFER_SIZE:-}" ]] && cmd+=(-bufsize "$COPT_BUFFER_SIZE")
@@ -319,56 +322,44 @@ build_ffmpeg_usb_cmd() {
             [[ -n "${COPT_GOP_SIZE:-}" ]] && cmd+=(-g "$COPT_GOP_SIZE")
             ;;
         hevc)
-            # HEVC for HDR10 — input is 8-bit yuv420p with HDR already encoded by device.
-            # V4L2 reports Rec.709 tags but HDR-capable capture cards encode 10-bit HDR
-            # in 8-bit stream with LUT/codec. Just expand to p010le and tag OUTPUT as HDR.
-            # No setparams needed - device handles HDR encoding, we just tag the output.
-            local encoders
-            encoders=$(ffmpeg -hide_banner -encoders 2>/dev/null || true)
-
+            # HEVC encoding — NVIDIA NVENC GPU encoder (no filter chain, direct encode)
             if echo "$encoders" | grep -q hevc_nvenc; then
-                # hevc_nvenc handles CPU→GPU upload internally - no hwupload needed
-                local vf=""
-                [[ -n "$logo_filter" ]] && vf="${logo_filter},"
-                vf+="hwupload_cuda,scale_cuda=${COPT_OUT_W}:${COPT_OUT_H}:format=p010le"
-                cmd+=(-vf "$vf")
-                cmd+=(-c:v hevc_nvenc -preset p4 -profile:v main10 -pix_fmt p010le -bf 0)
-                cmd+=(-qp "$COPT_QUALITY")
-                # HDR10 static metadata via SEI
-                cmd+=(-color_primaries "${COPT_COLOR_PRIMARIES:-bt2020}")
-                cmd+=(-color_trc "${COPT_COLOR_TRC:-smpte2084}")
-                cmd+=(-colorspace "${COPT_COLORSPACE:-bt2020nc}")
-                cmd+=(-color_range "${COPT_COLOR_RANGE:-tv}")
-            elif echo "$encoders" | grep -q hevc_vaapi; then
-                local vf=""
-                [[ -n "$logo_filter" ]] && vf="${logo_filter},"
-                vf+="format=p010le,hwupload=extra_hw_frames=64"
-                if [[ "$COPT_OUT_W" != "$input_w" || "$COPT_OUT_H" != "$input_h" ]]; then
-                    vf+=",scale_vaapi=${COPT_OUT_W}:${COPT_OUT_H}:p010le"
-                fi
-                cmd+=(-vf "$vf")
-                cmd+=(-c:v hevc_vaapi -profile:v main10 -pix_fmt p010le)
-                cmd+=(-qp "$COPT_QUALITY")
-                cmd+=(-color_primaries "${COPT_COLOR_PRIMARIES:-bt2020}")
-                cmd+=(-color_trc "${COPT_COLOR_TRC:-smpte2084}")
-                cmd+=(-colorspace "${COPT_COLORSPACE:-bt2020nc}")
-                cmd+=(-color_range "${COPT_COLOR_RANGE:-tv}")
+                # Direct encoding: nv12 input -> hevc_nvenc converts to p010le internally
+                # No filter chain needed - OBS-style direct encode
+                
+                # NVIDIA NVENC h265 — quality settings from proven ff4KHDR config
+                cmd+=(-c:v hevc_nvenc)
+                cmd+=(-pix_fmt "${COPT_PIXEL_FMT:-p010le}")  # Encoder converts nv12 -> p010le
+                cmd+=(-preset "${COPT_NVENC_PRESET:-p7}")   # p7=quality, p4=speed
+                cmd+=(-tune "${COPT_NVENC_TUNE:-hq}")        # hq=perceptual quality
+                cmd+=(-profile:v main10)                      # HDR10 Main10 profile
+                cmd+=(-tag:v hvc1)                            # HLS compatibility tag
+                
+                # RTX-optimized encoding settings
+                cmd+=(-rc vbr)                               # Variable bitrate (better quality)
+                cmd+=(-surfaces 32)                          # Reference frames for RTX
+                cmd+=(-b_ref_mode each)                      # B-frames as references
+                cmd+=(-aq-strength 15)                       # Adaptive quantization
+                cmd+=(-rc-lookahead 32)                      # Lookahead buffer
+                
+                # HDR metadata (for YouTube and HDR displays)
+                cmd+=(-color_range 1)                        # 1=video range (required for HDR), not pc range
+                cmd+=(-colorspace bt2020nc)                  # BT.2020 color space (HDR standard)
+                cmd+=(-color_primaries bt2020)               # BT.2020 primaries
+                cmd+=(-color_trc smpte2084)                  # PQ (Perceptual Quantization) for HDR
+                
+                # Mastering display metadata (defines peak luminance and color volume)
+                # Standard values for HDR10: 10000 nits peak, BT.2020 primaries, 0.0001 black point
+                cmd+=(-master-display "G(13250,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(10000000,1)")
+                
+                # Content Light Level metadata (max brightness in stream)
+                cmd+=(-max-cll "1000,400")                   # max brightness: 1000 nits, max frame avg: 400 nits
             else
-                # Software fallback: libx265 can encode Main10 from p010le
-                local vf=""
-                [[ -n "$logo_filter" ]] && vf="${logo_filter},"
-                vf+="format=p010le"
-                if [[ "$COPT_OUT_W" != "$input_w" || "$COPT_OUT_H" != "$input_h" ]]; then
-                    vf+=",scale=${COPT_OUT_W}:${COPT_OUT_H}"
-                fi
-                cmd+=(-vf "$vf")
-                cmd+=(-c:v libx265 -preset fast -crf "$COPT_QUALITY" -pix_fmt yuv420p10le)
-                cmd+=(-x265-params "colorprim=bt2020:transfer=smpte2084:colormatrix=bt2020nc")
-                [[ -n "${COPT_HDR_MASTER_DISPLAY:-}" ]] && \
-                    cmd+=(-x265-params "master-display=${COPT_HDR_MASTER_DISPLAY}:max-cll=${COPT_HDR_MAX_CLL:-1000,400}")
-                warn "No hardware HEVC encoder found — using libx265 (CPU, slow for 4K)"
+                # CPU fallback
+                cmd+=(-c:v libx265 -preset fast -crf "$COPT_QUALITY" -pix_fmt yuv420p)
             fi
 
+            # Bitrate control (for streaming)
             if [[ -n "${COPT_BITRATE_VIDEO:-}" ]]; then
                 cmd+=(-b:v "$COPT_BITRATE_VIDEO" -maxrate "$COPT_BITRATE_VIDEO")
                 [[ -n "${COPT_BUFFER_SIZE:-}" ]] && cmd+=(-bufsize "$COPT_BUFFER_SIZE")
@@ -398,6 +389,14 @@ build_ffmpeg_usb_cmd() {
             copy) cmd+=(-c:a copy) ;;
             *)    die "Unknown audio codec: $COPT_AUDIO_CODEC" ;;
         esac
+    fi
+
+    # -- HLS streaming options (for YouTube Live and similar) --
+    if [[ "${COPT_STREAM_TYPE:-}" == "hls" ]]; then
+        cmd+=(-f hls)
+        cmd+=(-hls_time "${COPT_HLS_TIME:-4}")
+        cmd+=(-hls_playlist_type event)
+        cmd+=(-method PUT)
     fi
 
     # -- Output --
