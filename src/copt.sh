@@ -197,9 +197,30 @@ start_relay() {
     local relay_script=""
     local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     
-    # Only start relay if we're doing HLS streaming to YouTube
-    [[ "${COPT_STREAM_TYPE:-}" != "hls" ]] && return 0
-    [[ -z "${COPT_HLS_URL:-}${YT_HLS_URL:-}" ]] && return 0
+    # Only start relay if user requested HLS streaming (detected from --hls flag)
+    [[ $STREAMING_HINT -eq 0 ]] && return 0
+    
+    # Check if --hls was explicitly passed (not --rtmp)
+    local has_hls=0
+    for _a in "${FILTERED_ARGS[@]+"${FILTERED_ARGS[@]}"}"; do
+        [[ "$_a" == "--hls" ]] && has_hls=1 && break
+    done
+    [[ $has_hls -eq 0 ]] && return 0
+    
+    # Load YouTube URL from .env file
+    local youtube_url=""
+    local env_file="${script_dir}/../cfg/.env"
+    if [[ -f "$env_file" ]]; then
+        youtube_url=$(grep "^YT_HLS_URL=" "$env_file" 2>/dev/null | cut -d= -f2- | tr -d '"')
+    fi
+    
+    # Also check environment variables
+    youtube_url="${COPT_HLS_URL:-${YT_HLS_URL:-${youtube_url}}}"
+    
+    if [[ -z "$youtube_url" ]]; then
+        warn "YouTube HLS URL not configured in .env or YT_HLS_URL — relay cannot start"
+        return 1
+    fi
     
     # Find relay script
     if [[ -f "${script_dir}/../scripts/hls-upload-relay.sh" ]]; then
@@ -207,27 +228,14 @@ start_relay() {
     elif [[ -f "${script_dir}/hls-upload-relay.sh" ]]; then
         relay_script="${script_dir}/hls-upload-relay.sh"
     else
-        warn "HLS relay script not found — uploads will block encoder"
+        warn "HLS relay script not found at ${script_dir}/../scripts/hls-upload-relay.sh"
         return 1
     fi
     
     [[ ! -x "$relay_script" ]] && chmod +x "$relay_script"
     
-    # Get YouTube URL from environment or config
-    local youtube_url="${COPT_HLS_URL:-${YT_HLS_URL:-}}"
-    if [[ -z "$youtube_url" ]]; then
-        # Try to load from ~/.env if available
-        if [[ -f "$HOME/.env" ]]; then
-            youtube_url=$(grep "^YT_HLS_URL=" "$HOME/.env" 2>/dev/null | cut -d= -f2- | tr -d '"')
-        fi
-    fi
-    
-    if [[ -z "$youtube_url" ]]; then
-        warn "YouTube HLS URL not configured — relay cannot upload"
-        return 1
-    fi
-    
     info "Starting HLS relay (async uploader to YouTube)..."
+    mkdir -p /tmp/hls
     "$relay_script" --hls-dir /tmp/hls \
                     --youtube-url "$youtube_url" \
                     --segment-name stream &>/tmp/hls-relay.log &

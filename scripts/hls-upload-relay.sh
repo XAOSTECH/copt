@@ -86,10 +86,9 @@ upload_playlist() {
 # Main loop - watch for new segments and upload
 while true; do
     # Upload any .ts segments that haven't been uploaded
-    for segment in "$HLS_DIR"/${SEGMENT_NAME}*.ts 2>/dev/null; do
-        if [[ -f "$segment" ]]; then
-            upload_segment "$segment"
-        fi
+    for segment in "$HLS_DIR"/${SEGMENT_NAME}*.ts; do
+        [[ -f "$segment" ]] || continue
+        upload_segment "$segment"
     done
     
     # Upload playlist every 4 segments (roughly)
