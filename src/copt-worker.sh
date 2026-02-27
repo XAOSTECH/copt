@@ -56,7 +56,7 @@ if [[ -f "${COPT_CFG}/.env" ]]; then
         set +a
         if [[ -n "${YT_HLS_URL:-}" ]]; then
             # Obfuscate stream key (cid parameter)
-            local url_display="${YT_HLS_URL%%\?cid=*}"
+            url_display="${YT_HLS_URL%%\?cid=*}"
             [[ "$url_display" != "$YT_HLS_URL" ]] && url_display="${url_display}?cid=..."
             info "Loaded YT_HLS_URL from .env: ${url_display}"
         else

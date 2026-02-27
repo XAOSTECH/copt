@@ -484,7 +484,7 @@ CFG_ENV_FILE="${SCRIPT_DIR}/../cfg/.env"
 if [[ -f "$CFG_ENV_FILE" ]]; then
     YT_HLS_URL=$(grep "^YT_HLS_URL=" "$CFG_ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"' | xargs) || true
     if [[ -n "$YT_HLS_URL" ]]; then
-        local url_display="${YT_HLS_URL%%\?cid=*}"
+        url_display="${YT_HLS_URL%%\?cid=*}"
         [[ "$url_display" != "$YT_HLS_URL" ]] && url_display="${url_display}?cid=..."
         info "Loaded YT_HLS_URL from cfg/.env: ${url_display}"
     fi
