@@ -1,4 +1,14 @@
 
+## Credits
+
+- **P010 kernel patches** — [awawa-dev/P010_for_V4L2](https://github.com/awawa-dev/P010_for_V4L2)
+  by Alexander Weissmann ([@awawa-dev](https://github.com/awawa-dev)), creator of
+  [HyperHDR](https://github.com/awawa-dev/HyperHDR). Enables native P010 v4l2 support
+  for UVC devices. Included as a submodule in
+  [XAOSTECH/video-tools](https://github.com/XAOSTECH/video-tools) alongside this repo.
+
+---
+
 ## [0.0.1] - 2026-02-22 (re-release)
 
 ### Added
