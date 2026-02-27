@@ -347,13 +347,8 @@ build_ffmpeg_usb_cmd() {
                 cmd+=(-colorspace bt2020nc)                  # BT.2020 color space (HDR standard)
                 cmd+=(-color_primaries bt2020)               # BT.2020 primaries
                 cmd+=(-color_trc smpte2084)                  # PQ (Perceptual Quantization) for HDR
-                
-                # Mastering display metadata (defines peak luminance and color volume)
-                # Standard values for HDR10: 10000 nits peak, BT.2020 primaries, 0.0001 black point
-                cmd+=(-master_display "G(13250,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(10000000,1)")
-                
-                # Content Light Level metadata (max brightness in stream)
-                cmd+=(-max_cll "1000,400")                   # max brightness: 1000 nits, max frame avg: 400 nits
+                # Note: -master_display and -max_cll are mov/mp4 options, not supported by HLS muxer
+                # HDR information is embedded in HEVC bitstream via pix_fmt and color settings above
             else
                 # CPU fallback
                 cmd+=(-c:v libx265 -preset fast -crf "$COPT_QUALITY" -pix_fmt yuv420p)
