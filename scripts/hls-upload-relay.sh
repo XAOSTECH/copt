@@ -124,23 +124,34 @@ upload_playlist() {
 # Main loop - watch for new segments and upload
 last_playlist_upload=$(date +%s)
 loop_count=0
+max_concurrent_uploads=2
 while true; do
     loop_count=$((loop_count + 1))
-    # Upload any .ts segments that haven't been uploaded
-    for segment in "$HLS_DIR"/${SEGMENT_NAME}*.ts; do
-        [[ -f "$segment" ]] || continue
-        upload_segment "$segment"
-    done
     
-    # Upload playlist every 3 seconds (reduced for testing)
+    # Upload playlist every 3 seconds (independent of segment uploads)
     current_time=$(date +%s)
     if (( current_time - last_playlist_upload >= 3 )); then
         {
-            echo "[$(date)] Checking playlist... (loop #$loop_count, elapsed: $((current_time - last_playlist_upload))s)"
+            echo "[$(date)] Uploading playlist..."
             upload_playlist
-        } >> "$LOG_FILE"
+        } >> "$LOG_FILE" 2>&1 &
         last_playlist_upload=$current_time
     fi
+    
+    # Limit concurrent background uploads
+    while (( $(jobs -r | wc -l) >= max_concurrent_uploads )); do
+        sleep 0.1
+    done
+    
+    # Upload any .ts segments that haven't been uploaded (in background)
+    for segment in "$HLS_DIR"/${SEGMENT_NAME}*.ts; do
+        [[ -f "$segment" ]] || continue
+        # Check if already uploaded
+        if ! grep -q "^$segment$" "$UPLOADED_SEGMENTS_FILE" 2>/dev/null; then
+            # Upload in background but with concurrency limit
+            upload_segment "$segment" >> "$LOG_FILE" 2>&1 &
+        fi
+    done
     
     sleep 0.5
 done
