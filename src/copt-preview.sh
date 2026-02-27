@@ -235,11 +235,35 @@ start_preview() {
         info "Press 'q' or ESC in preview window to close"
         info "Or run: copt-preview stop"
         
-        # Wait a moment to see if window opens
-        sleep 1
-        if ! kill -0 "$pid" 2>/dev/null; then
-            rm -f "$PID_FILE"
-            die "Preview exited immediately. Check log: tail /tmp/copt-preview.log"
+        # Wait and verify process is stable and window actually opened
+        local check_count=0
+        local window_id=""
+        while [[ $check_count -lt 5 ]]; do
+            sleep 0.3
+            if ! kill -0 "$pid" 2>/dev/null; then
+                rm -f "$PID_FILE"
+                err "Preview process died during startup"
+                cat /tmp/copt-preview.log
+                die "Preview exited immediately. Check log above"
+            fi
+            
+            # Try to find the window (X11 or Wayland)
+            if command -v xdotool &>/dev/null; then
+                window_id=$(xdotool search --pid "$pid" 2>/dev/null | head -1 || true)
+            fi
+            
+            if [[ -n "$window_id" ]]; then
+                ok "Preview window confirmed (Window ID: $window_id)"
+                return 0
+            fi
+            
+            ((check_count++))
+        done
+        
+        # Process still alive but couldn't confirm window - warn but continue
+        if kill -0 "$pid" 2>/dev/null; then
+            warn "Preview process running but couldn't confirm window opened"
+            info "If you don't see a preview window, check: tail /tmp/copt-preview.log"
         fi
     else
         cat /tmp/copt-preview.log

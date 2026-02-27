@@ -138,6 +138,16 @@ kill_stale_ffmpeg() {
         pkill -9 -f "ffmpeg.*${VIDEO_DEV}" 2>/dev/null || true
     fi
     
+    # Kill any orphaned ffmpeg processes (including root-owned)
+    local orphaned_ffmpeg
+    orphaned_ffmpeg=$(ps aux | grep -E '[f]fmpeg.*(/dev/video|hw:[0-9]|/tmp/copt)' | awk '{print $2}' || true)
+    if [[ -n "$orphaned_ffmpeg" ]]; then
+        warn "Found orphaned FFmpeg processes: $orphaned_ffmpeg"
+        for pid in $orphaned_ffmpeg; do
+            kill -9 "$pid" 2>/dev/null || sudo kill -9 "$pid" 2>/dev/null || true
+        done
+    fi
+    
     # Kill any ffplay preview windows (may hold audio)
     if pgrep -f "ffplay" &>/dev/null; then
         warn "Killing stale ffplay preview processes"
