@@ -169,7 +169,7 @@ start_preview() {
     else
         ffplay_opts+=(
             -f v4l2
-            -input_format yuv420p
+            -input_format nv12
             -video_size 3840x2160
             -framerate 30
             -i "$PREVIEW_DEVICE"
