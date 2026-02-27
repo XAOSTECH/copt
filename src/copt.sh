@@ -210,6 +210,11 @@ start_relay() {
     # If YouTube URL is set by parent script, use it
     local youtube_url="${COPT_HLS_URL:-${YT_HLS_URL:-}}"
     
+    # Debug output
+    info "DEBUG start_relay: COPT_HLS_URL='${COPT_HLS_URL:-<not set>}'"
+    info "DEBUG start_relay: YT_HLS_URL='${YT_HLS_URL:-<not set>}'"
+    info "DEBUG start_relay: youtube_url='${youtube_url:-<not set>}'"
+    
     if [[ -z "$youtube_url" ]]; then
         warn "YouTube HLS URL not available — relay will not start"
         return 0
@@ -484,16 +489,24 @@ CFG_ENV_FILE="${SCRIPT_DIR}/../cfg/.env"
 if [[ -f "$CFG_ENV_FILE" ]]; then
     YT_HLS_URL=$(grep "^YT_HLS_URL=" "$CFG_ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"' | xargs) || true
     if [[ -n "$YT_HLS_URL" ]]; then
+        export YT_HLS_URL
         url_display="${YT_HLS_URL%%\?cid=*}"
         [[ "$url_display" != "$YT_HLS_URL" ]] && url_display="${url_display}?cid=..."
         info "Loaded YT_HLS_URL from cfg/.env: ${url_display}"
+    else
+        warn "CFG_ENV_FILE exists but YT_HLS_URL not found or empty in: $CFG_ENV_FILE"
     fi
+else
+    warn "CFG_ENV_FILE not found: $CFG_ENV_FILE"
 fi
 
 # Also try ~/.env as fallback
 if [[ -z "${YT_HLS_URL:-}" ]] && [[ -f "$HOME/.env" ]]; then
     YT_HLS_URL=$(grep "^YT_HLS_URL=" "$HOME/.env" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"' | xargs) || true
-    [[ -n "$YT_HLS_URL" ]] && info "Loaded YT_HLS_URL from ~/.env"
+    if [[ -n "$YT_HLS_URL" ]]; then
+        export YT_HLS_URL
+        info "Loaded YT_HLS_URL from ~/.env"
+    fi
 fi
 
 # Start HLS relay if doing async uploads
