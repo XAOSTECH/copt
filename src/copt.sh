@@ -477,14 +477,17 @@ info "Exec mode: ${EXEC_MODE}  |  autorestart: enabled  |  max: ${MAX_RETRIES:-i
 [[ $PREVIEW_ENABLED -eq 1 ]] && info "Preview: enabled (window will open)"
 echo ""
 
-# Load YouTube URL early before starting relay
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Load YouTube URL early before starting relay (use existing SCRIPT_DIR)
 CFG_ENV_FILE="${SCRIPT_DIR}/../cfg/.env"
 
 # Try to load from cfg/.env first
 if [[ -f "$CFG_ENV_FILE" ]]; then
     YT_HLS_URL=$(grep "^YT_HLS_URL=" "$CFG_ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"' | xargs) || true
-    [[ -n "$YT_HLS_URL" ]] && info "Loaded YT_HLS_URL from cfg/.env"
+    if [[ -n "$YT_HLS_URL" ]]; then
+        local url_display="${YT_HLS_URL%%\?cid=*}"
+        [[ "$url_display" != "$YT_HLS_URL" ]] && url_display="${url_display}?cid=..."
+        info "Loaded YT_HLS_URL from cfg/.env: ${url_display}"
+    fi
 fi
 
 # Also try ~/.env as fallback
