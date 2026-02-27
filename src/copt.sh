@@ -163,6 +163,24 @@ kill_stale_ffmpeg() {
     sleep 0.5
 }
 
+# Disable systemd services that may interfere with device access
+disable_capture_services() {
+    local services=(
+        "usb-capture-ffmpeg.service"
+        "usb-capture-monitor.service"
+        "ugreen-ffmpeg.service"
+        "ugreen-monitor.service"
+    )
+    
+    for service in "${services[@]}"; do
+        if systemctl is-active --quiet "$service" 2>/dev/null; then
+            warn "Stopping and disabling ${service}"
+            sudo systemctl stop "$service" 2>/dev/null || true
+            sudo systemctl disable "$service" 2>/dev/null || true
+        fi
+    done
+}
+
 # Fast exit handler (Ctrl+C)
 on_interrupt() {
     STOP_REQUESTED=1
@@ -381,7 +399,7 @@ rebuild_args
 retry_count=0
 start_time=$(date +%s)
 tmplog=$(mktemp /tmp/copt-host-XXXXXX.log)
-trap 'kill_stale_ffmpeg; stop_preview; rm -f "$tmplog"' EXIT
+trap 'disable_capture_services; kill_stale_ffmpeg; stop_preview; rm -f "$tmplog"' EXIT
 
 info "Exec mode: ${EXEC_MODE}  |  autorestart: enabled  |  max: ${MAX_RETRIES:-infinite}"
 [[ $PREVIEW_ENABLED -eq 1 ]] && info "Preview: enabled (window will open)"
