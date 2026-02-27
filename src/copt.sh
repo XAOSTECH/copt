@@ -193,6 +193,18 @@ disable_capture_services() {
 
 # Start HLS upload relay (async uploader for YouTube)
 RELAY_PID=""
+
+# Kill stale relay processes from previous runs
+kill_stale_relay() {
+    if pgrep -f "hls-upload-relay.sh" &>/dev/null; then
+        warn "Killing stale HLS relay processes"
+        pkill -9 -f "hls-upload-relay.sh" 2>/dev/null || true
+        sleep 0.5
+    fi
+    # Clear stale upload tracking log
+    rm -f /tmp/hls-uploaded.log 2>/dev/null
+}
+
 start_relay() {
     local relay_script=""
     
@@ -209,15 +221,13 @@ start_relay() {
     # If YouTube URL is set by parent script, use it
     local youtube_url="${COPT_HLS_URL:-${YT_HLS_URL:-}}"
     
-    # Debug output
-    info "DEBUG start_relay: COPT_HLS_URL='${COPT_HLS_URL:-<not set>}'"
-    info "DEBUG start_relay: YT_HLS_URL='${YT_HLS_URL:-<not set>}'"
-    info "DEBUG start_relay: youtube_url='${youtube_url:-<not set>}'"
-    
     if [[ -z "$youtube_url" ]]; then
         warn "YouTube HLS URL not available — relay will not start"
         return 0
     fi
+    
+    # Kill any stale relay processes and clear upload log
+    kill_stale_relay
     
     # Find relay script using already-computed SCRIPT_DIR
     if [[ -f "${SCRIPT_DIR}/../scripts/hls-upload-relay.sh" ]]; then
@@ -233,7 +243,7 @@ start_relay() {
     
     # Start relay in background
     mkdir -p /tmp/hls
-    info "Starting HLS relay (async uploader to YouTube)..."
+    info "Starting HLS relay..."
     "$relay_script" --hls-dir /tmp/hls \
                     --youtube-url "$youtube_url" \
                     --segment-name stream &>/tmp/hls-relay.log &
