@@ -277,6 +277,10 @@ parse_args() {
             --dry-run)            DRY_RUN=1; shift ;;
             --version)            echo "copt v${COPT_VERSION}"; exit 0 ;;
             --help)               usage ;;
+            # Relay flags are handled by copt.sh (launcher); ignore here
+            --skip-relay|--no-relay) shift ;;
+            # Host/preview flags are handled by copt.sh; ignore here
+            --host|--preview)     shift ;;
             -*)                   die "Unknown option: $1  (try --help)" ;;
             *)                    COPT_OUTPUT="$1"; shift ;;   # positional = output
         esac
