@@ -123,7 +123,9 @@ upload_playlist() {
 
 # Main loop - watch for new segments and upload
 last_playlist_upload=$(date +%s)
+loop_count=0
 while true; do
+    loop_count=$((loop_count + 1))
     # Upload any .ts segments that haven't been uploaded
     for segment in "$HLS_DIR"/${SEGMENT_NAME}*.ts; do
         [[ -f "$segment" ]] || continue
@@ -133,6 +135,7 @@ while true; do
     # Upload playlist every 10 seconds
     current_time=$(date +%s)
     if (( current_time - last_playlist_upload >= 10 )); then
+        echo "[$(date)] Checking playlist... (loop #$loop_count, elapsed: $((current_time - last_playlist_upload))s)" >> "$LOG_FILE"
         upload_playlist
         last_playlist_upload=$current_time
     fi
