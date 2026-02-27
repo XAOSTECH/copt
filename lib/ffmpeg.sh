@@ -327,20 +327,22 @@ build_ffmpeg_usb_cmd() {
                 # Direct encoding: nv12 input -> hevc_nvenc converts to p010le internally
                 # No filter chain needed - OBS-style direct encode
                 
-                # NVIDIA NVENC h265 — quality settings from proven ff4KHDR config
+                # NVIDIA NVENC h265 — GPU-only encoding with minimal CPU preprocessing
                 cmd+=(-c:v hevc_nvenc)
                 cmd+=(-pix_fmt "${COPT_PIXEL_FMT:-p010le}")  # Encoder converts nv12 -> p010le
-                cmd+=(-preset "${COPT_NVENC_PRESET:-p7}")   # p7=quality, p4=speed
-                cmd+=(-tune "${COPT_NVENC_TUNE:-hq}")        # hq=perceptual quality
+                cmd+=(-preset "${COPT_NVENC_PRESET:-p4}")    # p4=low latency (pure GPU), p5=balanced
+                cmd+=(-tune "${COPT_NVENC_TUNE:-ll}")        # ll=low latency (GPU-only pipeline)
                 cmd+=(-profile:v main10)                      # HDR10 Main10 profile
                 cmd+=(-tag:v hvc1)                            # HLS compatibility tag
                 
-                # RTX-optimized encoding settings
-                cmd+=(-rc vbr)                               # Variable bitrate (better quality)
-                cmd+=(-surfaces 32)                          # Reference frames for RTX
-                cmd+=(-b_ref_mode each)                      # B-frames as references
-                cmd+=(-aq-strength 15)                       # Adaptive quantization
-                cmd+=(-rc-lookahead 32)                      # Lookahead buffer
+                # Pure GPU encoding settings (minimal CPU)
+                cmd+=(-rc vbr)                               # Variable bitrate
+                cmd+=(-delay 0)                              # No frame delay (pure GPU pipeline)
+                cmd+=(-zerolatency 1)                        # Zero latency mode (no CPU buffering)
+                cmd+=(-rc-lookahead 0)                       # Disable CPU lookahead analysis (GPU decides in real-time)
+                cmd+=(-b_ref_mode 0)                         # Disable (reduces complexity)
+                cmd+=(-spatial-aq 1)                         # GPU spatial AQ only
+                cmd+=(-temporal-aq 1)                        # GPU temporal AQ
                 
                 # HDR metadata (for YouTube and HDR displays)
                 cmd+=(-color_range 1)                        # 1=video range (required for HDR), not pc range
