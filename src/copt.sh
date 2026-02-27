@@ -391,7 +391,7 @@ else
     # ── On the host — check if forced to host-only mode ───────────────────────
     if [[ $FORCE_HOST_MODE -eq 1 ]]; then
         info "Host-only mode forced (--host flag)"
-        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
         HOST_SCRIPT="${SCRIPT_DIR}/copt-worker.sh"
         if [[ ! -f "$HOST_SCRIPT" ]]; then
             for candidate in \
@@ -489,7 +489,6 @@ CFG_ENV_FILE="${SCRIPT_DIR}/../cfg/.env"
 if [[ -f "$CFG_ENV_FILE" ]]; then
     YT_HLS_URL=$(grep "^YT_HLS_URL=" "$CFG_ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"' | xargs) || true
     if [[ -n "$YT_HLS_URL" ]]; then
-        export YT_HLS_URL
         url_display="${YT_HLS_URL%%\?cid=*}"
         [[ "$url_display" != "$YT_HLS_URL" ]] && url_display="${url_display}?cid=..."
         info "Loaded YT_HLS_URL from cfg/.env: ${url_display}"
@@ -504,7 +503,6 @@ fi
 if [[ -z "${YT_HLS_URL:-}" ]] && [[ -f "$HOME/.env" ]]; then
     YT_HLS_URL=$(grep "^YT_HLS_URL=" "$HOME/.env" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"' | xargs) || true
     if [[ -n "$YT_HLS_URL" ]]; then
-        export YT_HLS_URL
         info "Loaded YT_HLS_URL from ~/.env"
     fi
 fi
