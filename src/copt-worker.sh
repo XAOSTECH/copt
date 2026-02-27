@@ -151,105 +151,81 @@ load_env_file() {
 # ----- usage / help ----------------------------------------------------------
 usage() {
     cat <<EOF
-${C_BLD}copt${C_RST} v${COPT_VERSION} — Wayland screen capture via KMS grab + FFmpeg
+${C_BLD}copt${C_RST} v${COPT_VERSION} — USB capture + live streaming (UGREEN 25173 / V4L2)
 
 ${C_BLD}USAGE${C_RST}
     copt [OPTIONS]
 
-${C_BLD}CAPTURE OPTIONS${C_RST}
-    -d, --dri-device PATH    DRI device          (default: auto-detect)
-    -W, --screen-width  N    Source screen width  (default: auto-detect)
-    -H, --screen-height N    Source screen height (default: auto-detect)
-    -w, --out-width     N    Output width         (default: $COPT_OUT_W)
-    -h, --out-height    N    Output height        (default: $COPT_OUT_H)
-    --crop-x  N              Crop region X offset (default: 0)
-    --crop-y  N              Crop region Y offset (default: 0)
-    --crop-w  N              Crop region width    (default: screen width)
-    --crop-h  N              Crop region height   (default: screen height)
-    -r, --framerate     N    Capture framerate    (default: $COPT_FRAMERATE)
-    -t, --duration      N    Duration in seconds  (default: unlimited)
-
-${C_BLD}ENCODER OPTIONS${C_RST}
-    -e, --encoder  NAME      Encoder: auto|vaapi|nvenc|x264|x265|hevc  (default: auto)
-    -q, --quality  N         Quality (CRF/QP)     (default: $COPT_QUALITY)
-    -p, --pix-fmt  FMT       Pixel format          (default: $COPT_PIXEL_FMT)
-    --profile NAME           Load encoding profile (1080p30|1080p60|4k30|4k60|4kHDR30)
-
-${C_BLD}AUDIO OPTIONS${C_RST}
-    -a, --audio-device DEV   ALSA device (e.g. hw:0,6)  (default: auto-detect)
-    -A, --no-audio           Disable audio capture
-    --audio-codec CODEC      Audio codec: aac|opus|mp3|copy (default: $COPT_AUDIO_CODEC)
-
-${C_BLD}OUTPUT${C_RST}
-    -o, --output  FILE       Output file path      (default: $COPT_OUTPUT)
+${C_BLD}PROFILES  (--profile NAME)${C_RST}
+    4k30               4K HDR10 @ 30fps, NV12→p010le, 17Mbps  [default for HLS]
+    1080p60            1080p SDR @ 60fps, NV12→yuv420p, 17Mbps [use with --rtmp]
+    4kHDR30            alias for 4k30
+    usb-capture-4k30-hdr  legacy alias for 4k30
+    usb-capture-1080p30-hdr  1080p HDR (requires P010 kernel patch)
 
 ${C_BLD}STREAMING${C_RST}
-    -y, --youtube-key KEY    YouTube stream key (enables live streaming)
-    --rtmp                   Use RTMP protocol (default)
-    --hls                    Use HLS protocol (requires --hls-url)
-    --rtmp-url URL           Custom RTMP server URL (default: YouTube)
-    --hls-url URL            HLS endpoint URL
-    --stream-name NAME       Stream name/key suffix (default: copt-stream)
+    --hls                    Use HLS upload relay to YouTube (recommended)
+    --rtmp                   Stream via RTMP/RTMPS
+    --skip-relay             Write HLS directly without async relay
+    --no-relay               Alias for --skip-relay
+    -y, --youtube-key KEY    YouTube stream key
+    --hls-url URL            Override HLS endpoint URL
+    --rtmp-url URL           Override RTMP server URL
 
-${C_BLD}USB CAPTURE (UGREEN 25173 / V4L2 devices)${C_RST}
-    --capture-mode MODE      Capture mode: kmsgrab (default) | usb
+${C_BLD}USB CAPTURE${C_RST}
+    --capture-mode usb       USB V4L2 capture mode (required for UGREEN 25173)
     --usb-device  PATH       V4L2 device path         (default: auto-detect)
     --usb-vid-pid VID:PID    USB VID:PID for reconnect (default: 3188:1000)
-    --input-format FMT       V4L2 input pixel format   (default: mjpeg)
-    --input-size  WxH        Capture resolution from device (default: output size)
-    --usb-reconnect          Enable auto-reconnect on USB disconnect (default: on)
-    --no-usb-reconnect       Disable auto-reconnect (exit on disconnect)
+    --input-format FMT       V4L2 input pixel format   (default: nv12)
+    --input-size  WxH        Capture resolution from device
+
+${C_BLD}ENCODER OPTIONS${C_RST}
+    -e, --encoder  NAME      Encoder: hevc (NVENC) | vaapi | x265  (default: hevc)
+    -q, --quality  N         Quality (CRF/QP)              (default: $COPT_QUALITY)
+    -p, --pix-fmt  FMT       Pixel format                  (default: $COPT_PIXEL_FMT)
+    -r, --framerate     N    Capture framerate             (default: $COPT_FRAMERATE)
+    -t, --duration      N    Duration in seconds           (default: unlimited)
+
+${C_BLD}AUDIO OPTIONS${C_RST}
+    -a, --audio-device DEV   ALSA device (e.g. hw:1,0)    (default: auto-detect)
+    -A, --no-audio           Disable audio capture
+    --audio-codec CODEC      aac|opus|mp3|copy             (default: $COPT_AUDIO_CODEC)
+
+${C_BLD}OUTPUT${C_RST}
+    -o, --output  FILE       Output file path              (default: $COPT_OUTPUT)
 
 ${C_BLD}GENERAL${C_RST}
-    -c, --config  FILE       Config file path
+    --host                   Force host execution (skip container lookup)
+    --preview                Launch preview window alongside stream
     --probe                  Probe system and show detected devices, then exit
-    --dry-run                Print the ffmpeg command without executing
+    --dry-run                Print ffmpeg command without executing
     --version                Show version
     --help                   Show this help
 
 ${C_BLD}EXAMPLES${C_RST}
-    # Full screen capture with auto-detect
-    sudo copt -o ~/recording.mkv
+    # 4K HDR stream to YouTube via HLS (from cfg/.env URL)
+    copt --hls --profile=4k30
 
-    # Capture at native resolution, no scaling
-    sudo copt -W 3456 -H 2160 -w 3456 -h 2160
+    # 1080p SDR stream via RTMPS with explicit stream key
+    copt --rtmp --profile=1080p60 -y YOUR_KEY
 
-    # Capture a 1920x1080 region starting at (100,200)
-    sudo copt --crop-x 100 --crop-y 200 --crop-w 1920 --crop-h 1080
+    # Skip async relay (debug: FFmpeg writes directly)
+    copt --hls --profile=4k30 --skip-relay
 
-    # Use NVENC encoder explicitly
-    sudo copt -e nvenc -o /tmp/gpu-recording.mkv
+    # Force host execution (no container)
+    copt --hls --profile=4k30 --host
 
-    # No audio, 30fps, short recording
-    sudo copt -A -r 30 -t 60 -o /tmp/clip.mkv
+    # Preview window alongside HLS stream
+    copt --hls --profile=4k30 --preview
 
-    # Use 1080p60 encoding profile
-    sudo copt --profile 1080p60 -o ~/recording.mkv
-
-    # Use 4K HDR profile for HDR10 streaming/recording
-    sudo copt --profile 4kHDR30 -y YOUR_STREAM_KEY
-
-    # Stream to YouTube Live via RTMP (default)
-    sudo copt -y YOUR_STREAM_KEY
-
-    # Stream to YouTube Live via HLS
-    sudo copt -y YOUR_STREAM_KEY --hls --hls-url https://your-hls-url
-
-    # USB capture (UGREEN 25173) — 4K with auto-reconnect
-    sudo copt --capture-mode usb --profile usb-capture-4k30 -o ~/capture.mkv
-
-    # USB capture — stable 1080p on USB 3.0 back port
-    sudo copt --capture-mode usb --profile usb-capture-1080p30 -o ~/capture.mkv
-
-    # USB capture — explicit device + VID:PID, streaming to YouTube
-    sudo copt --capture-mode usb --usb-device /dev/video0 \\
-              --usb-vid-pid 3188:1000 -y YOUR_STREAM_KEY
+    # Explicit device + VID:PID
+    copt --capture-mode usb --usb-device /dev/video0 --usb-vid-pid 3188:1000 --hls
 
 ${C_BLD}NOTES${C_RST}
-    • Requires root (sudo) for KMS framebuffer access.
-    • On multi-GPU systems, try --dri-device /dev/dri/card1 if card0 fails.
+    • Run as the capture user (sudo for USB access if needed).
+    • Set YT_HLS_URL in cfg/.env or ~/.env — no need to pass URL on CLI.
     • Check audio devices:  cat /proc/asound/cards
-    • Mouse cursor capture is not supported by kmsgrab.
+    • Relay log:  tail -f /tmp/hls-relay.log
 
 EOF
     exit 0
