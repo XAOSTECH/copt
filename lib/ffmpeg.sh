@@ -173,12 +173,13 @@ build_ffmpeg_cmd() {
         esac
     fi
 
-    # -- Output --
+    # -- Output with streaming --
+    # Note: When using tee muxer, format-specific options are set in the format string, not globally
     if [[ -n "${COPT_PREVIEW_OUTPUT:-}" && "${COPT_IS_STREAMING:-0}" -eq 1 && "${DRY_RUN:-0}" -eq 0 ]]; then
         local main_fmt=""
         case "${COPT_STREAM_TYPE:-}" in
             rtmp) main_fmt="flv" ;;
-            hls)  main_fmt="hls:method=PUT:hls_time=2:hls_list_size=6:hls_flags=delete_segments+omit_endlist" ;;
+            hls)  main_fmt="hls:method=PUT:hls_time=2:hls_list_size=6:hls_flags=delete_segments+omit_endlist+independent_segments" ;;
         esac
         local preview_fmt="${COPT_PREVIEW_FORMAT:-mpegts}"
         local tee_outputs=""
@@ -189,6 +190,15 @@ build_ffmpeg_cmd() {
         fi
         cmd+=(-f tee "$tee_outputs")
     else
+        # Direct output (no preview) - apply HLS options globally for non-tee output
+        if [[ "${COPT_STREAM_TYPE:-}" == "hls" ]]; then
+            cmd+=(-f hls)
+            cmd+=(-hls_time 2)
+            cmd+=(-hls_list_size 6)
+            cmd+=(-hls_flags delete_segments+omit_endlist+independent_segments)
+            cmd+=(-hls_playlist_type event)
+            cmd+=(-method PUT)
+        fi
         cmd+=("$COPT_OUTPUT")
     fi
 
@@ -388,20 +398,13 @@ build_ffmpeg_usb_cmd() {
         esac
     fi
 
-    # -- HLS streaming options (for YouTube Live and similar) --
-    if [[ "${COPT_STREAM_TYPE:-}" == "hls" ]]; then
-        cmd+=(-f hls)
-        cmd+=(-hls_time "${COPT_HLS_TIME:-4}")
-        cmd+=(-hls_playlist_type event)
-        cmd+=(-method PUT)
-    fi
-
-    # -- Output --
+    # -- Output with streaming --
+    # Note: When using tee muxer, format-specific options are set in the format string, not globally
     if [[ -n "${COPT_PREVIEW_OUTPUT:-}" && "${COPT_IS_STREAMING:-0}" -eq 1 && "${DRY_RUN:-0}" -eq 0 ]]; then
         local main_fmt=""
         case "${COPT_STREAM_TYPE:-}" in
             rtmp) main_fmt="flv" ;;
-            hls)  main_fmt="hls:method=PUT:hls_time=2:hls_list_size=6:hls_flags=delete_segments+omit_endlist" ;;
+            hls)  main_fmt="hls:method=PUT:hls_time=2:hls_list_size=6:hls_flags=delete_segments+omit_endlist+independent_segments" ;;
         esac
         local preview_fmt="${COPT_PREVIEW_FORMAT:-mpegts}"
         local tee_outputs=""
@@ -412,6 +415,15 @@ build_ffmpeg_usb_cmd() {
         fi
         cmd+=(-f tee "$tee_outputs")
     else
+        # Direct output (no preview) - apply HLS options globally for non-tee output
+        if [[ "${COPT_STREAM_TYPE:-}" == "hls" ]]; then
+            cmd+=(-f hls)
+            cmd+=(-hls_time 2)
+            cmd+=(-hls_list_size 6)
+            cmd+=(-hls_flags delete_segments+omit_endlist+independent_segments)
+            cmd+=(-hls_playlist_type event)
+            cmd+=(-method PUT)
+        fi
         cmd+=("$COPT_OUTPUT")
     fi
 
