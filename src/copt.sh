@@ -195,7 +195,6 @@ disable_capture_services() {
 RELAY_PID=""
 start_relay() {
     local relay_script=""
-    local script_dir=""
     
     # Only start relay if user requested HLS streaming (detected from --hls flag)
     [[ $STREAMING_HINT -eq 0 ]] && return 0
@@ -220,16 +219,13 @@ start_relay() {
         return 0
     fi
     
-    # Resolve script directory
-    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    
-    # Find relay script
-    if [[ -f "${script_dir}/../scripts/hls-upload-relay.sh" ]]; then
-        relay_script="${script_dir}/../scripts/hls-upload-relay.sh"
-    elif [[ -f "${script_dir}/hls-upload-relay.sh" ]]; then
-        relay_script="${script_dir}/hls-upload-relay.sh"
+    # Find relay script using already-computed SCRIPT_DIR
+    if [[ -f "${SCRIPT_DIR}/../scripts/hls-upload-relay.sh" ]]; then
+        relay_script="${SCRIPT_DIR}/../scripts/hls-upload-relay.sh"
+    elif [[ -f "${SCRIPT_DIR}/hls-upload-relay.sh" ]]; then
+        relay_script="${SCRIPT_DIR}/hls-upload-relay.sh"
     else
-        warn "HLS relay script not found — uploads will be synchronous"
+        warn "HLS relay script not found (looked for ${SCRIPT_DIR}/../scripts/hls-upload-relay.sh) — uploads will be synchronous"
         return 0
     fi
     
