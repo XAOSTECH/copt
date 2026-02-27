@@ -479,12 +479,19 @@ echo ""
 
 # Load YouTube URL early before starting relay
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ -f "${SCRIPT_DIR}/../cfg/.env" ]]; then
-    source "${SCRIPT_DIR}/../cfg/.env" 2>/dev/null || true
+CFG_ENV_FILE="${SCRIPT_DIR}/../cfg/.env"
+
+# Try to load from cfg/.env first
+if [[ -f "$CFG_ENV_FILE" ]]; then
+    YT_HLS_URL=$(grep "^YT_HLS_URL=" "$CFG_ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"' | xargs) || true
+    [[ -n "$YT_HLS_URL" ]] && info "Loaded YT_HLS_URL from cfg/.env"
 fi
-# Also check home directory for .env
-[[ -z "${YT_HLS_URL:-}" ]] && [[ -f "$HOME/.env" ]] && \
-    YT_HLS_URL=$(grep "^YT_HLS_URL=" "$HOME/.env" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"' | tr -d "'") || true
+
+# Also try ~/.env as fallback
+if [[ -z "${YT_HLS_URL:-}" ]] && [[ -f "$HOME/.env" ]]; then
+    YT_HLS_URL=$(grep "^YT_HLS_URL=" "$HOME/.env" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"' | xargs) || true
+    [[ -n "$YT_HLS_URL" ]] && info "Loaded YT_HLS_URL from ~/.env"
+fi
 
 # Start HLS relay if doing async uploads
 start_relay || true
