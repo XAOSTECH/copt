@@ -195,7 +195,7 @@ disable_capture_services() {
 RELAY_PID=""
 start_relay() {
     local relay_script=""
-    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local script_dir=""
     
     # Only start relay if user requested HLS streaming (detected from --hls flag)
     [[ $STREAMING_HINT -eq 0 ]] && return 0
@@ -207,19 +207,29 @@ start_relay() {
     done
     [[ $has_hls -eq 0 ]] && return 0
     
-    # Load YouTube URL from .env file
+    # Resolve script directory
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    
+    # Try to load YouTube URL from multiple sources
     local youtube_url=""
-    local env_file="${script_dir}/../cfg/.env"
-    if [[ -f "$env_file" ]]; then
-        youtube_url=$(grep "^YT_HLS_URL=" "$env_file" 2>/dev/null | cut -d= -f2- | tr -d '"')
+    
+    # 1. Check environment variables first
+    youtube_url="${COPT_HLS_URL:-${YT_HLS_URL:-}}"
+    
+    # 2. If not in env, try to read from cfg/.env (relative to this script)
+    if [[ -z "$youtube_url" ]] && [[ -f "${script_dir}/../cfg/.env" ]]; then
+        youtube_url=$(grep "^YT_HLS_URL=" "${script_dir}/../cfg/.env" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"' | tr -d "'" | xargs)
     fi
     
-    # Also check environment variables
-    youtube_url="${COPT_HLS_URL:-${YT_HLS_URL:-${youtube_url}}}"
+    # 3. Also try ~/.env as fallback
+    if [[ -z "$youtube_url" ]] && [[ -f "$HOME/.env" ]]; then
+        youtube_url=$(grep "^YT_HLS_URL=" "$HOME/.env" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"' | tr -d "'" | xargs)
+    fi
     
+    # If still no URL, skip relay (worker will handle direct streaming if needed)
     if [[ -z "$youtube_url" ]]; then
-        warn "YouTube HLS URL not configured in .env or YT_HLS_URL — relay cannot start"
-        return 1
+        warn "YouTube HLS URL not available yet — relay will start after worker loads config"
+        return 0
     fi
     
     # Find relay script
@@ -228,14 +238,15 @@ start_relay() {
     elif [[ -f "${script_dir}/hls-upload-relay.sh" ]]; then
         relay_script="${script_dir}/hls-upload-relay.sh"
     else
-        warn "HLS relay script not found at ${script_dir}/../scripts/hls-upload-relay.sh"
-        return 1
+        warn "HLS relay script not found — uploads will be synchronous"
+        return 0
     fi
     
-    [[ ! -x "$relay_script" ]] && chmod +x "$relay_script"
+    [[ ! -x "$relay_script" ]] && chmod +x "$relay_script" 2>/dev/null
     
-    info "Starting HLS relay (async uploader to YouTube)..."
+    # Start relay in background
     mkdir -p /tmp/hls
+    info "Starting HLS relay (async uploader to YouTube)..."
     "$relay_script" --hls-dir /tmp/hls \
                     --youtube-url "$youtube_url" \
                     --segment-name stream &>/tmp/hls-relay.log &
