@@ -334,35 +334,47 @@ build_ffmpeg_usb_cmd() {
             [[ -n "${COPT_GOP_SIZE:-}" ]] && cmd+=(-g "$COPT_GOP_SIZE")
             ;;
         hevc)
-            # HEVC encoding — NVIDIA NVENC GPU encoder (no filter chain, direct encode)
+            # HEVC encoding — NVIDIA NVENC GPU encoder
             if echo "$encoders" | grep -q hevc_nvenc; then
-                # Direct encoding: nv12 input -> hevc_nvenc converts to p010le internally
-                # No filter chain needed - OBS-style direct encode
-                
-                # NVIDIA NVENC h265 — GPU-only encoding with minimal CPU preprocessing
+                # hevc_nvenc ignores output-side -color_primaries/-color_trc codec context flags
+                # when the input frames carry no colour metadata (V4L2 always reports sRGB/Rec.709).
+                # setparams stamps BT.2020/PQ onto each frame before NVENC sees it, which causes
+                # NVENC to propagate the correct primaries and transfer into the bitstream SEI.
+                # Verified: without setparams → bt2020nc/unknown/unknown in output stream.
+                #           with setparams    → bt2020nc/bt2020/smpte2084 ✓
+                local _sp_primaries="${COPT_COLOR_PRIMARIES:-bt2020}"
+                local _sp_trc="${COPT_COLOR_TRC:-smpte2084}"
+                local _sp_cs="${COPT_COLORSPACE:-bt2020nc}"
+                local hdr_setparams="setparams=color_primaries=${_sp_primaries}:color_trc=${_sp_trc}:colorspace=${_sp_cs}:range=tv"
+
+                # Combine with logo filter if enabled
+                local hdr_vf=""
+                if [[ -n "$logo_filter" ]]; then
+                    hdr_vf="${logo_filter},${hdr_setparams}"
+                else
+                    hdr_vf="${hdr_setparams}"
+                fi
+                cmd+=(-vf "$hdr_vf")
+
                 cmd+=(-c:v hevc_nvenc)
-                cmd+=(-pix_fmt "${COPT_PIXEL_FMT:-p010le}")  # Encoder converts nv12 -> p010le
-                cmd+=(-preset "${COPT_NVENC_PRESET:-p4}")    # p4=low latency (pure GPU), p5=balanced
-                cmd+=(-tune "${COPT_NVENC_TUNE:-ll}")        # ll=low latency (GPU-only pipeline)
-                cmd+=(-profile:v main10)                      # HDR10 Main10 profile
-                cmd+=(-tag:v hvc1)                            # HLS compatibility tag
-                
-                # Pure GPU encoding settings (minimal CPU)
-                cmd+=(-rc vbr)                               # Variable bitrate
-                cmd+=(-delay 0)                              # No frame delay (pure GPU pipeline)
-                cmd+=(-zerolatency 1)                        # Zero latency mode (no CPU buffering)
-                cmd+=(-rc-lookahead 0)                       # Disable CPU lookahead analysis (GPU decides in real-time)
-                cmd+=(-b_ref_mode 0)                         # Disable (reduces complexity)
-                cmd+=(-spatial-aq 1)                         # GPU spatial AQ only
-                cmd+=(-temporal-aq 1)                        # GPU temporal AQ
-                
-                # HDR metadata (for YouTube and HDR displays)
-                cmd+=(-color_range 1)                        # 1=video range (required for HDR), not pc range
-                cmd+=(-colorspace bt2020nc)                  # BT.2020 color space (HDR standard)
-                cmd+=(-color_primaries bt2020)               # BT.2020 primaries
-                cmd+=(-color_trc smpte2084)                  # PQ (Perceptual Quantization) for HDR
-                # Note: -master_display and -max_cll are mov/mp4 options, not supported by HLS muxer
-                # HDR information is embedded in HEVC bitstream via pix_fmt and color settings above
+                cmd+=(-pix_fmt "${COPT_PIXEL_FMT:-p010le}")  # nv12/p010 → p010le internal conversion
+                cmd+=(-preset "${COPT_NVENC_PRESET:-p4}")
+                cmd+=(-tune "${COPT_NVENC_TUNE:-ll}")
+                cmd+=(-profile:v main10)
+                cmd+=(-tag:v hvc1)
+
+                cmd+=(-rc vbr)
+                cmd+=(-zerolatency 1)
+                cmd+=(-rc-lookahead 0)
+                cmd+=(-b_ref_mode 0)
+                cmd+=(-spatial-aq 1)
+                cmd+=(-temporal-aq 1)
+
+                # Output-side colour flags (propagated correctly once setparams stamps frames)
+                cmd+=(-color_range tv)
+                cmd+=(-colorspace "${COPT_COLORSPACE:-bt2020nc}")
+                cmd+=(-color_primaries "${COPT_COLOR_PRIMARIES:-bt2020}")
+                cmd+=(-color_trc "${COPT_COLOR_TRC:-smpte2084}")
             else
                 # CPU fallback
                 cmd+=(-c:v libx265 -preset fast -crf "$COPT_QUALITY" -pix_fmt yuv420p)
