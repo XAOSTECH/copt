@@ -207,30 +207,16 @@ start_relay() {
     done
     [[ $has_hls -eq 0 ]] && return 0
     
-    # Resolve script directory
-    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    # If YouTube URL is set by parent script, use it
+    local youtube_url="${COPT_HLS_URL:-${YT_HLS_URL:-}}"
     
-    # Try to load YouTube URL from multiple sources
-    local youtube_url=""
-    
-    # 1. Check environment variables first
-    youtube_url="${COPT_HLS_URL:-${YT_HLS_URL:-}}"
-    
-    # 2. If not in env, try to read from cfg/.env (relative to this script)
-    if [[ -z "$youtube_url" ]] && [[ -f "${script_dir}/../cfg/.env" ]]; then
-        youtube_url=$(grep "^YT_HLS_URL=" "${script_dir}/../cfg/.env" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"' | tr -d "'" | xargs)
-    fi
-    
-    # 3. Also try ~/.env as fallback
-    if [[ -z "$youtube_url" ]] && [[ -f "$HOME/.env" ]]; then
-        youtube_url=$(grep "^YT_HLS_URL=" "$HOME/.env" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"' | tr -d "'" | xargs)
-    fi
-    
-    # If still no URL, skip relay (worker will handle direct streaming if needed)
     if [[ -z "$youtube_url" ]]; then
-        warn "YouTube HLS URL not available yet — relay will start after worker loads config"
+        warn "YouTube HLS URL not available — relay will not start"
         return 0
     fi
+    
+    # Resolve script directory
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     
     # Find relay script
     if [[ -f "${script_dir}/../scripts/hls-upload-relay.sh" ]]; then
@@ -490,6 +476,15 @@ tmplog=$(mktemp /tmp/copt-host-XXXXXX.log)
 info "Exec mode: ${EXEC_MODE}  |  autorestart: enabled  |  max: ${MAX_RETRIES:-infinite}"
 [[ $PREVIEW_ENABLED -eq 1 ]] && info "Preview: enabled (window will open)"
 echo ""
+
+# Load YouTube URL early before starting relay
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "${SCRIPT_DIR}/../cfg/.env" ]]; then
+    source "${SCRIPT_DIR}/../cfg/.env" 2>/dev/null || true
+fi
+# Also check home directory for .env
+[[ -z "${YT_HLS_URL:-}" ]] && [[ -f "$HOME/.env" ]] && \
+    YT_HLS_URL=$(grep "^YT_HLS_URL=" "$HOME/.env" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"' | tr -d "'") || true
 
 # Start HLS relay if doing async uploads
 start_relay || true
