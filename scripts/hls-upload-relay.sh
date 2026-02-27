@@ -68,12 +68,13 @@ upload_segment() {
         echo "[$(date)] Uploading: $remote_path" >> "$LOG_FILE"
         
         # Use --tcp-nodelay for persistent connection, --keepalive-time to reuse
+        # Append filename directly (URL ends with parameter name like "file=")
         if curl --connect-timeout 10 \
                 --max-time "$UPLOAD_TIMEOUT" \
                 --tcp-nodelay \
                 --keepalive-time 60 \
                 -T "$segment" \
-                "${YOUTUBE_URL%/}/$(basename "$segment")" \
+                "${YOUTUBE_URL}$(basename "$segment")" \
                 >> "$LOG_FILE" 2>&1; then
             echo "$segment" >> "$UPLOADED_SEGMENTS_FILE"
             echo "[$(date)] ✓ Uploaded: $remote_path" >> "$LOG_FILE"
@@ -94,11 +95,13 @@ upload_segment() {
 upload_playlist() {
     local m3u8="$HLS_DIR/${SEGMENT_NAME}.m3u8"
     if [[ -f "$m3u8" ]]; then
+        # For playlist, we typically use the base URL or a manifest endpoint
+        # YouTube HLS may not need explicit playlist uploads if segments are present
         curl --connect-timeout 10 \
              --max-time 10 \
              --tcp-nodelay \
              -T "$m3u8" \
-             "${YOUTUBE_URL%/}/${SEGMENT_NAME}.m3u8" \
+             "${YOUTUBE_URL}${SEGMENT_NAME}.m3u8" \
              >> "$LOG_FILE" 2>&1 || echo "[$(date)] ⚠ Playlist upload failed" >> "$LOG_FILE"
     fi
 }
