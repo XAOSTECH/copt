@@ -132,11 +132,13 @@ while true; do
         upload_segment "$segment"
     done
     
-    # Upload playlist every 10 seconds
+    # Upload playlist every 3 seconds (reduced for testing)
     current_time=$(date +%s)
-    if (( current_time - last_playlist_upload >= 10 )); then
-        echo "[$(date)] Checking playlist... (loop #$loop_count, elapsed: $((current_time - last_playlist_upload))s)" >> "$LOG_FILE"
-        upload_playlist
+    if (( current_time - last_playlist_upload >= 3 )); then
+        {
+            echo "[$(date)] Checking playlist... (loop #$loop_count, elapsed: $((current_time - last_playlist_upload))s)"
+            upload_playlist
+        } >> "$LOG_FILE"
         last_playlist_upload=$current_time
     fi
     
