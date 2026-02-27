@@ -401,12 +401,35 @@ build_ffmpeg_usb_cmd() {
     fi
 
     # -- Output with streaming --
-    # Note: When using tee muxer, format-specific options are set in the format string, not globally
-    if [[ -n "${COPT_PREVIEW_OUTPUT:-}" && "${COPT_IS_STREAMING:-0}" -eq 1 && "${DRY_RUN:-0}" -eq 0 ]]; then
+    # For HLS streaming: write to local /tmp/hls/, relay uploads asynchronously
+    # This decouples encoding from network uploads (like OBS does internally)
+    if [[ "${COPT_STREAM_TYPE:-}" == "hls" ]]; then
+        # Create local HLS output directory
+        mkdir -p /tmp/hls
+        
+        # Write to local disk (no network blocking on encoder)
+        local hls_output="/tmp/hls/stream.m3u8"
+        
+        if [[ -n "${COPT_PREVIEW_OUTPUT:-}" && "${COPT_IS_STREAMING:-0}" -eq 1 && "${DRY_RUN:-0}" -eq 0 ]]; then
+            # With preview: use tee to split streams
+            local preview_fmt="${COPT_PREVIEW_FORMAT:-mpegts}"
+            local hls_fmt="hls:hls_time=4:hls_list_size=5:hls_flags=delete_segments+omit_endlist+independent_segments:hls_playlist_type=event"
+            local tee_outputs="[f=${hls_fmt}]${hls_output}|[f=${preview_fmt}]${COPT_PREVIEW_OUTPUT}"
+            cmd+=(-f tee "$tee_outputs")
+        else
+            # No preview: direct HLS output to local disk
+            cmd+=(-f hls)
+            cmd+=(-hls_time 4)
+            cmd+=(-hls_list_size 5)
+            cmd+=(-hls_flags delete_segments+omit_endlist+independent_segments)
+            cmd+=(-hls_playlist_type event)
+            cmd+=("$hls_output")
+        fi
+    elif [[ -n "${COPT_PREVIEW_OUTPUT:-}" && "${COPT_IS_STREAMING:-0}" -eq 1 && "${DRY_RUN:-0}" -eq 0 ]]; then
+        # Non-HLS with preview: use tee
         local main_fmt=""
         case "${COPT_STREAM_TYPE:-}" in
             rtmp) main_fmt="flv" ;;
-            hls)  main_fmt="hls:method=PUT:http_persistent=1:timeout=300:hls_time=4:hls_list_size=5:hls_flags=delete_segments+omit_endlist+independent_segments" ;;
         esac
         local preview_fmt="${COPT_PREVIEW_FORMAT:-mpegts}"
         local tee_outputs=""
@@ -417,17 +440,7 @@ build_ffmpeg_usb_cmd() {
         fi
         cmd+=(-f tee "$tee_outputs")
     else
-        # Direct output (no preview) - apply HLS options globally for non-tee output
-        if [[ "${COPT_STREAM_TYPE:-}" == "hls" ]]; then
-            cmd+=(-f hls)
-            cmd+=(-hls_time 4)
-            cmd+=(-hls_list_size 5)
-            cmd+=(-hls_flags delete_segments+omit_endlist+independent_segments)
-            cmd+=(-hls_playlist_type event)
-            cmd+=(-method PUT)
-            cmd+=(-http_persistent 1)
-            cmd+=(-timeout 300)
-        fi
+        # Direct output (no preview)
         cmd+=("$COPT_OUTPUT")
     fi
 

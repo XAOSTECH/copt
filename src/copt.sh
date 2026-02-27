@@ -191,6 +191,62 @@ disable_capture_services() {
     done
 }
 
+# Start HLS upload relay (async uploader for YouTube)
+RELAY_PID=""
+start_relay() {
+    local relay_script=""
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    
+    # Only start relay if we're doing HLS streaming to YouTube
+    [[ "${COPT_STREAM_TYPE:-}" != "hls" ]] && return 0
+    [[ -z "${COPT_HLS_URL:-}${YT_HLS_URL:-}" ]] && return 0
+    
+    # Find relay script
+    if [[ -f "${script_dir}/../scripts/hls-upload-relay.sh" ]]; then
+        relay_script="${script_dir}/../scripts/hls-upload-relay.sh"
+    elif [[ -f "${script_dir}/hls-upload-relay.sh" ]]; then
+        relay_script="${script_dir}/hls-upload-relay.sh"
+    else
+        warn "HLS relay script not found — uploads will block encoder"
+        return 1
+    fi
+    
+    [[ ! -x "$relay_script" ]] && chmod +x "$relay_script"
+    
+    # Get YouTube URL from environment or config
+    local youtube_url="${COPT_HLS_URL:-${YT_HLS_URL:-}}"
+    if [[ -z "$youtube_url" ]]; then
+        # Try to load from ~/.env if available
+        if [[ -f "$HOME/.env" ]]; then
+            youtube_url=$(grep "^YT_HLS_URL=" "$HOME/.env" 2>/dev/null | cut -d= -f2- | tr -d '"')
+        fi
+    fi
+    
+    if [[ -z "$youtube_url" ]]; then
+        warn "YouTube HLS URL not configured — relay cannot upload"
+        return 1
+    fi
+    
+    info "Starting HLS relay (async uploader to YouTube)..."
+    "$relay_script" --hls-dir /tmp/hls \
+                    --youtube-url "$youtube_url" \
+                    --segment-name stream &>/tmp/hls-relay.log &
+    RELAY_PID=$!
+    ok "Relay started (PID: $RELAY_PID)"
+}
+
+# Stop HLS upload relay
+stop_relay() {
+    if [[ -n "$RELAY_PID" ]] && kill -0 "$RELAY_PID" 2>/dev/null; then
+        info "Stopping HLS relay (PID: $RELAY_PID)..."
+        kill -TERM "$RELAY_PID" 2>/dev/null || true
+        sleep 1
+        kill -9 "$RELAY_PID" 2>/dev/null || true
+    fi
+    # Also kill any orphaned relay processes
+    pkill -f "hls-upload-relay.sh" 2>/dev/null || true
+}
+
 # Fast exit handler (Ctrl+C)
 on_interrupt() {
     STOP_REQUESTED=1
@@ -409,11 +465,14 @@ rebuild_args
 retry_count=0
 start_time=$(date +%s)
 tmplog=$(mktemp /tmp/copt-host-XXXXXX.log)
-trap 'disable_capture_services; kill_stale_ffmpeg; stop_preview; rm -f "$tmplog"' EXIT
+trap 'stop_relay; disable_capture_services; kill_stale_ffmpeg; stop_preview; rm -f "$tmplog"' EXIT
 
 info "Exec mode: ${EXEC_MODE}  |  autorestart: enabled  |  max: ${MAX_RETRIES:-infinite}"
 [[ $PREVIEW_ENABLED -eq 1 ]] && info "Preview: enabled (window will open)"
 echo ""
+
+# Start HLS relay if doing async uploads
+start_relay || true
 
 # Start preview window if requested
 if [[ $PREVIEW_ENABLED -eq 1 ]]; then
