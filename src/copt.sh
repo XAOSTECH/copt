@@ -126,16 +126,33 @@ stop_preview() {
     fi
 }
 
-# Kill stale ffmpeg processes that still hold the device
+# Kill stale ffmpeg/ffplay/alsa processes that hold devices
 kill_stale_ffmpeg() {
     [[ "$KILL_STALE_FFMPEG" -eq 1 ]] || return 0
-    local pattern="ffmpeg.*${VIDEO_DEV}"
-    if pgrep -f "$pattern" &>/dev/null; then
+    
+    # Kill any ffmpeg process using the video device
+    if pgrep -f "ffmpeg.*${VIDEO_DEV}" &>/dev/null; then
         warn "Found stale ffmpeg using ${VIDEO_DEV} — stopping"
-        pkill -TERM -f "$pattern" 2>/dev/null || true
-        sleep 1
-        pkill -KILL -f "$pattern" 2>/dev/null || true
+        pkill -TERM -f "ffmpeg.*${VIDEO_DEV}" 2>/dev/null || true
+        sleep 0.5
+        pkill -9 -f "ffmpeg.*${VIDEO_DEV}" 2>/dev/null || true
     fi
+    
+    # Kill any ffplay preview windows (may hold audio)
+    if pgrep -f "ffplay" &>/dev/null; then
+        warn "Killing stale ffplay preview processes"
+        pkill -9 -f "ffplay" 2>/dev/null || true
+    fi
+    
+    # Kill any alsa/pulseaudio processes stuck on audio device
+    if pgrep -f "alsa|pulseaudio" &>/dev/null; then
+        warn "Clearing stuck audio daemon processes"
+        pkill -9 aplay 2>/dev/null || true
+        pkill -9 arecord 2>/dev/null || true
+    fi
+    
+    # Give devices time to fully release
+    sleep 0.5
 }
 
 # Fast exit handler (Ctrl+C)
