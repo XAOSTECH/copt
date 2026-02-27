@@ -149,6 +149,14 @@ kill_stale_ffmpeg() {
         warn "Clearing stuck audio daemon processes"
         pkill -9 aplay 2>/dev/null || true
         pkill -9 arecord 2>/dev/null || true
+        # Restart PulseAudio daemon to release audio device lock
+        pkill -9 pulseaudio 2>/dev/null || true
+        sleep 0.5
+        # Try to restart pulseaudio in user session
+        if command -v pulseaudio &>/dev/null; then
+            systemctl --user restart pulseaudio 2>/dev/null || true
+            pulseaudio --daemonize 2>/dev/null || true
+        fi
     fi
     
     # Give devices time to fully release
