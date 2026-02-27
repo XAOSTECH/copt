@@ -235,6 +235,19 @@ build_ffmpeg_usb_cmd() {
     cmd+=(-input_format "$input_fmt")
     cmd+=(-video_size "${input_w}x${input_h}")
     cmd+=(-framerate "$COPT_FRAMERATE")
+    # Declare input colorspace before -i so FFmpeg treats the raw V4L2 frames as
+    # already being in the target colorspace.  The UGREEN 25173 genuinely outputs
+    # HDR-encoded pixel values in NV12; the UVC descriptor wrongly reports sRGB/
+    # Rec.709.  Without this, FFmpeg uses the V4L2 descriptor as the input context
+    # and may apply an implicit matrix conversion when nv12→p010le is requested,
+    # washing out colours.  OBS avoids this by setting the output encoder flags
+    # directly without re-interpreting the input — we replicate that here.
+    local _in_primaries="${COPT_COLOR_PRIMARIES:-}"
+    local _in_trc="${COPT_COLOR_TRC:-}"
+    local _in_cs="${COPT_COLORSPACE:-}"
+    if [[ -n "$_in_primaries" && -n "$_in_trc" && -n "$_in_cs" ]]; then
+        cmd+=(-color_primaries "$_in_primaries" -color_trc "$_in_trc" -colorspace "$_in_cs")
+    fi
     cmd+=(-i "${COPT_USB_DEVICE:-/dev/video0}")
 
     # -- Duration --
@@ -336,12 +349,12 @@ build_ffmpeg_usb_cmd() {
         hevc)
             # HEVC encoding — NVIDIA NVENC GPU encoder
             if echo "$encoders" | grep -q hevc_nvenc; then
-                # hevc_nvenc ignores output-side -color_primaries/-color_trc codec context flags
-                # when the input frames carry no colour metadata (V4L2 always reports sRGB/Rec.709).
-                # setparams stamps BT.2020/PQ onto each frame before NVENC sees it, which causes
-                # NVENC to propagate the correct primaries and transfer into the bitstream SEI.
-                # Verified: without setparams → bt2020nc/unknown/unknown in output stream.
-                #           with setparams    → bt2020nc/bt2020/smpte2084 ✓
+                # Input-side colorspace is declared before -i (see above) so FFmpeg's
+                # internal context matches the output — no implicit matrix is applied.
+                # setparams additionally stamps per-frame AVFrame metadata so NVENC
+                # propagates the correct primaries/transfer into the bitstream SEI.
+                # Both are needed: input decl prevents pixel conversion; setparams
+                # ensures NVENC emits the SEI even when input frame tags are clean.
                 local _sp_primaries="${COPT_COLOR_PRIMARIES:-bt2020}"
                 local _sp_trc="${COPT_COLOR_TRC:-smpte2084}"
                 local _sp_cs="${COPT_COLORSPACE:-bt2020nc}"
