@@ -199,7 +199,15 @@ kill_stale_relay() {
     if pgrep -f "hls-upload-relay.sh" &>/dev/null; then
         warn "Killing stale HLS relay processes"
         pkill -9 -f "hls-upload-relay.sh" 2>/dev/null || true
-        sleep 0.5
+        # Wait for processes to actually die
+        for i in {1..10}; do
+            pgrep -f "hls-upload-relay.sh" &>/dev/null || break
+            sleep 0.1
+        done
+        if pgrep -f "hls-upload-relay.sh" &>/dev/null; then
+            err "Failed to kill stale relay processes"
+            return 1
+        fi
     fi
     # Clear stale upload tracking log
     rm -f /tmp/hls-uploaded.log 2>/dev/null
@@ -253,14 +261,24 @@ start_relay() {
 
 # Stop HLS upload relay
 stop_relay() {
+    local killed_any=0
     if [[ -n "$RELAY_PID" ]] && kill -0 "$RELAY_PID" 2>/dev/null; then
         info "Stopping HLS relay (PID: $RELAY_PID)..."
         kill -TERM "$RELAY_PID" 2>/dev/null || true
-        sleep 1
+        sleep 0.5
         kill -9 "$RELAY_PID" 2>/dev/null || true
+        killed_any=1
     fi
-    # Also kill any orphaned relay processes
-    pkill -f "hls-upload-relay.sh" 2>/dev/null || true
+    # Kill any orphaned relay processes
+    if pgrep -f "hls-upload-relay.sh" &>/dev/null; then
+        [[ $killed_any -eq 0 ]] && info "Stopping orphaned HLS relay processes..."
+        pkill -9 -f "hls-upload-relay.sh" 2>/dev/null || true
+        # Wait for cleanup
+        for i in {1..5}; do
+            pgrep -f "hls-upload-relay.sh" &>/dev/null || break
+            sleep 0.1
+        done
+    fi
 }
 
 # Fast exit handler (Ctrl+C)
