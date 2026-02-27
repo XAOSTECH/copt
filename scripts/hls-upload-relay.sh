@@ -50,7 +50,10 @@ done
 
 # Initialize
 mkdir -p "$HLS_DIR"
-touch "$UPLOADED_SEGMENTS_FILE"
+
+# Clear uploaded segments list on startup to handle playlist resets
+# (FFmpeg may start fresh with new segments, so old tracking is invalid)
+> "$UPLOADED_SEGMENTS_FILE"
 
 # Obfuscate URL for logging - show first 8 chars of cid key
 url_display="${YOUTUBE_URL%%=*}="
@@ -107,6 +110,22 @@ upload_segment() {
 upload_playlist() {
     local m3u8="$HLS_DIR/${SEGMENT_NAME}.m3u8"
     if [[ -f "$m3u8" ]]; then
+        # Verify all segments referenced in playlist still exist (avoid stale playlists)
+        local all_segments_exist=true
+        while IFS= read -r line; do
+            if [[ "$line" =~ ^${SEGMENT_NAME}.*\.ts$ ]]; then
+                if [[ ! -f "$HLS_DIR/$line" ]]; then
+                    all_segments_exist=false
+                    break
+                fi
+            fi
+        done < "$m3u8"
+        
+        if ! $all_segments_exist; then
+            # Playlist references missing segments - skip this upload
+            return
+        fi
+        
         echo "[$(date)] Uploading playlist: ${SEGMENT_NAME}.m3u8" >> "$LOG_FILE"
         if curl --connect-timeout 10 \
                 --max-time 10 \
