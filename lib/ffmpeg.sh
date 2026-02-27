@@ -350,10 +350,10 @@ build_ffmpeg_usb_cmd() {
                 
                 # Mastering display metadata (defines peak luminance and color volume)
                 # Standard values for HDR10: 10000 nits peak, BT.2020 primaries, 0.0001 black point
-                cmd+=(-master-display "G(13250,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(10000000,1)")
+                cmd+=(-master_display "G(13250,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(10000000,1)")
                 
                 # Content Light Level metadata (max brightness in stream)
-                cmd+=(-max-cll "1000,400")                   # max brightness: 1000 nits, max frame avg: 400 nits
+                cmd+=(-max_cll "1000,400")                   # max brightness: 1000 nits, max frame avg: 400 nits
             else
                 # CPU fallback
                 cmd+=(-c:v libx265 -preset fast -crf "$COPT_QUALITY" -pix_fmt yuv420p)
