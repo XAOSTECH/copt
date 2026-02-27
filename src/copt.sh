@@ -361,23 +361,30 @@ wait_for_device() {
 # ============================================================================
 # Main
 # ============================================================================
-echo ""
-echo "  copt — USB/Wayland capture with HDR support"
-echo "  USB device : ${VID_PID}"
-echo "  Profile    : ${DEFAULT_PROFILE} (override with --profile)"
-echo ""
-
 # ── Parse flags early (needed for --host) ───────────────────────────────────
 USER_ARGS=("$@")
 has_profile=0
 FILTERED_ARGS=()
+EFFECTIVE_PROFILE="$DEFAULT_PROFILE"
 
 # Parse user args: extract --preview, --host, --profile, and streaming flags
+# --profile=VALUE is normalised to --profile VALUE so the worker always gets
+# the two-token form and we can extract the effective value unambiguously.
 STREAMING_HINT=0
+_next_is_profile=0
 for _a in "${USER_ARGS[@]+"${USER_ARGS[@]}"}"; do
-    if [[ "$_a" == "--profile" ]]; then
+    if [[ $_next_is_profile -eq 1 ]]; then
+        EFFECTIVE_PROFILE="$_a"
+        FILTERED_ARGS+=("$_a")
+        _next_is_profile=0
+    elif [[ "$_a" == "--profile" ]]; then
         has_profile=1
         FILTERED_ARGS+=("$_a")
+        _next_is_profile=1
+    elif [[ "$_a" == --profile=* ]]; then
+        has_profile=1
+        EFFECTIVE_PROFILE="${_a#--profile=}"
+        FILTERED_ARGS+=(--profile "$EFFECTIVE_PROFILE")
     elif [[ "$_a" == "--preview" ]]; then
         PREVIEW_ENABLED=1
     elif [[ "$_a" == "--host" ]]; then
@@ -389,6 +396,12 @@ for _a in "${USER_ARGS[@]+"${USER_ARGS[@]}"}"; do
         FILTERED_ARGS+=("$_a")
     fi
 done
+
+echo ""
+echo "  copt — USB/Wayland capture with HDR support"
+echo "  USB device : ${VID_PID}"
+echo "  Profile    : ${EFFECTIVE_PROFILE}"
+echo ""
 
 # When preview is enabled for streaming, use stream-based preview (no device grab)
 if [[ $PREVIEW_ENABLED -eq 1 && $STREAMING_HINT -eq 1 ]]; then
@@ -429,6 +442,8 @@ else
         [[ -f "$HOST_SCRIPT" ]] || die "copt-worker.sh not found. Try without --host flag."
         EXEC_MODE=host
         COPT_SCRIPT="$HOST_SCRIPT"
+        # Update SCRIPT_DIR to the real location (may differ from readlink if found via candidate)
+        SCRIPT_DIR="$(cd "$(dirname "$COPT_SCRIPT")" && pwd)"
         ok "copt (host-only): ${COPT_SCRIPT}"
         info "Lower latency mode - using host FFmpeg/NVENC directly"
     else
@@ -460,7 +475,8 @@ else
             # Fallback: no container running — run directly on host
             warn "No devcontainer found — falling back to host-direct mode"
             warn "Start the VS Code devcontainer for full NVENC/CUDA support"
-            SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+            # Resolve via readlink first so an installed symlink (~/bin/copt) points back to the repo
+            SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
             HOST_SCRIPT="${SCRIPT_DIR}/copt-worker.sh"
             if [[ ! -f "$HOST_SCRIPT" ]]; then
                 for candidate in \
@@ -474,6 +490,8 @@ else
             [[ -f "$HOST_SCRIPT" ]] || die "copt-worker.sh not found on host and no container running."
             EXEC_MODE=host
             COPT_SCRIPT="$HOST_SCRIPT"
+            # Keep SCRIPT_DIR consistent with the resolved script location
+            SCRIPT_DIR="$(cd "$(dirname "$COPT_SCRIPT")" && pwd)"
             ok "copt (host fallback): ${COPT_SCRIPT}"
         fi
     fi
