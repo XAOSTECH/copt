@@ -95,14 +95,17 @@ upload_segment() {
 upload_playlist() {
     local m3u8="$HLS_DIR/${SEGMENT_NAME}.m3u8"
     if [[ -f "$m3u8" ]]; then
-        # For playlist, we typically use the base URL or a manifest endpoint
-        # YouTube HLS may not need explicit playlist uploads if segments are present
-        curl --connect-timeout 10 \
-             --max-time 10 \
-             --tcp-nodelay \
-             -T "$m3u8" \
-             "${YOUTUBE_URL}${SEGMENT_NAME}.m3u8" \
-             >> "$LOG_FILE" 2>&1 || echo "[$(date)] ⚠ Playlist upload failed" >> "$LOG_FILE"
+        echo "[$(date)] Uploading playlist: ${SEGMENT_NAME}.m3u8" >> "$LOG_FILE"
+        if curl --connect-timeout 10 \
+                --max-time 10 \
+                --tcp-nodelay \
+                -T "$m3u8" \
+                "${YOUTUBE_URL}${SEGMENT_NAME}.m3u8" \
+                >> "$LOG_FILE" 2>&1; then
+            echo "[$(date)] ✓ Playlist uploaded" >> "$LOG_FILE"
+        else
+            echo "[$(date)] ⚠ Playlist upload failed" >> "$LOG_FILE"
+        fi
     fi
 }
 
