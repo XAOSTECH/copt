@@ -269,10 +269,12 @@ stop_relay() {
 # Fast exit handler (Ctrl+C)
 on_interrupt() {
     STOP_REQUESTED=1
+    info "Interrupt received — shutting down gracefully..."
     stop_preview
     exit 0
 }
 trap on_interrupt INT TERM
+trap 'stop_relay; disable_capture_services; kill_stale_ffmpeg; stop_preview; rm -f "$tmplog"' EXIT
 
 # True when this process is running inside a container
 in_container() {
@@ -484,7 +486,6 @@ rebuild_args
 retry_count=0
 start_time=$(date +%s)
 tmplog=$(mktemp /tmp/copt-host-XXXXXX.log)
-trap 'stop_relay; disable_capture_services; kill_stale_ffmpeg; stop_preview; rm -f "$tmplog"' EXIT
 
 info "Exec mode: ${EXEC_MODE}  |  autorestart: enabled  |  max: ${MAX_RETRIES:-infinite}"
 [[ $PREVIEW_ENABLED -eq 1 ]] && info "Preview: enabled (window will open)"
