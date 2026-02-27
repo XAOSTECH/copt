@@ -52,10 +52,22 @@ done
 mkdir -p "$HLS_DIR"
 touch "$UPLOADED_SEGMENTS_FILE"
 
+# Obfuscate URL for logging - show first 8 chars of cid key
+url_display="${YOUTUBE_URL%%=*}="
+cid_part="${YOUTUBE_URL#*cid=}"
+cid_key="${cid_part%&*}"
+if [[ ${#cid_key} -gt 8 ]]; then
+    url_display="${url_display}${cid_key:0:8}***"
+else
+    url_display="${url_display}***"
+fi
+rest="${YOUTUBE_URL#*cid=*&}"
+[[ -n "$rest" ]] && url_display="${url_display}&${rest}" || url_display="${url_display}&..."
+
 {
     echo "[$(date)] HLS Upload Relay started"
     echo "  HLS dir: $HLS_DIR"
-    echo "  YouTube URL: ${YOUTUBE_URL%"?cid="*}?cid=..."
+    echo "  YouTube URL: ${url_display}"
     echo ""
 } >> "$LOG_FILE"
 

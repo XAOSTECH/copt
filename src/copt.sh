@@ -513,8 +513,18 @@ CFG_ENV_FILE="${SCRIPT_DIR}/../cfg/.env"
 if [[ -f "$CFG_ENV_FILE" ]]; then
     YT_HLS_URL=$(grep "^YT_HLS_URL=" "$CFG_ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"' | xargs) || true
     if [[ -n "$YT_HLS_URL" ]]; then
-        url_display="${YT_HLS_URL%%\?cid=*}"
-        [[ "$url_display" != "$YT_HLS_URL" ]] && url_display="${url_display}?cid=..."
+        # Show URL with partial cid masking (first 8 chars + *)
+        url_display="${YT_HLS_URL%%=*}="  # base: ?cid=
+        cid_part="${YT_HLS_URL#*cid=}"     # everything after cid=
+        cid_key="${cid_part%&*}"            # just the cid value
+        if [[ ${#cid_key} -gt 8 ]]; then
+            url_display="${url_display}${cid_key:0:8}***"
+        else
+            url_display="${url_display}***"
+        fi
+        # Add any query parameters after cid
+        rest="${YT_HLS_URL#*cid=*&}"
+        [[ -n "$rest" ]] && url_display="${url_display}&${rest}" || url_display="${url_display}&..."
         info "Loaded YT_HLS_URL from cfg/.env: ${url_display}"
     else
         warn "CFG_ENV_FILE exists but YT_HLS_URL not found or empty in: $CFG_ENV_FILE"
