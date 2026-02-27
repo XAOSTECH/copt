@@ -199,7 +199,7 @@ build_ffmpeg_cmd() {
             cmd+=(-hls_playlist_type event)
             cmd+=(-method PUT)
             cmd+=(-http_persistent 1)
-            cmd+=(-timeout 10000000)
+            cmd+=(-timeout 300)
         fi
         cmd+=("$COPT_OUTPUT")
     fi
@@ -406,7 +406,7 @@ build_ffmpeg_usb_cmd() {
         local main_fmt=""
         case "${COPT_STREAM_TYPE:-}" in
             rtmp) main_fmt="flv" ;;
-            hls)  main_fmt="hls:method=PUT:http_persistent=1:timeout=10:hls_time=4:hls_list_size=5:hls_flags=delete_segments+omit_endlist+independent_segments" ;;
+            hls)  main_fmt="hls:method=PUT:http_persistent=1:timeout=300:hls_time=4:hls_list_size=5:hls_flags=delete_segments+omit_endlist+independent_segments" ;;
         esac
         local preview_fmt="${COPT_PREVIEW_FORMAT:-mpegts}"
         local tee_outputs=""
@@ -426,7 +426,7 @@ build_ffmpeg_usb_cmd() {
             cmd+=(-hls_playlist_type event)
             cmd+=(-method PUT)
             cmd+=(-http_persistent 1)
-            cmd+=(-timeout 10000000)
+            cmd+=(-timeout 300)
         fi
         cmd+=("$COPT_OUTPUT")
     fi
