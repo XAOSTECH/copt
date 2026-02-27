@@ -48,11 +48,13 @@ done
 [[ -z "$HLS_DIR" ]] && { echo "Error: --hls-dir required" | tee -a "$LOG_FILE"; exit 1; }
 [[ -z "$YOUTUBE_URL" ]] && { echo "Error: --youtube-url required" | tee -a "$LOG_FILE"; exit 1; }
 
-# Initialize
+# Initialize — wipe HLS dir so FFmpeg and relay always start in sync.
+# Stale .ts files from a previous run confuse YouTube: it gets a playlist
+# referencing segment N+M but the connection already closed at segment N.
 mkdir -p "$HLS_DIR"
+rm -f "$HLS_DIR"/*.ts "$HLS_DIR"/*.m3u8 2>/dev/null || true
 
-# Clear uploaded segments list on startup to handle playlist resets
-# (FFmpeg may start fresh with new segments, so old tracking is invalid)
+# Clear uploaded segments tracking log
 > "$UPLOADED_SEGMENTS_FILE"
 
 # Obfuscate URL for logging - show first 8 chars of cid key

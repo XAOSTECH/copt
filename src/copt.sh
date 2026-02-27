@@ -371,8 +371,9 @@ EFFECTIVE_PROFILE="$DEFAULT_PROFILE"
 # --profile=VALUE is normalised to --profile VALUE so the worker always gets
 # the two-token form and we can extract the effective value unambiguously.
 STREAMING_HINT=0
+SKIP_RELAY=0
 _next_is_profile=0
-for _a in "${USER_ARGS[@]+"${USER_ARGS[@]}"}"; do
+for _a in "${USER_ARGS[@]+"${USER_ARGS[@]}"}"]; do
     if [[ $_next_is_profile -eq 1 ]]; then
         EFFECTIVE_PROFILE="$_a"
         FILTERED_ARGS+=("$_a")
@@ -385,6 +386,12 @@ for _a in "${USER_ARGS[@]+"${USER_ARGS[@]}"}"; do
         has_profile=1
         EFFECTIVE_PROFILE="${_a#--profile=}"
         FILTERED_ARGS+=(--profile "$EFFECTIVE_PROFILE")
+    elif [[ "$_a" == "--skip-relay" || "$_a" == "--no-relay" ]]; then
+        SKIP_RELAY=1
+    elif [[ "$_a" == "--help" || "$_a" == "-h" ]]; then
+        # Pass --help through to worker (which prints full usage and exits)
+        # but skip all the relay/USB setup overhead first.
+        FILTERED_ARGS+=("$_a")
     elif [[ "$_a" == "--preview" ]]; then
         PREVIEW_ENABLED=1
     elif [[ "$_a" == "--host" ]]; then
@@ -394,6 +401,17 @@ for _a in "${USER_ARGS[@]+"${USER_ARGS[@]}"}"; do
         FILTERED_ARGS+=("$_a")
     else
         FILTERED_ARGS+=("$_a")
+    fi
+done
+
+# ------------------------------------------------------------------
+# Early exit for --help / -h: don't start relay, don't check USB,
+# just exec the worker with --help and let it print usage + exit.
+# ------------------------------------------------------------------
+for _a in "${USER_ARGS[@]+"${USER_ARGS[@]}"}"]; do
+    if [[ "$_a" == "--help" || "$_a" == "-h" ]]; then
+        exec bash "$(find /home/jnxlr/PRO/WEB/CST/copt/src /workspaces/CST/copt/src /workspaces/copt/src -name copt-worker.sh 2>/dev/null | head -1)" --help 2>/dev/null \
+            || { bash -n 2>/dev/null; echo "(worker not found — run from repo)"; exit 1; }
     fi
 done
 
