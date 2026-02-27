@@ -55,7 +55,10 @@ if [[ -f "${COPT_CFG}/.env" ]]; then
         source "${COPT_CFG}/.env" || warn "Failed to source ${COPT_CFG}/.env"
         set +a
         if [[ -n "${YT_HLS_URL:-}" ]]; then
-            info "Loaded YT_HLS_URL from .env: ${YT_HLS_URL:0:50}..."
+            # Obfuscate stream key (cid parameter)
+            local url_display="${YT_HLS_URL%%\?cid=*}"
+            [[ "$url_display" != "$YT_HLS_URL" ]] && url_display="${url_display}?cid=..."
+            info "Loaded YT_HLS_URL from .env: ${url_display}"
         else
             warn "YT_HLS_URL is empty after sourcing .env"
         fi

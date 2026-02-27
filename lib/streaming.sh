@@ -37,8 +37,13 @@ setup_streaming() {
             ;;
         hls)
             info "HLS mode - checking for URL..."
-            info "  COPT_HLS_URL: ${COPT_HLS_URL:-<not set>}"
-            info "  YT_HLS_URL: ${YT_HLS_URL:-<not set>}"
+            # Obfuscate stream keys in log output
+            local copt_display="${COPT_HLS_URL:-<not set>}"
+            local yt_display="${YT_HLS_URL:-<not set>}"
+            [[ "$copt_display" != "<not set>" ]] && copt_display="${COPT_HLS_URL%%\?cid=*}?cid=..."
+            [[ "$yt_display" != "<not set>" ]] && yt_display="${YT_HLS_URL%%\?cid=*}?cid=..."
+            info "  COPT_HLS_URL: ${copt_display}"
+            info "  YT_HLS_URL: ${yt_display}"
             if [[ -z "${COPT_HLS_URL:-}" ]]; then
                 # Fallback to YT_HLS_URL from .env if available
                 COPT_HLS_URL="${YT_HLS_URL:-}"
