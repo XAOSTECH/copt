@@ -90,6 +90,55 @@ check_installed() {
     fi
 }
 
+check_secure_boot() {
+    local sb_status=""
+    
+    # Try mokutil first
+    if command -v mokutil &> /dev/null; then
+        sb_status=$(mokutil --sb-state 2>/dev/null || echo "")
+        if echo "$sb_status" | grep -qi "SecureBoot enabled"; then
+            return 0  # Secure Boot is enabled
+        elif echo "$sb_status" | grep -qi "SecureBoot disabled"; then
+            return 1  # Secure Boot is disabled
+        fi
+    fi
+    
+    # Fallback: check EFI vars
+    if [ -f /sys/firmware/efi/efivars/SecureBoot-* ] || [ -f /sys/firmware/efi/vars/SecureBoot-* ]; then
+        return 0  # Likely enabled
+    fi
+    
+    return 1  # Assume disabled or not applicable
+}
+
+warn_secure_boot() {
+    log_warning "═══════════════════════════════════════════════════════════"
+    log_warning "  SECURE BOOT DETECTED"
+    log_warning "═══════════════════════════════════════════════════════════"
+    log_error "The P010 kernel module will NOT work with Secure Boot enabled!"
+    log_error ""
+    log_error "The patched uvcvideo module is unsigned and will be rejected"
+    log_error "by the kernel, causing your USB capture device to stop working."
+    log_error ""
+    log_info "Choose one option before proceeding:"
+    log_info ""
+    log_info "Option 1 - Disable Secure Boot (RECOMMENDED):"
+    log_info "  1. Reboot into BIOS/UEFI (F2, F12, Del, or Esc at boot)"
+    log_info "  2. Find Security settings"
+    log_info "  3. Disable Secure Boot"
+    log_info "  4. Save and reboot"
+    log_info "  5. Run this script again"
+    log_info ""
+    log_info "Option 2 - Sign the module (ADVANCED):"
+    log_info "  After installation, sign with Machine Owner Key (MOK)"
+    log_info "  See: https://ubuntu.com/blog/how-to-sign-things-for-secure-boot"
+    log_info ""
+    log_warning "═══════════════════════════════════════════════════════════"
+    log_error "Installation ABORTED to protect your device"
+    log_warning "═══════════════════════════════════════════════════════════"
+    return 1
+}
+
 install_prerequisites() {
     log_info "Installing build prerequisites..."
     apt-get update >> "$LOG_FILE" 2>&1
@@ -169,6 +218,52 @@ verify_installation() {
     return 0
 }
 
+uninstall_p010() {
+    log_info "Uninstalling P010 kernel module..."
+    
+    if ! dkms status v4l2-p010 2>/dev/null | grep -q "installed"; then
+        log_warning "P010 module is not installed"
+        return 0
+    fi
+    
+    # Unload the module if it's loaded
+    if lsmod | grep -q uvcvideo; then
+        log_info "Unloading uvcvideo module..."
+        modprobe -r uvcvideo >> "$LOG_FILE" 2>&1 || log_warning "Could not unload uvcvideo"
+    fi
+    
+    # Remove from DKMS
+    log_info "Removing P010 module from DKMS..."
+    dkms remove v4l2-p010/1.0 --all >> "$LOG_FILE" 2>&1 || {
+        log_error "Failed to remove DKMS module"
+        return 1
+    }
+    
+    # Rebuild module dependencies
+    log_info "Rebuilding kernel module dependencies..."
+    depmod -a >> "$LOG_FILE" 2>&1
+    
+    # Reload original uvcvideo
+    log_info "Loading original uvcvideo driver..."
+    modprobe uvcvideo >> "$LOG_FILE" 2>&1 || {
+        log_warning "Could not load uvcvideo - may need reboot"
+    }
+    
+    # Give it a moment to initialize
+    sleep 2
+    
+    # Verify device is back
+    if v4l2-ctl --list-devices 2>/dev/null | grep -q "video"; then
+        log_success "USB video device restored successfully!"
+    else
+        log_warning "No video devices found - reboot may be required"
+    fi
+    
+    log_success "P010 module uninstalled"
+    log_info "Run 'v4l2-ctl --list-devices' to verify your device"
+    return 0
+}
+
 show_usage() {
     cat <<EOF
 ${BLUE}P010 HDR Kernel Support Installer${NC}
@@ -178,6 +273,7 @@ Usage: sudo $0 [OPTION]
 Options:
   (none)     Interactive mode - auto-detect OS
   check      Check if P010 is already installed
+  uninstall  Remove P010 module and restore original driver
   rpi        Force Raspberry Pi OS installation
   ubuntu     Force Debian/Ubuntu x64 installation
   help       Show this help message
@@ -185,6 +281,7 @@ Options:
 Examples:
   sudo $0                  # Auto-detect and install
   sudo $0 check            # Check installation status
+  sudo $0 uninstall        # Remove P010 and restore original
   sudo $0 rpi              # Install for Raspberry Pi OS
   sudo $0 ubuntu           # Install for Ubuntu/Debian
 
@@ -194,6 +291,12 @@ Requirements:
   - Internet connection
   - gcc, make, bc
   - Linux headers for current kernel
+  - Secure Boot DISABLED (or module signing configured)
+
+${YELLOW}IMPORTANT - Secure Boot:${NC}
+  This module patches the kernel's uvcvideo driver. If Secure Boot is
+  enabled, the unsigned module will be REJECTED and your USB capture
+  device will STOP WORKING. Disable Secure Boot before installation!
 
 After Installation:
   1. Reboot system: sudo reboot
@@ -201,6 +304,16 @@ After Installation:
      v4l2-ctl -d /dev/video0 --list-formats-ext | grep -i p010
   3. Test capture with FFmpeg:
      ffmpeg -f v4l2 -input_format p010 -video_size 3840x2160 -framerate 30 -i /dev/video0 -t 5 test.mp4
+
+${RED}Recovery (if device stops working):${NC}
+  1. Remove patched module:
+     sudo dkms remove v4l2-p010/1.0 --all
+  2. Rebuild dependencies:
+     sudo depmod -a
+  3. Load original driver:
+     sudo modprobe uvcvideo
+  4. Verify device returns:
+     v4l2-ctl --list-devices
 
 Troubleshooting:
   - Check logs: tail -f /tmp/p010-install-*.log
@@ -231,6 +344,13 @@ main() {
                 exit 1
             fi
             ;;
+        uninstall)
+            if ! uninstall_p010; then
+                log_error "Uninstallation failed - see logs in $LOG_FILE"
+                exit 1
+            fi
+            exit 0
+            ;;
         help)
             show_usage
             exit 0
@@ -244,6 +364,12 @@ main() {
 
             log_warning "This will modify kernel modules"
             log_warning "Ensure system is fully updated before proceeding"
+
+            # Check for Secure Boot before proceeding
+            if check_secure_boot; then
+                warn_secure_boot
+                exit 1
+            fi
 
             if ! install_prerequisites; then
                 log_error "Failed to install prerequisites"
