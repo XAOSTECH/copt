@@ -373,7 +373,7 @@ EFFECTIVE_PROFILE="$DEFAULT_PROFILE"
 STREAMING_HINT=0
 SKIP_RELAY=0
 _next_is_profile=0
-for _a in "${USER_ARGS[@]+"${USER_ARGS[@]}"}"]; do
+for _a in "${USER_ARGS[@]+"${USER_ARGS[@]}"}"; do
     if [[ $_next_is_profile -eq 1 ]]; then
         EFFECTIVE_PROFILE="$_a"
         FILTERED_ARGS+=("$_a")
@@ -408,7 +408,7 @@ done
 # Early exit for --help / -h: don't start relay, don't check USB,
 # just exec the worker with --help and let it print usage + exit.
 # ------------------------------------------------------------------
-for _a in "${USER_ARGS[@]+"${USER_ARGS[@]}"}"]; do
+for _a in "${USER_ARGS[@]+"${USER_ARGS[@]}"}"; do
     if [[ "$_a" == "--help" || "$_a" == "-h" ]]; then
         exec bash "$(find /home/jnxlr/PRO/WEB/CST/copt/src /workspaces/CST/copt/src /workspaces/copt/src -name copt-worker.sh 2>/dev/null | head -1)" --help 2>/dev/null \
             || { bash -n 2>/dev/null; echo "(worker not found — run from repo)"; exit 1; }
