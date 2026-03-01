@@ -48,7 +48,7 @@ done
 [[ -z "$HLS_DIR" ]] && { echo "Error: --hls-dir required" | tee -a "$LOG_FILE"; exit 1; }
 [[ -z "$YOUTUBE_URL" ]] && { echo "Error: --youtube-url required" | tee -a "$LOG_FILE"; exit 1; }
 
-# Initialize — wipe HLS dir so FFmpeg and relay always start in sync.
+# Initialise — wipe HLS dir so FFmpeg and relay always start in sync.
 # Stale .ts files from a previous run confuse YouTube: it gets a playlist
 # referencing segment N+M but the connection already closed at segment N.
 mkdir -p "$HLS_DIR"
