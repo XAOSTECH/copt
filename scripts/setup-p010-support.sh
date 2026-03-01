@@ -20,12 +20,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 P010_DIR="$(dirname "$SCRIPT_DIR")/P010_for_V4L2"
 LOG_FILE="/tmp/p010-install-$(date +%s).log"
 
-# Colors for output
+# Colours for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m' # No Colour
 
 ###############################################################################
 # Helper Functions
@@ -57,7 +57,7 @@ check_root() {
 check_submodule() {
     if [ ! -d "$P010_DIR" ]; then
         log_error "P010_for_V4L2 submodule not found at: $P010_DIR"
-        log_error "Make sure to initialize git submodules: git submodule update --init"
+        log_error "Make sure to initialise git submodules: git submodule update --init"
         exit 1
     fi
     log_success "P010_for_V4L2 submodule found"
@@ -83,7 +83,7 @@ check_installed() {
         log_success "P010 kernel module is already installed"
         v4l2-ctl -d /dev/video0 --list-formats-ext 2>/dev/null | grep -i p010 && \
             log_success "P010 format recognized by v4l2" || \
-            log_warning "P010 module installed but not recognized - may need reboot"
+            log_warning "P010 module installed but not recognised - may need reboot"
         return 0
     else
         return 1
@@ -249,7 +249,7 @@ uninstall_p010() {
         log_warning "Could not load uvcvideo - may need reboot"
     }
     
-    # Give it a moment to initialize
+    # Give it a moment to initialise
     sleep 2
     
     # Verify device is back
@@ -287,7 +287,7 @@ Examples:
 
 Requirements:
   - Root/sudo access
-  - Git submodule initialized (at ../P010_for_V4L2)
+  - Git submodule initialised (at ../P010_for_V4L2)
   - Internet connection
   - gcc, make, bc
   - Linux headers for current kernel

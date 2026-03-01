@@ -19,14 +19,14 @@ FFmpeg with NVENC (RTX GPU)
     └─ Output: HEVC Main10 profile, p010le pixel format
     ↓
 Streaming Metadata
-    ├─ Color Space: BT.2020nc (wide gamut)
+    ├─ Colour Space: BT.2020nc (wide gamut)
     ├─ Transfer: SMPTE ST 2084 (PQ tone curve)
-    ├─ Primaries: BT.2020 (UHDTV color)
+    ├─ Primaries: BT.2020 (UHDTV colour)
     ├─ Mastering Display: HDR10 metadata (10000 nits peak)
     └─ Content Light Level: 1000/400 nits reference
     ↓
 HLS Output to YouTube
-    └─ HEVC 10-bit → YouTube recognizes as HDR
+    └─ HEVC 10-bit → YouTube recognises as HDR
 ```
 
 ## Quick Start
@@ -75,7 +75,7 @@ copt-worker stream
 ```
 
 **Quality**: Optimal HDR (full 10-bit native capture)  
-**Advantage**: 4x more tonal levels, minimal quantization, more color grading room
+**Advantage**: 4x more tonal levels, minimal quantization, more colour grading room
 
 ## Key Configuration
 
@@ -91,7 +91,7 @@ FFmpeg command includes:
 - `-c:v hevc_nvenc` - GPU h.265 encoder
 - `-pix_fmt p010le` - Output 10-bit (NVENC converts internally)
 - `-profile:v main10` - HDR10 profile
-- HDR metadata flags (color space, transfer, mastering display)
+- HDR metadata flags (colour space, transfer, mastering display)
 
 ### For P010 (Recommended - 10-bit)
 
@@ -137,7 +137,7 @@ ffprobe -v error -select_streams v:0 -show_entries stream=pix_fmt,width,height \
 1. Video codec: HEVC (H.264 not supported)
 2. Profile: Main10 (Main profile is 8-bit)
 3. Protocol: HLS (RTMP doesn't support HDR)
-4. Color metadata: bt2020, smpte2084 present
+4. Colour metadata: bt2020, smpte2084 present
 5. Bit depth: 10-bit (not 8-bit)
 6. Segment time: 2-4 seconds (not too long)
 
@@ -167,7 +167,7 @@ ffmpeg                                      # GPU-capable build
   -profile:v main10                         # HDR10 profile
   -tag:v hvc1                               # HLS compatibility
   
-  # RTX Optimizations
+  # RTX Optimisations
   -rc vbr                                   # Variable bitrate
   -surfaces 32                              # GPU buffer pools
   -b_ref_mode each                          # B-frame refs
@@ -217,13 +217,13 @@ ffmpeg                                      # GPU-capable build
 **Likely causes** (in priority order):
 1. **RTMP protocol used** - Switch to HLS with `-f hls` (check logs)
 2. **Profile not Main10** - Verify `-profile:v main10` (check ffprobe)
-3. **Color metadata missing** - Add `-color_primaries bt2020 -color_trc smpte2084`
+3. **Colour metadata missing** - Add `-color_primaries bt2020 -color_trc smpte2084`
 4. **Device not sending HDR** - Verify HDMI source outputs HDR, splitter supports it
-5. **Processing delay** - YouTube takes 5-10 minutes to recognize HDR format
+5. **Processing delay** - YouTube takes 5-10 minutes to recognise HDR format
 
 ### P010 Causes Pink/Black Frames
 
-**Symptom**: Capture starts, but video is corrupted colors
+**Symptom**: Capture starts, but video is corrupted colours
 
 **Possible causes**:
 - P010 kernel module not actually loaded (`lsmod | grep uvcvideo`)
