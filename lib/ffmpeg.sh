@@ -73,7 +73,7 @@ build_ffmpeg_cmd() {
                 cmd+=(-vf "$vf")
                 cmd+=(-c:v hevc_nvenc -preset p4 -qp "$COPT_QUALITY" -profile:v main10)
                 
-                # RTX-optimized encoding settings
+                # RTX-optimised encoding settings
                 cmd+=(-rc vbr -surfaces 32 -b_ref_mode each -aq-strength 15 -rc-lookahead 32)
                 
                 # HDR metadata
