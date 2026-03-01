@@ -34,7 +34,7 @@
 
 set -euo pipefail
 
-# Colors
+# Colours
 C_GRN='\033[0;32m'
 C_YEL='\033[0;33m'
 C_RED='\033[0;31m'
