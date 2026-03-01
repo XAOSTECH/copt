@@ -11,7 +11,7 @@ This document describes the P010 kernel module integration for enabling native 1
 ### What is P010?
 
 P010 (Planar 10-bit) is a video format defined by:
-- **Bit Depth**: 10-bit per color channel (vs 8-bit in NV12)
+- **Bit Depth**: 10-bit per colour channel (vs 8-bit in NV12)
 - **Layout**: Planar YUV 4:2:0 (Y plane + interleaved UV planes)
 - **Storage**: 16-bit per pixel (2 bytes - 10 bits used, 6 bits padding)
 - **USB VID:PID Identifier**: `30313050-0000-0010-8000-00aa00389b71`
@@ -44,7 +44,7 @@ The patch modifies three kernel components:
 
 **Why**: Defines the USB UVC GUID that matches P010 devices. The GUID is part of the USB Video Class specification (the sequence of bytes uniquely identifies this format across all USB devices).
 
-**Impact**: Kernel now recognizes the format when scanning UVC device descriptors.
+**Impact**: Kernel now recognises the format when scanning UVC device descriptors.
 
 ### 2. V4L2 Pixel Format Mapping (`drivers/media/common/uvc.c`)
 
