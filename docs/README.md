@@ -76,6 +76,10 @@ Low-level Wayland screen capture tool for UNIX systems. Uses FFmpeg's KMS grab t
 
 Wayland compositors don't expose the X11 screen-grab APIs that traditional tools rely on. `copt` uses the kernel's KMS (Kernel Mode Setting) framebuffer interface through FFmpeg's `kmsgrab` device, giving you zero-copy GPU capture with hardware encoding — no Xwayland needed.
 
+### Monorepo Note (video-tools)
+
+When `copt` is used inside the [`video-tools`](https://github.com/XAOSTECH/video-tools) monorepo, use the shared OBS crash-recovery launcher from [`../op-cap/scripts/obs-safe-launch.sh`](https://github.com/XAOSTECH/op-cap/blob/main/scripts/obs-safe-launch.sh).
+
 ---
 
 ## ✨ Features
