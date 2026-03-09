@@ -1,4 +1,31 @@
 
+## [0.0.1] - 2026-03-09 (re-release)
+
+### Fixed
+- remove stray ] from for loops; handle --skip-relay in worker
+- relay sync + --skip-relay flag + --help early exit + updated help text
+- add missing colorspace vars; consolidate to 4k30 + 1080p60
+- declare input colorspace before -i to prevent implicit matrix conversion
+- profile arg parsing + banner timing
+- embed HDR color metadata via setparams in USB hevc path
+
+### Changed
+- chore(dc-init): update workflows and actions
+- Remove redundant obs-safe-launch.sh, use shared op-cap launcher
+- Merge pull request #3 from XAOSTECH:anglicise/20260301-015228
+
+chore: Convert American spellings to British English
+- chore: convert American spellings to British English
+- chore: rremove .gitmodules
+- Add USB capture and OBS crash prevention utilities
+- Simplify relay back to synchronous uploads with playlist timer
+- Fix stale playlist and segment tracking issues
+- Refactor relay to upload segments in background for independent playlist scheduling
+- Reduce playlist upload interval to 3s and wrap logging
+- Add debug logging for playlist upload timing
+- Show full URL format with partial cid masking for debugging
+- Make relay cleanup more robust with verification loops
+
 ## Credits
 
 - **P010 kernel patches** — [awawa-dev/P010_for_V4L2](https://github.com/awawa-dev/P010_for_V4L2)
