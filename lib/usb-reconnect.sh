@@ -10,7 +10,7 @@
 # background. On a detected USB disconnect we kill FFmpeg, wait for the
 # device to re-enumerate on the bus, then re-launch with the same command.
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-Licence-Identifier: GPL-3.0-or-later
 # ============================================================================
 
 # ----- error patterns that indicate a USB bus disconnect --------------------

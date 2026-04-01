@@ -7,7 +7,7 @@
 - add missing colorspace vars; consolidate to 4k30 + 1080p60
 - declare input colorspace before -i to prevent implicit matrix conversion
 - profile arg parsing + banner timing
-- embed HDR color metadata via setparams in USB hevc path
+- embed HDR colour metadata via setparams in USB hevc path
 
 ### Changed
 - chore(dc-init): update workflows and actions

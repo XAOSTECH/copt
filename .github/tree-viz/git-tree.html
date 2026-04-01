@@ -1,0 +1,3269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git Tree Visualisation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(160deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #e0e0e0;
+        }
+
+        .container {
+            background: rgba(15, 15, 35, 0.85);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(100, 60, 200, 0.15);
+            padding: 30px;
+            max-width: 95vw;
+            width: 100%;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 100, 200, 0.15);
+        }
+
+        h1 {
+            color: #c0a0ff;
+            margin-bottom: 8px;
+            font-size: 28px;
+            text-shadow: 0 0 20px rgba(160, 100, 255, 0.4);
+        }
+
+        .info {
+            color: #8888aa;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .canvas-viewport {
+            position: relative;
+            width: 100%;
+            overflow: auto;
+            border: 1px solid rgba(100, 100, 200, 0.2);
+            border-radius: 8px;
+            background: #0a0a1a;
+            max-height: 85vh;
+        }
+
+        #treeCanvas {
+            display: block;
+            cursor: crosshair;
+        }
+
+        #tooltip {
+            position: fixed;
+            background: rgba(20, 10, 40, 0.96);
+            colour: white;
+            padding: 14px 18px;
+            border-radius: 10px;
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6), 0 0 12px rgba(120, 80, 200, 0.3);
+            max-width: 420px;
+            z-index: 1000;
+            border: 1px solid rgba(140, 100, 240, 0.3);
+        }
+
+        #tooltip.visible { opacity: 1; }
+
+        .tooltip-sha {
+            color: #60a5fa;
+            font-weight: bold;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+        .tooltip-msg {
+            color: #e2e8f0;
+            margin-bottom: 6px;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+        .tooltip-author {
+            color: #a78bfa;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+        .tooltip-date {
+            color: #64748b;
+            font-size: 10px;
+        }
+        .tooltip-refs {
+            color: #34d399;
+            font-size: 11px;
+            margin-top: 4px;
+            font-weight: bold;
+        }
+
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        button {
+            padding: 8px 16px;
+            background: rgba(80, 50, 160, 0.6);
+            color: #c0b0e8;
+            border: 1px solid rgba(120, 80, 220, 0.4);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: rgba(100, 60, 200, 0.8);
+            colour: white;
+            box-shadow: 0 0 12px rgba(120, 80, 220, 0.4);
+        }
+
+        .stats {
+            margin-left: auto;
+            font-size: 12px;
+            color: #6b6b8a;
+        }
+
+        .wind-slider-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #c0b0e8;
+        }
+        .wind-slider-label input[type="range"] {
+            width: 100px;
+            accent-color: #7c3aed;
+        }
+        #windVal {
+            min-width: 3.5em;
+            text-align: right;
+            font-size: 11px;
+            color: #8888aa;
+        }
+
+        .legend {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #8888aa;
+        }
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌳 Git Tree Visualisation</h1>
+        <p class="info">Hover over leaves to see commit details · Click to highlight ancestry · Ctrl+click to open commit page · Scroll to explore</p>
+
+        <div class="canvas-viewport" id="viewport">
+            <canvas id="treeCanvas" width="1200" height="5380"></canvas>
+        </div>
+
+        <div class="controls">
+            <button onclick="toggleAnimation()">⏯ Animation</button>
+            <button onclick="toggleWind()">🌬 Wind</button>
+            <label class="wind-slider-label" title="Wind intensity">🍃 <input type="range" id="windSlider" min="0" max="500" value="100" oninput="updateWindIntensity(this.value)"><span id="windVal">100%</span></label>
+            <button onclick="resetView()">↺ Reset</button>
+            <span class="stats" id="stats"></span>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item"><span class="legend-dot" style="background:#4ade80"></span> Commit</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#c084fc"></span> Merge</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#fb923c"></span> Fork point</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#38bdf8"></span> Tagged</div>
+        </div>
+    </div>
+
+    <div id="tooltip">
+        <div class="tooltip-sha"></div>
+        <div class="tooltip-msg"></div>
+        <div class="tooltip-author"></div>
+        <div class="tooltip-date"></div>
+        <div class="tooltip-refs"></div>
+    </div>
+
+    <script>
+        // Embedded git data
+        const gitData =
+{
+  "metadata": {
+    "repository": "copt",
+    "current_branch": "main",
+    "repo_url": "https://github.com/XAOSTECH/copt",
+    "generated": "2026-03-30T03:27:05Z",
+    "max_commits": 500
+  },
+  "commits": [
+    {
+      "sha": "047f5ab119cfcc6f399d81e67ce7e4f5077c38dd",
+      "short": "047f5ab",
+      "parents": "0c801efbee27afc7cd50396cf3c40ed08d095f1c",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-03-23T17:55:03+01:00",
+      "timestamp": 1774284903,
+      "subject": "chore(dc-init): load workflows,actions",
+      "refs": "HEAD -> main, origin/main",
+      "position": {
+        "x": 600,
+        "y": 60,
+        "lane": 0,
+        "radius": 6,
+        "depth": 0,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "0c801efbee27afc7cd50396cf3c40ed08d095f1c",
+      "short": "0c801ef",
+      "parents": "16df4f84c69ae472be3f8b44a0e9491205ccd644",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-03-15T06:29:12+01:00",
+      "timestamp": 1773552552,
+      "subject": "chore(dc-init): update workflows,actions",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 100,
+        "lane": 0,
+        "radius": 6,
+        "depth": 1,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "16df4f84c69ae472be3f8b44a0e9491205ccd644",
+      "short": "16df4f8",
+      "parents": "0a39c340de1507ba3daf1c623fc576e5cb7ca34d",
+      "author": "XAOSTECH",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-03-14T18:06:15+01:00",
+      "timestamp": 1773507975,
+      "subject": "chore: dc-contain",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 140,
+        "lane": 0,
+        "radius": 6,
+        "depth": 2,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "0a39c340de1507ba3daf1c623fc576e5cb7ca34d",
+      "short": "0a39c34",
+      "parents": "bc0d3ce9fa77cd00e4bb6fbf8d8f78152c12a9c5",
+      "author": "xaos-bot",
+      "email": "262248812+xaos-bot@users.noreply.github.com",
+      "date": "2026-03-09T02:49:33Z",
+      "timestamp": 1773024573,
+      "subject": "chore: update CHANGELOG for v0.0.1 (re-release)",
+      "refs": "tag: v0.0.1, tag: latest",
+      "position": {
+        "x": 600,
+        "y": 180,
+        "lane": 0,
+        "radius": 6,
+        "depth": 3,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "bc0d3ce9fa77cd00e4bb6fbf8d8f78152c12a9c5",
+      "short": "bc0d3ce",
+      "parents": "8730ff92063d2e6c9da30cbf7a2f9f9b52f3fe5b",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-03-06T05:32:38+01:00",
+      "timestamp": 1772771558,
+      "subject": "chore(dc-init): update workflows and actions",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 220,
+        "lane": 0,
+        "radius": 6,
+        "depth": 4,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "8730ff92063d2e6c9da30cbf7a2f9f9b52f3fe5b",
+      "short": "8730ff9",
+      "parents": "a74d97564dc7b0afcfe2cde34d4dcde8dd8faf54",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-03-06T02:55:41+01:00",
+      "timestamp": 1772762141,
+      "subject": "Remove redundant obs-safe-launch.sh, use shared op-cap launcher",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 260,
+        "lane": 0,
+        "radius": 6,
+        "depth": 5,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "a74d97564dc7b0afcfe2cde34d4dcde8dd8faf54",
+      "short": "a74d975",
+      "parents": "9f36a909dd7c8479a3cec21537231cb49d1955fa 68a848b041124c7f5fa479f03173b160dacb2776",
+      "author": "xaos-bot",
+      "email": "262248812+xaos-bot@users.noreply.github.com",
+      "date": "2026-03-01T01:53:01Z",
+      "timestamp": 1772329981,
+      "subject": "Merge pull request #3 from XAOSTECH:anglicise/20260301-015228\\n\\nchore: Convert American spellings to British English",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 300,
+        "lane": 0,
+        "radius": 10,
+        "depth": 6,
+        "is_trunk": true,
+        "is_merge": true,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "68a848b041124c7f5fa479f03173b160dacb2776",
+      "short": "68a848b",
+      "parents": "9f36a909dd7c8479a3cec21537231cb49d1955fa",
+      "author": "xaos-bot",
+      "email": "262248812+xaos-bot@users.noreply.github.com",
+      "date": "2026-03-01T01:52:28Z",
+      "timestamp": 1772329948,
+      "subject": "chore: convert American spellings to British English",
+      "refs": "",
+      "position": {
+        "x": 720,
+        "y": 340,
+        "lane": 1,
+        "radius": 6,
+        "depth": 7,
+        "is_trunk": false,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "9f36a909dd7c8479a3cec21537231cb49d1955fa",
+      "short": "9f36a90",
+      "parents": "d433e384a6adc84452cdb816a379d1d1c1270cee",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T21:09:46+01:00",
+      "timestamp": 1772222986,
+      "subject": "fix: remove stray ] from for loops; handle --skip-relay in worker",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 420,
+        "lane": 0,
+        "radius": 9,
+        "depth": 8,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": true
+      }
+    },
+    {
+      "sha": "d433e384a6adc84452cdb816a379d1d1c1270cee",
+      "short": "d433e38",
+      "parents": "0039916011aac86e4a0785ae04a17a6d4fba7629",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T21:05:02+01:00",
+      "timestamp": 1772222702,
+      "subject": "fix: relay sync + --skip-relay flag + --help early exit + updated help text",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 460,
+        "lane": 0,
+        "radius": 6,
+        "depth": 9,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "0039916011aac86e4a0785ae04a17a6d4fba7629",
+      "short": "0039916",
+      "parents": "be8460c8cdae8b8e73c4922c98b6b727eec1cbd6",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T20:46:18+01:00",
+      "timestamp": 1772221578,
+      "subject": "fix(profiles): add missing colorspace vars; consolidate to 4k30 + 1080p60",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 500,
+        "lane": 0,
+        "radius": 6,
+        "depth": 10,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "be8460c8cdae8b8e73c4922c98b6b727eec1cbd6",
+      "short": "be8460c",
+      "parents": "3f5f5e09e253482201972e1992b893f3c2ea4697",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T20:20:50+01:00",
+      "timestamp": 1772220050,
+      "subject": "fix(ffmpeg.sh): declare input colorspace before -i to prevent implicit matrix conversion",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 540,
+        "lane": 0,
+        "radius": 6,
+        "depth": 11,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "3f5f5e09e253482201972e1992b893f3c2ea4697",
+      "short": "3f5f5e0",
+      "parents": "98e0c8d3fd618b483bd400b322c578ac1fe54572",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T19:41:08+01:00",
+      "timestamp": 1772217668,
+      "subject": "fix(copt.sh): profile arg parsing + banner timing",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 580,
+        "lane": 0,
+        "radius": 6,
+        "depth": 12,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "98e0c8d3fd618b483bd400b322c578ac1fe54572",
+      "short": "98e0c8d",
+      "parents": "bf9adb1285e09572476b4c70c6990c655ae46453",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T19:26:26+01:00",
+      "timestamp": 1772216786,
+      "subject": "fix(ffmpeg.sh): embed HDR color metadata via setparams in USB hevc path",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 620,
+        "lane": 0,
+        "radius": 6,
+        "depth": 13,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "bf9adb1285e09572476b4c70c6990c655ae46453",
+      "short": "bf9adb1",
+      "parents": "6df6b3aeea8e3b07233027687d3ce3e69eb74353",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T19:14:21+01:00",
+      "timestamp": 1772216061,
+      "subject": "chore: rremove .gitmodules",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 660,
+        "lane": 0,
+        "radius": 6,
+        "depth": 14,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "6df6b3aeea8e3b07233027687d3ce3e69eb74353",
+      "short": "6df6b3a",
+      "parents": "0f5a1f7a1cc5c2f88dcfa1b7fca786186907c643",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T17:46:26+01:00",
+      "timestamp": 1772210786,
+      "subject": "Add USB capture and OBS crash prevention utilities",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 700,
+        "lane": 0,
+        "radius": 6,
+        "depth": 15,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "0f5a1f7a1cc5c2f88dcfa1b7fca786186907c643",
+      "short": "0f5a1f7",
+      "parents": "5da3680b77069f89bc6be83e9d62f4ed2a78a52d",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T06:16:17+01:00",
+      "timestamp": 1772169377,
+      "subject": "Simplify relay back to synchronous uploads with playlist timer",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 740,
+        "lane": 0,
+        "radius": 6,
+        "depth": 16,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "5da3680b77069f89bc6be83e9d62f4ed2a78a52d",
+      "short": "5da3680",
+      "parents": "c33556b4085d7993aa6b6b6e7db286e83aa574db",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T05:53:30+01:00",
+      "timestamp": 1772168010,
+      "subject": "Fix stale playlist and segment tracking issues",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 780,
+        "lane": 0,
+        "radius": 6,
+        "depth": 17,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "c33556b4085d7993aa6b6b6e7db286e83aa574db",
+      "short": "c33556b",
+      "parents": "4aa1f1ca129cf127a775c5450c048eb90902b6e6",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T05:52:28+01:00",
+      "timestamp": 1772167948,
+      "subject": "Refactor relay to upload segments in background for independent playlist scheduling",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 820,
+        "lane": 0,
+        "radius": 6,
+        "depth": 18,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "4aa1f1ca129cf127a775c5450c048eb90902b6e6",
+      "short": "4aa1f1c",
+      "parents": "2ae1e354d61a7852a232fbd6bd81484cd80e0848",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T05:35:25+01:00",
+      "timestamp": 1772166925,
+      "subject": "Reduce playlist upload interval to 3s and wrap logging",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 860,
+        "lane": 0,
+        "radius": 6,
+        "depth": 19,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "2ae1e354d61a7852a232fbd6bd81484cd80e0848",
+      "short": "2ae1e35",
+      "parents": "424d47b7640274dbfc54244acff20d47f0bae1a7",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T05:14:05+01:00",
+      "timestamp": 1772165645,
+      "subject": "Add debug logging for playlist upload timing",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 900,
+        "lane": 0,
+        "radius": 6,
+        "depth": 20,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "424d47b7640274dbfc54244acff20d47f0bae1a7",
+      "short": "424d47b",
+      "parents": "81dd80af9734be120879b220d177abd89e9eafcd",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T05:13:16+01:00",
+      "timestamp": 1772165596,
+      "subject": "Show full URL format with partial cid masking for debugging",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 940,
+        "lane": 0,
+        "radius": 6,
+        "depth": 21,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "81dd80af9734be120879b220d177abd89e9eafcd",
+      "short": "81dd80a",
+      "parents": "45964d20b0f93c7da3785d148321befb584a9c30",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T05:10:38+01:00",
+      "timestamp": 1772165438,
+      "subject": "Make relay cleanup more robust with verification loops",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 980,
+        "lane": 0,
+        "radius": 6,
+        "depth": 22,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "45964d20b0f93c7da3785d148321befb584a9c30",
+      "short": "45964d2",
+      "parents": "608422d42a05d1c50f657fa9b3ddee99df2efacb",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T05:04:51+01:00",
+      "timestamp": 1772165091,
+      "subject": "Add explicit logging for m3u8 playlist uploads",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1020,
+        "lane": 0,
+        "radius": 6,
+        "depth": 23,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "608422d42a05d1c50f657fa9b3ddee99df2efacb",
+      "short": "608422d",
+      "parents": "79e19578fff70a97b5f65b53d49eeffad1e5e2ba",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T04:57:59+01:00",
+      "timestamp": 1772164679,
+      "subject": "Add relay cleanup and remove debug output exposing stream keys",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1060,
+        "lane": 0,
+        "radius": 6,
+        "depth": 24,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "79e19578fff70a97b5f65b53d49eeffad1e5e2ba",
+      "short": "79e1957",
+      "parents": "8f2a404c7405336574909667ed66471672f54e56",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T04:48:04+01:00",
+      "timestamp": 1772164084,
+      "subject": "Fix HLS upload URL construction for YouTube endpoint",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1100,
+        "lane": 0,
+        "radius": 6,
+        "depth": 25,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "8f2a404c7405336574909667ed66471672f54e56",
+      "short": "8f2a404",
+      "parents": "b98c7a615b9d5d155c5f8b9cacc99df7a7ed25d9",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T04:41:32+01:00",
+      "timestamp": 1772163692,
+      "subject": "Use SCRIPT_DIR in start_relay to find relay script",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1140,
+        "lane": 0,
+        "radius": 6,
+        "depth": 26,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "b98c7a615b9d5d155c5f8b9cacc99df7a7ed25d9",
+      "short": "b98c7a6",
+      "parents": "7a5d61cc0363b97477cd7b1a21822e425989255b",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T04:34:55+01:00",
+      "timestamp": 1772163295,
+      "subject": "Fix symlink path resolution and remove unnecessary URL export",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1180,
+        "lane": 0,
+        "radius": 6,
+        "depth": 27,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "7a5d61cc0363b97477cd7b1a21822e425989255b",
+      "short": "7a5d61c",
+      "parents": "b2de963bb843ec0f61caac670c0fe2552bb3c7d9",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T04:23:19+01:00",
+      "timestamp": 1772162599,
+      "subject": "fix: Export YT_HLS_URL so it's available to relay subprocess",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1220,
+        "lane": 0,
+        "radius": 6,
+        "depth": 28,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "b2de963bb843ec0f61caac670c0fe2552bb3c7d9",
+      "short": "b2de963",
+      "parents": "bf7a05f82f90c37411836fbd3b0657612022fa50",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T04:16:48+01:00",
+      "timestamp": 1772162208,
+      "subject": "fix: Remove 'local' keyword from non-function scope",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1260,
+        "lane": 0,
+        "radius": 6,
+        "depth": 29,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "bf7a05f82f90c37411836fbd3b0657612022fa50",
+      "short": "bf7a05f",
+      "parents": "1bc89fe6fee79697109d1140e1f3a04dd7c1ee6c",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T04:11:04+01:00",
+      "timestamp": 1772161864,
+      "subject": "fix: Use existing SCRIPT_DIR for URL loading to resolve symlink path issue",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1300,
+        "lane": 0,
+        "radius": 6,
+        "depth": 30,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "1bc89fe6fee79697109d1140e1f3a04dd7c1ee6c",
+      "short": "1bc89fe",
+      "parents": "ffc812b02e0433b33f1457e6dfaa208c2d74e7a0",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T03:52:12+01:00",
+      "timestamp": 1772160732,
+      "subject": "security: Obfuscate YouTube stream keys in all log output",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1340,
+        "lane": 0,
+        "radius": 6,
+        "depth": 31,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "ffc812b02e0433b33f1457e6dfaa208c2d74e7a0",
+      "short": "ffc812b",
+      "parents": "e7184a0aa72b15f6ab4166902932b62764d3f4f4",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T03:48:21+01:00",
+      "timestamp": 1772160501,
+      "subject": "Fix: use grep instead of source for reliable YT_HLS_URL loading",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1380,
+        "lane": 0,
+        "radius": 6,
+        "depth": 32,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "e7184a0aa72b15f6ab4166902932b62764d3f4f4",
+      "short": "e7184a0",
+      "parents": "8ecfa99da3dd6a86eca4926755c2b84dc08e743b",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T03:42:39+01:00",
+      "timestamp": 1772160159,
+      "subject": "Fix relay startup: load YT_HLS_URL early from cfg/.env",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1420,
+        "lane": 0,
+        "radius": 6,
+        "depth": 33,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "8ecfa99da3dd6a86eca4926755c2b84dc08e743b",
+      "short": "8ecfa99",
+      "parents": "f33a926a739779b833d0fc79c47c464996ef95cd",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T03:27:08+01:00",
+      "timestamp": 1772159228,
+      "subject": "Improve interrupt handling and remove duplicate EXIT trap",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1460,
+        "lane": 0,
+        "radius": 6,
+        "depth": 34,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "f33a926a739779b833d0fc79c47c464996ef95cd",
+      "short": "f33a926",
+      "parents": "f719db349cda6f3863cc156f990050c8ac80df5c",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T03:26:39+01:00",
+      "timestamp": 1772159199,
+      "subject": "Add relay robustness: improved error handling, logging, and URL loading",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1500,
+        "lane": 0,
+        "radius": 6,
+        "depth": 35,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "f719db349cda6f3863cc156f990050c8ac80df5c",
+      "short": "f719db3",
+      "parents": "d77d240733129bae43f12ef7f1d09443e4b7dc49",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T03:25:01+01:00",
+      "timestamp": 1772159101,
+      "subject": "Fix hls-upload-relay.sh syntax error in loop",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1540,
+        "lane": 0,
+        "radius": 6,
+        "depth": 36,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "d77d240733129bae43f12ef7f1d09443e4b7dc49",
+      "short": "d77d240",
+      "parents": "e4cfec5a97a8f6026615a63499a57ee0f4759c7e",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T03:13:47+01:00",
+      "timestamp": 1772158427,
+      "subject": "Implement async HLS upload relay - decouple encoding from network",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1580,
+        "lane": 0,
+        "radius": 6,
+        "depth": 37,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "e4cfec5a97a8f6026615a63499a57ee0f4759c7e",
+      "short": "e4cfec5",
+      "parents": "d7e18d46fcdcea02cad652840884ff956285320b",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T03:06:28+01:00",
+      "timestamp": 1772157988,
+      "subject": "Fix HLS timeout parameter - use valid range",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1620,
+        "lane": 0,
+        "radius": 6,
+        "depth": 38,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "d7e18d46fcdcea02cad652840884ff956285320b",
+      "short": "d7e18d4",
+      "parents": "b793ad6dc56b1a973825c303145bf310d7ea4e9f",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T02:39:38+01:00",
+      "timestamp": 1772156378,
+      "subject": "Fix HLS upload blocking with persistent HTTP connections",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1660,
+        "lane": 0,
+        "radius": 6,
+        "depth": 39,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "b793ad6dc56b1a973825c303145bf310d7ea4e9f",
+      "short": "b793ad6",
+      "parents": "2518ddb6bd35adf00ea86a86e6eb7c79ce4c7596",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T02:32:24+01:00",
+      "timestamp": 1772155944,
+      "subject": "Reduce 4K HDR bitrate to 17Mbps for 18Mbps upload limit",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1700,
+        "lane": 0,
+        "radius": 6,
+        "depth": 40,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "2518ddb6bd35adf00ea86a86e6eb7c79ce4c7596",
+      "short": "2518ddb",
+      "parents": "1128f9ae0f018deb417ed4bbe4285156a0d020c0",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T02:28:15+01:00",
+      "timestamp": 1772155695,
+      "subject": "Fix HLS streaming configuration conflicts",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1740,
+        "lane": 0,
+        "radius": 6,
+        "depth": 41,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "1128f9ae0f018deb417ed4bbe4285156a0d020c0",
+      "short": "1128f9a",
+      "parents": "4d835f5887f29e6e11bba94fb860f9d187291311",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T02:22:51+01:00",
+      "timestamp": 1772155371,
+      "subject": "Optimize NVENC for GPU-only encoding (minimize CPU usage)",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1780,
+        "lane": 0,
+        "radius": 6,
+        "depth": 42,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "4d835f5887f29e6e11bba94fb860f9d187291311",
+      "short": "4d835f5",
+      "parents": "2ae5e8dc9b4e19ea75c56db07097c371764afb2b",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T02:19:45+01:00",
+      "timestamp": 1772155185,
+      "subject": "Improve preview verification and FFmpeg cleanup",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1820,
+        "lane": 0,
+        "radius": 6,
+        "depth": 43,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "2ae5e8dc9b4e19ea75c56db07097c371764afb2b",
+      "short": "2ae5e8d",
+      "parents": "b3036f96e866d8bc2a2797578ab55562eeb3759e",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T02:12:32+01:00",
+      "timestamp": 1772154752,
+      "subject": "Add systemd service cleanup on exit",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1860,
+        "lane": 0,
+        "radius": 6,
+        "depth": 44,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "b3036f96e866d8bc2a2797578ab55562eeb3759e",
+      "short": "b3036f9",
+      "parents": "940a3b8d1a272db5fb9c127da74375df98f44965",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T01:52:16+01:00",
+      "timestamp": 1772153536,
+      "subject": "Add PulseAudio restart to aggressive device cleanup",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1900,
+        "lane": 0,
+        "radius": 6,
+        "depth": 45,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "940a3b8d1a272db5fb9c127da74375df98f44965",
+      "short": "940a3b8",
+      "parents": "28eb32bda2768f922787e7c915f148cb0da7b24d",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T01:51:44+01:00",
+      "timestamp": 1772153504,
+      "subject": "Improve stale process cleanup to handle ffplay and audio locks",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1940,
+        "lane": 0,
+        "radius": 6,
+        "depth": 46,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "28eb32bda2768f922787e7c915f148cb0da7b24d",
+      "short": "28eb32b",
+      "parents": "c8f804db625f82dd73e7a097e5a4978e61832c98",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T01:46:32+01:00",
+      "timestamp": 1772153192,
+      "subject": "Add documentation for GSettings schema fix for preview window",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1980,
+        "lane": 0,
+        "radius": 6,
+        "depth": 47,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "c8f804db625f82dd73e7a097e5a4978e61832c98",
+      "short": "c8f804d",
+      "parents": "2ae61d3d3237ba6a261dcf71c16c3847dcca1804",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T01:37:38+01:00",
+      "timestamp": 1772152658,
+      "subject": "Remove unsupported HDR metadata options from HLS encoder",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2020,
+        "lane": 0,
+        "radius": 6,
+        "depth": 48,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "2ae61d3d3237ba6a261dcf71c16c3847dcca1804",
+      "short": "2ae61d3",
+      "parents": "8f7a80c46dd9f289bb98c5101bd0f6ff735bcf9f",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T01:33:11+01:00",
+      "timestamp": 1772152391,
+      "subject": "Fix preview window input format for USB capture",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2060,
+        "lane": 0,
+        "radius": 6,
+        "depth": 49,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "8f7a80c46dd9f289bb98c5101bd0f6ff735bcf9f",
+      "short": "8f7a80c",
+      "parents": "8d231e47bd679762f9dd6386cd317d3a97f9437c",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T01:31:56+01:00",
+      "timestamp": 1772152316,
+      "subject": "Fix FFmpeg HDR metadata options syntax",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2100,
+        "lane": 0,
+        "radius": 6,
+        "depth": 50,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "8d231e47bd679762f9dd6386cd317d3a97f9437c",
+      "short": "8d231e4",
+      "parents": "1b010e38f53fd04e57753e99f79e9af8dbf63ab4",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T01:19:53+01:00",
+      "timestamp": 1772151593,
+      "subject": "Add Secure Boot detection and uninstall option to P010 setup script",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2140,
+        "lane": 0,
+        "radius": 6,
+        "depth": 51,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "1b010e38f53fd04e57753e99f79e9af8dbf63ab4",
+      "short": "1b010e3",
+      "parents": "c1758572344d6780e1d8e347c3f684c3ff99ff4e",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-23T23:58:41+01:00",
+      "timestamp": 1771887521,
+      "subject": "docs: add P010 HDR streaming integration guide",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2180,
+        "lane": 0,
+        "radius": 6,
+        "depth": 52,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "c1758572344d6780e1d8e347c3f684c3ff99ff4e",
+      "short": "c175857",
+      "parents": "d0477238272961a5b246d9b82e8f25b6e011cec1",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-23T23:58:00+01:00",
+      "timestamp": 1771887480,
+      "subject": "feat: add automated P010 Linux kernel module setup script",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2220,
+        "lane": 0,
+        "radius": 6,
+        "depth": 53,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "d0477238272961a5b246d9b82e8f25b6e011cec1",
+      "short": "d047723",
+      "parents": "9b09908f4b640143ca36e99c569f4ac83d62466f",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-23T23:45:41+01:00",
+      "timestamp": 1771886741,
+      "subject": "chore: add custom FFmpeg 7.1.1 build script for NVENC+HDR support",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2260,
+        "lane": 0,
+        "radius": 6,
+        "depth": 54,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "9b09908f4b640143ca36e99c569f4ac83d62466f",
+      "short": "9b09908",
+      "parents": "6a60eb9af9381d054a87b62f312e18ad9e12e762",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-23T23:38:10+01:00",
+      "timestamp": 1771886290,
+      "subject": "feat: update profiles and USB capture encoder pipeline for nv12 HDR",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2300,
+        "lane": 0,
+        "radius": 6,
+        "depth": 55,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "6a60eb9af9381d054a87b62f312e18ad9e12e762",
+      "short": "6a60eb9",
+      "parents": "fbd60e0e662cc1c608025793b7aac7eca1ece437",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-23T23:36:47+01:00",
+      "timestamp": 1771886207,
+      "subject": "fix: h265/nv12 4K HDR streaming with NVENC and reconnect logic",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2340,
+        "lane": 0,
+        "radius": 6,
+        "depth": 56,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "fbd60e0e662cc1c608025793b7aac7eca1ece437",
+      "short": "fbd60e0",
+      "parents": "c65916798ae392024dd6b40e56a183e23877b76a",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-23T00:56:11+01:00",
+      "timestamp": 1771804571,
+      "subject": "fix: auto-kill stale ffmpeg holding device",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2380,
+        "lane": 0,
+        "radius": 6,
+        "depth": 57,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "c65916798ae392024dd6b40e56a183e23877b76a",
+      "short": "c659167",
+      "parents": "340ce608a95130e49b4184fff27d155fbc9876cd",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-23T00:54:32+01:00",
+      "timestamp": 1771804472,
+      "subject": "fix: restore interactive sudo and adjust CUDA filter",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2420,
+        "lane": 0,
+        "radius": 6,
+        "depth": 58,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "340ce608a95130e49b4184fff27d155fbc9876cd",
+      "short": "340ce60",
+      "parents": "89d703c97eb10ff535530b0d8378d3078b129c61 877fd2c404c3f57060a93a2c42a28af615a0b42d",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-23T00:43:39+01:00",
+      "timestamp": 1771803819,
+      "subject": "merge: remote changelog update",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2460,
+        "lane": 0,
+        "radius": 10,
+        "depth": 59,
+        "is_trunk": true,
+        "is_merge": true,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "89d703c97eb10ff535530b0d8378d3078b129c61",
+      "short": "89d703c",
+      "parents": "dd2d99923022a1a331dab58b54b7bba7f7d7f2c2",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-23T00:40:34+01:00",
+      "timestamp": 1771803634,
+      "subject": "fix: make sudo optional for worker execution",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2500,
+        "lane": 0,
+        "radius": 6,
+        "depth": 60,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "dd2d99923022a1a331dab58b54b7bba7f7d7f2c2",
+      "short": "dd2d999",
+      "parents": "3d5fe3cc05251a4cf2a0b13dbd6cf78ccfc5a2c0",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-23T00:32:20+01:00",
+      "timestamp": 1771803140,
+      "subject": "perf: GPU conversion + HLS tee + fast process cleanup",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2540,
+        "lane": 0,
+        "radius": 6,
+        "depth": 61,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "3d5fe3cc05251a4cf2a0b13dbd6cf78ccfc5a2c0",
+      "short": "3d5fe3c",
+      "parents": "e130fcc4d54caa1f99ded574a36c87a9e9db979d",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-23T00:24:26+01:00",
+      "timestamp": 1771802666,
+      "subject": "fix: parse flags before exec mode (respect --host)",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2580,
+        "lane": 0,
+        "radius": 6,
+        "depth": 62,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "e130fcc4d54caa1f99ded574a36c87a9e9db979d",
+      "short": "e130fcc",
+      "parents": "c2230ccb57eca702fa23111268a0922b291147b9",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-23T00:23:35+01:00",
+      "timestamp": 1771802615,
+      "subject": "fix: pass preview env through sudo/exec and fast Ctrl+C",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2620,
+        "lane": 0,
+        "radius": 6,
+        "depth": 63,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "c2230ccb57eca702fa23111268a0922b291147b9",
+      "short": "c2230cc",
+      "parents": "f41f56aa72af3860127ef41f0cd95cdc61ee7cda",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-23T00:11:06+01:00",
+      "timestamp": 1771801866,
+      "subject": "feat: stream-based preview to avoid device contention",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2660,
+        "lane": 0,
+        "radius": 6,
+        "depth": 64,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "877fd2c404c3f57060a93a2c42a28af615a0b42d",
+      "short": "877fd2c",
+      "parents": "f41f56aa72af3860127ef41f0cd95cdc61ee7cda",
+      "author": "xaos-bot",
+      "email": "262248812+xaos-bot@users.noreply.github.com",
+      "date": "2026-02-22T22:55:11Z",
+      "timestamp": 1771800911,
+      "subject": "chore: update CHANGELOG for v0.0.1 (re-release)",
+      "refs": "",
+      "position": {
+        "x": 480,
+        "y": 2700,
+        "lane": -1,
+        "radius": 6,
+        "depth": 65,
+        "is_trunk": false,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "f41f56aa72af3860127ef41f0cd95cdc61ee7cda",
+      "short": "f41f56a",
+      "parents": "b920d240d9785afa22ff5b8199ed4d6cb048413a",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-22T23:54:43+01:00",
+      "timestamp": 1771800883,
+      "subject": "chore(dc-init): generate release fix",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2780,
+        "lane": 0,
+        "radius": 9,
+        "depth": 66,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": true
+      }
+    },
+    {
+      "sha": "b920d240d9785afa22ff5b8199ed4d6cb048413a",
+      "short": "b920d24",
+      "parents": "054f24266b6356d04d892e8baff9be00121ba831",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-22T23:01:53+01:00",
+      "timestamp": 1771797713,
+      "subject": "chore(dc-init): generate codeql fix",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2820,
+        "lane": 0,
+        "radius": 6,
+        "depth": 67,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "054f24266b6356d04d892e8baff9be00121ba831",
+      "short": "054f242",
+      "parents": "8c9183580287b1c25aa429419a46621f82103421",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-22T22:25:08+01:00",
+      "timestamp": 1771795508,
+      "subject": "chore(dc-init): generate codeql and automerge fix",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2860,
+        "lane": 0,
+        "radius": 6,
+        "depth": 68,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "8c9183580287b1c25aa429419a46621f82103421",
+      "short": "8c91835",
+      "parents": "69fd4d91a9d42a6231c50255379d5a543c3d41fa",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-22T22:09:22+01:00",
+      "timestamp": 1771794562,
+      "subject": "chore(docs): restore readme content + move docs",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2900,
+        "lane": 0,
+        "radius": 6,
+        "depth": 69,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "69fd4d91a9d42a6231c50255379d5a543c3d41fa",
+      "short": "69fd4d9",
+      "parents": "66b1527a7996f90fad2506a5d74efab570ada910 19003cd2d909b36dc82c9a5837bfab564e6fa0fa",
+      "author": "xaos-bot",
+      "email": "262248812+xaos-bot@users.noreply.github.com",
+      "date": "2026-02-22T21:00:54Z",
+      "timestamp": 1771794054,
+      "subject": "Merge pull request #2 from XAOSTECH:anglicise/20260222-210023\\n\\nchore: Convert American spellings to British English",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 2940,
+        "lane": 0,
+        "radius": 10,
+        "depth": 70,
+        "is_trunk": true,
+        "is_merge": true,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "19003cd2d909b36dc82c9a5837bfab564e6fa0fa",
+      "short": "19003cd",
+      "parents": "66b1527a7996f90fad2506a5d74efab570ada910",
+      "author": "xaos-bot",
+      "email": "262248812+xaos-bot@users.noreply.github.com",
+      "date": "2026-02-22T21:00:23Z",
+      "timestamp": 1771794023,
+      "subject": "chore: convert American spellings to British English",
+      "refs": "",
+      "position": {
+        "x": 840,
+        "y": 2980,
+        "lane": 2,
+        "radius": 6,
+        "depth": 71,
+        "is_trunk": false,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "66b1527a7996f90fad2506a5d74efab570ada910",
+      "short": "66b1527",
+      "parents": "2e06f2d1a4cd2a393e04d30074f8c4b4060ef2df",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-22T21:58:39+01:00",
+      "timestamp": 1771793919,
+      "subject": "dc-init",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3060,
+        "lane": 0,
+        "radius": 9,
+        "depth": 72,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": true
+      }
+    },
+    {
+      "sha": "6ab05305a113a34e02bb4dcc5b394e6c47bf6086",
+      "short": "6ab0530",
+      "parents": "2e06f2d1a4cd2a393e04d30074f8c4b4060ef2df",
+      "author": "github-actions[bot]",
+      "email": "github-actions[bot]@users.noreply.github.com",
+      "date": "2026-02-22T20:26:39Z",
+      "timestamp": 1771791999,
+      "subject": "chore: convert American spellings to British English",
+      "refs": "origin/anglicise/20260222-202639",
+      "position": {
+        "x": 360,
+        "y": 3100,
+        "lane": -2,
+        "radius": 6,
+        "depth": 73,
+        "is_trunk": false,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "2e06f2d1a4cd2a393e04d30074f8c4b4060ef2df",
+      "short": "2e06f2d",
+      "parents": "9e6e3e5dcc83768b2229292ba388546f8a01f34d",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-22T21:23:55+01:00",
+      "timestamp": 1771791835,
+      "subject": "refactor: consolidate files - rename copt-host to copt",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3180,
+        "lane": 0,
+        "radius": 9,
+        "depth": 74,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": true
+      }
+    },
+    {
+      "sha": "9e6e3e5dcc83768b2229292ba388546f8a01f34d",
+      "short": "9e6e3e5",
+      "parents": "61796707c9730ab6bdc8bdd3f6e5cb77ccea67cc",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-22T21:19:40+01:00",
+      "timestamp": 1771791580,
+      "subject": "docs: add YouTube HDR troubleshooting section",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3220,
+        "lane": 0,
+        "radius": 6,
+        "depth": 75,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "61796707c9730ab6bdc8bdd3f6e5cb77ccea67cc",
+      "short": "6179670",
+      "parents": "cac8b014bd9e383e5c8a8bcf488359ec60b0fa32",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-22T21:19:16+01:00",
+      "timestamp": 1771791556,
+      "subject": "feat: add --host flag for direct host execution (lower latency)",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3260,
+        "lane": 0,
+        "radius": 6,
+        "depth": 76,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "cac8b014bd9e383e5c8a8bcf488359ec60b0fa32",
+      "short": "cac8b01",
+      "parents": "e205e7ff53472e62d72a4fb839a1ce06b73dee19",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-22T21:17:41+01:00",
+      "timestamp": 1771791461,
+      "subject": "feat: add --preview flag to copt-host",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3300,
+        "lane": 0,
+        "radius": 6,
+        "depth": 77,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "e205e7ff53472e62d72a4fb839a1ce06b73dee19",
+      "short": "e205e7f",
+      "parents": "9b33df4db962fa0d93dfbd7258eecf38c6b3a7e1",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-22T21:10:03+01:00",
+      "timestamp": 1771791003,
+      "subject": "fix: copt-preview display server access and diagnostics",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3340,
+        "lane": 0,
+        "radius": 6,
+        "depth": 78,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "9b33df4db962fa0d93dfbd7258eecf38c6b3a7e1",
+      "short": "9b33df4",
+      "parents": "47e238f241788d2698bd653db0f1bbd198a92b74",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-22T21:07:29+01:00",
+      "timestamp": 1771790849,
+      "subject": "fix: copt-preview path resolution when installed to ~/bin",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3380,
+        "lane": 0,
+        "radius": 6,
+        "depth": 79,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "47e238f241788d2698bd653db0f1bbd198a92b74",
+      "short": "47e238f",
+      "parents": "5695f0607d2b4d091d95344897fde028a1ffec37",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-22T21:05:53+01:00",
+      "timestamp": 1771790753,
+      "subject": "feat: add copt-preview - independent live preview window",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3420,
+        "lane": 0,
+        "radius": 6,
+        "depth": 80,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "5695f0607d2b4d091d95344897fde028a1ffec37",
+      "short": "5695f06",
+      "parents": "90378ed147756288258a2eea8a304bb7eb8a3170",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-22T21:03:54+01:00",
+      "timestamp": 1771790634,
+      "subject": "fix: remove setparams HDR reinterpretation - device encodes HDR in 8-bit",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3460,
+        "lane": 0,
+        "radius": 6,
+        "depth": 81,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "90378ed147756288258a2eea8a304bb7eb8a3170",
+      "short": "90378ed",
+      "parents": "a6206925a25c621d951c915b6ace4a01aa51fe6a",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-22T19:20:43+01:00",
+      "timestamp": 1771784443,
+      "subject": "fix: simplify find_video_device to prefer symlink unconditionally",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3500,
+        "lane": 0,
+        "radius": 6,
+        "depth": 82,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "a6206925a25c621d951c915b6ace4a01aa51fe6a",
+      "short": "a620692",
+      "parents": "9636f0f9e8dc41d6508100cbfe12b5b8076c4e13",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T21:07:50+01:00",
+      "timestamp": 1771531670,
+      "subject": "refactor: container-first execution, agnostic USB device naming, HDR metadata fixes",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3540,
+        "lane": 0,
+        "radius": 6,
+        "depth": 83,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "9636f0f9e8dc41d6508100cbfe12b5b8076c4e13",
+      "short": "9636f0f",
+      "parents": "117b7e0335cf85bc0d04532696fed4bf1286c699",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T05:16:09+01:00",
+      "timestamp": 1771474569,
+      "subject": "Add .env loading debug output",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3580,
+        "lane": 0,
+        "radius": 6,
+        "depth": 84,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "117b7e0335cf85bc0d04532696fed4bf1286c699",
+      "short": "117b7e0",
+      "parents": "23e5d80602088c1a8730ffe0c5918b3fffdf16b5",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T04:57:48+01:00",
+      "timestamp": 1771473468,
+      "subject": "Fix YouTube HLS URL construction",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3620,
+        "lane": 0,
+        "radius": 6,
+        "depth": 85,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "23e5d80602088c1a8730ffe0c5918b3fffdf16b5",
+      "short": "23e5d80",
+      "parents": "db9b79bc9d3bb5b8242157887c9d64bb7eabc5f4",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T04:38:44+01:00",
+      "timestamp": 1771472324,
+      "subject": "Add USB capture setup documentation",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3660,
+        "lane": 0,
+        "radius": 6,
+        "depth": 86,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "db9b79bc9d3bb5b8242157887c9d64bb7eabc5f4",
+      "short": "db9b79b",
+      "parents": "678328dda412f3c1e7efd27f4056fa351c8a8297",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T04:37:53+01:00",
+      "timestamp": 1771472273,
+      "subject": "Fix index-agnostic device detection: prefer udev symlink",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3700,
+        "lane": 0,
+        "radius": 6,
+        "depth": 87,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "678328dda412f3c1e7efd27f4056fa351c8a8297",
+      "short": "678328d",
+      "parents": "db85bbb6c41e080eb9ed823fa08536f62cacc74c",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T04:32:43+01:00",
+      "timestamp": 1771471963,
+      "subject": "Add UGREEN logo coordinates from screenshot analysis",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3740,
+        "lane": 0,
+        "radius": 6,
+        "depth": 88,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "db85bbb6c41e080eb9ed823fa08536f62cacc74c",
+      "short": "db85bbb",
+      "parents": "b34f6199d9c4890bacbd42242dc0bcac7da7cbe7",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T04:28:52+01:00",
+      "timestamp": 1771471732,
+      "subject": "Add smart logo detection for UGREEN idle screen",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3780,
+        "lane": 0,
+        "radius": 6,
+        "depth": 89,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "b34f6199d9c4890bacbd42242dc0bcac7da7cbe7",
+      "short": "b34f619",
+      "parents": "6c653c4d141d7c412a6eab1ea8e24e01bc6fb233",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T04:19:11+01:00",
+      "timestamp": 1771471151,
+      "subject": "Fix dry-run: insert -t 5 after inputs and print actual test command",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3820,
+        "lane": 0,
+        "radius": 6,
+        "depth": 90,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "6c653c4d141d7c412a6eab1ea8e24e01bc6fb233",
+      "short": "6c653c4",
+      "parents": "fc48ca84f4f715f1850e37a552931d5e8cea6053",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T04:16:00+01:00",
+      "timestamp": 1771470960,
+      "subject": "Fix .env sourcing, YT_HLS_URL fallback, and NVENC hwupload",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3860,
+        "lane": 0,
+        "radius": 6,
+        "depth": 91,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "fc48ca84f4f715f1850e37a552931d5e8cea6053",
+      "short": "fc48ca8",
+      "parents": "0ffa6e11c7d10d4fde97a0a6eeec17d5c322cab1",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T04:10:43+01:00",
+      "timestamp": 1771470643,
+      "subject": "Fix copt-host: add native host mode, remove broken --device from exec",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3900,
+        "lane": 0,
+        "radius": 6,
+        "depth": 92,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "0ffa6e11c7d10d4fde97a0a6eeec17d5c322cab1",
+      "short": "0ffa6e1",
+      "parents": "4ca776bc0a635f91aa9a622942d14e427e7406fa",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T03:57:09+01:00",
+      "timestamp": 1771469829,
+      "subject": "fix(copt-host): restore --device passthrough to podman exec",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3940,
+        "lane": 0,
+        "radius": 6,
+        "depth": 93,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "4ca776bc0a635f91aa9a622942d14e427e7406fa",
+      "short": "4ca776b",
+      "parents": "c4ddf005b79e77516ab6f804bf9faafac87804d7",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T03:55:34+01:00",
+      "timestamp": 1771469734,
+      "subject": "fix(udev): use ENV properties instead of ATTRS for stable symlink",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 3980,
+        "lane": 0,
+        "radius": 6,
+        "depth": 94,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "c4ddf005b79e77516ab6f804bf9faafac87804d7",
+      "short": "c4ddf00",
+      "parents": "ad623d626cde039b5c0bc90921b4f0de1c9699cc",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T03:48:15+01:00",
+      "timestamp": 1771469295,
+      "subject": "fix(copt-host): filter container by image name; stable udev device symlink",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4020,
+        "lane": 0,
+        "radius": 6,
+        "depth": 95,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "ad623d626cde039b5c0bc90921b4f0de1c9699cc",
+      "short": "ad623d6",
+      "parents": "0da98a2b0a861723766a1c4aabff4ad9f1ea03da",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T03:31:52+01:00",
+      "timestamp": 1771468312,
+      "subject": "fix(copt-host,ffmpeg): always exec in-container; guard -master_display probe",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4060,
+        "lane": 0,
+        "radius": 6,
+        "depth": 96,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "0da98a2b0a861723766a1c4aabff4ad9f1ea03da",
+      "short": "0da98a2",
+      "parents": "c0202d3bbadd964033ac8fef171639955179028a",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T03:25:06+01:00",
+      "timestamp": 1771467906,
+      "subject": "fix(copt-host): idempotent host/container auto-detection, run copt.sh directly on host",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4100,
+        "lane": 0,
+        "radius": 6,
+        "depth": 97,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "c0202d3bbadd964033ac8fef171639955179028a",
+      "short": "c0202d3",
+      "parents": "8b98531691b3a39d8e4c5315c71f9d8b1f64e5a5",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T03:14:04+01:00",
+      "timestamp": 1771467244,
+      "subject": "fix(profile): --profile arg parsed incorrectly when other flags precede it",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4140,
+        "lane": 0,
+        "radius": 6,
+        "depth": 98,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "8b98531691b3a39d8e4c5315c71f9d8b1f64e5a5",
+      "short": "8b98531",
+      "parents": "c7d0c981c950ba9f8bd682effe0bb00c119ece92",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T02:48:56+01:00",
+      "timestamp": 1771465736,
+      "subject": "feat(usb-hdr): 4K 30fps HDR10 PQ via yuv420p passthrough + rewrite copt-host",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4180,
+        "lane": 0,
+        "radius": 6,
+        "depth": 99,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "c7d0c981c950ba9f8bd682effe0bb00c119ece92",
+      "short": "c7d0c98",
+      "parents": "c163fd3970908830439fe2a7ea0316d109e26ada",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T01:46:54+01:00",
+      "timestamp": 1771462014,
+      "subject": "dc-contain + small Makefile changes",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4220,
+        "lane": 0,
+        "radius": 6,
+        "depth": 100,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "c163fd3970908830439fe2a7ea0316d109e26ada",
+      "short": "c163fd3",
+      "parents": "487a533e0b9602f102527b922bff4f2fca8b7ecd",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T01:43:54+01:00",
+      "timestamp": 1771461834,
+      "subject": "feat(usb): add USB V4L2 capture mode with auto-reconnect for UGREEN 25173",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4260,
+        "lane": 0,
+        "radius": 6,
+        "depth": 101,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "487a533e0b9602f102527b922bff4f2fca8b7ecd",
+      "short": "487a533",
+      "parents": "0cba8fa16a08a5136de024409d6fd1d66f2ba895",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T23:07:52+01:00",
+      "timestamp": 1770502072,
+      "subject": "fix: add audio device access to container, simplify copt-host wrapper",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4300,
+        "lane": 0,
+        "radius": 6,
+        "depth": 102,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "0cba8fa16a08a5136de024409d6fd1d66f2ba895",
+      "short": "0cba8fa",
+      "parents": "df4484d860e77a707c75e7c9433c97ce87484680",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T23:03:01+01:00",
+      "timestamp": 1770501781,
+      "subject": "feat: auto-detect host ALSA device in copt-host wrapper",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4340,
+        "lane": 0,
+        "radius": 6,
+        "depth": 103,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "df4484d860e77a707c75e7c9433c97ce87484680",
+      "short": "df4484d",
+      "parents": "b5b51e3b3de144b4061754e2380cd34f387d1b15",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T22:49:54+01:00",
+      "timestamp": 1770500994,
+      "subject": "docs: update Makefile help to include copt-host",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4380,
+        "lane": 0,
+        "radius": 6,
+        "depth": 104,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "b5b51e3b3de144b4061754e2380cd34f387d1b15",
+      "short": "b5b51e3",
+      "parents": "fec2dbc5be329d60c6688fbd55a3a6f6c0518c08",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T22:49:42+01:00",
+      "timestamp": 1770500982,
+      "subject": "fix: update Makefile copt-host path after moving to src/",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4420,
+        "lane": 0,
+        "radius": 6,
+        "depth": 105,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "fec2dbc5be329d60c6688fbd55a3a6f6c0518c08",
+      "short": "fec2dbc",
+      "parents": "1fd1d88b47eb85d194c7ad5b75678e9440af61e4 beb2c85e0610fd707e866b0fe15f6b8857dab05c",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T22:08:47+01:00",
+      "timestamp": 1770498527,
+      "subject": "Merge build-module-ubuntu2510: Add native installation support",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4460,
+        "lane": 0,
+        "radius": 10,
+        "depth": 106,
+        "is_trunk": true,
+        "is_merge": true,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "beb2c85e0610fd707e866b0fe15f6b8857dab05c",
+      "short": "beb2c85",
+      "parents": "1fd1d88b47eb85d194c7ad5b75678e9440af61e4",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T22:02:17+01:00",
+      "timestamp": 1770498137,
+      "subject": "feat: add build system for standalone Ubuntu installation",
+      "refs": "",
+      "position": {
+        "x": 960,
+        "y": 4500,
+        "lane": 3,
+        "radius": 6,
+        "depth": 107,
+        "is_trunk": false,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "1fd1d88b47eb85d194c7ad5b75678e9440af61e4",
+      "short": "1fd1d88",
+      "parents": "22090efeb491c1e37b5d5316bf6003f5aa36e22f",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T22:01:05+01:00",
+      "timestamp": 1770498065,
+      "subject": "feat: add host execution wrapper for DRI access",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4580,
+        "lane": 0,
+        "radius": 9,
+        "depth": 108,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": true
+      }
+    },
+    {
+      "sha": "22090efeb491c1e37b5d5316bf6003f5aa36e22f",
+      "short": "22090ef",
+      "parents": "d3a53649280169b692906e29d36dcd8e36ccc5b7",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T21:54:56+01:00",
+      "timestamp": 1770497696,
+      "subject": "fix: enable DRI device access for KMS grab in container",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4620,
+        "lane": 0,
+        "radius": 6,
+        "depth": 109,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "d3a53649280169b692906e29d36dcd8e36ccc5b7",
+      "short": "d3a5364",
+      "parents": "ce3c3ee1d7a17f6ccdd691f6442cb4e592bcf7fd",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T20:03:57+01:00",
+      "timestamp": 1770491037,
+      "subject": "refactor: consolidate check-deps into install, remove all X11 references",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4660,
+        "lane": 0,
+        "radius": 6,
+        "depth": 110,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "ce3c3ee1d7a17f6ccdd691f6442cb4e592bcf7fd",
+      "short": "ce3c3ee",
+      "parents": "8f66adeb5f9ed56a62132b19c3a87300065403ff",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T20:00:02+01:00",
+      "timestamp": 1770490802,
+      "subject": "refactor: remove final X11 tool references from help text",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4700,
+        "lane": 0,
+        "radius": 6,
+        "depth": 111,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "8f66adeb5f9ed56a62132b19c3a87300065403ff",
+      "short": "8f66ade",
+      "parents": "8b91f1b63c539a56243593821d1469072b398d4d",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T19:59:33+01:00",
+      "timestamp": 1770490773,
+      "subject": "refactor: remove X11 window detection, consolidate install script",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4740,
+        "lane": 0,
+        "radius": 6,
+        "depth": 112,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "8b91f1b63c539a56243593821d1469072b398d4d",
+      "short": "8b91f1b",
+      "parents": "f25158625d56b00af43fbc98864333e571175748",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T19:47:51+01:00",
+      "timestamp": 1770490071,
+      "subject": "improve: better window detection reporting and error messages",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4780,
+        "lane": 0,
+        "radius": 6,
+        "depth": 113,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "f25158625d56b00af43fbc98864333e571175748",
+      "short": "f251586",
+      "parents": "3ccbc618717e03b3583a5a75b62805e94ac1f1a6",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T19:45:19+01:00",
+      "timestamp": 1770489919,
+      "subject": "feat: add dependency checker and improve window detection errors",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4820,
+        "lane": 0,
+        "radius": 6,
+        "depth": 114,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "3ccbc618717e03b3583a5a75b62805e94ac1f1a6",
+      "short": "3ccbc61",
+      "parents": "1a406be42ce9e9ef894fca5d653822939427bce1",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T19:37:26+01:00",
+      "timestamp": 1770489446,
+      "subject": "feat: add automatic dependency installer for window capture",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4860,
+        "lane": 0,
+        "radius": 6,
+        "depth": 115,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "1a406be42ce9e9ef894fca5d653822939427bce1",
+      "short": "1a406be",
+      "parents": "2764d5d4c0cfb29ff67a6ca192ccf25a1b8b70a7",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T19:34:50+01:00",
+      "timestamp": 1770489290,
+      "subject": "fix: improve copt binary detection for podman exec usage",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4900,
+        "lane": 0,
+        "radius": 6,
+        "depth": 116,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "2764d5d4c0cfb29ff67a6ca192ccf25a1b8b70a7",
+      "short": "2764d5d",
+      "parents": "7a3c45cd9f3d01aa5183097d7278665de8a48aa4",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T19:31:04+01:00",
+      "timestamp": 1770489064,
+      "subject": "fix: autorestart root check and log file permissions",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4940,
+        "lane": 0,
+        "radius": 6,
+        "depth": 117,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "7a3c45cd9f3d01aa5183097d7278665de8a48aa4",
+      "short": "7a3c45c",
+      "parents": "c2da1b95d6c8027240e05fda17d14c0e3ca48090",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T19:26:03+01:00",
+      "timestamp": 1770488763,
+      "subject": "chore: adapt json header",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 4980,
+        "lane": 0,
+        "radius": 6,
+        "depth": 118,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "c2da1b95d6c8027240e05fda17d14c0e3ca48090",
+      "short": "c2da1b9",
+      "parents": "e94f9940a3daf66ce5527308de96cd568a79d03d",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T04:42:12+01:00",
+      "timestamp": 1770435732,
+      "subject": "feat: add window capture and auto-restart capabilities",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 5020,
+        "lane": 0,
+        "radius": 6,
+        "depth": 119,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "e94f9940a3daf66ce5527308de96cd568a79d03d",
+      "short": "e94f994",
+      "parents": "6998c14eec0457ebb54bff4eb09d8f427cc7e46f",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T04:32:12+01:00",
+      "timestamp": 1770435132,
+      "subject": "refactor: reorganise project structure with src/ directory",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 5060,
+        "lane": 0,
+        "radius": 6,
+        "depth": 120,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "6998c14eec0457ebb54bff4eb09d8f427cc7e46f",
+      "short": "6998c14",
+      "parents": "28e443b3b489c2ae93e0ebde00a2676465877dd2",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T04:29:14+01:00",
+      "timestamp": 1770434954,
+      "subject": "Add encoding profiles with 4K HDR support and bandwidth adaptation",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 5100,
+        "lane": 0,
+        "radius": 6,
+        "depth": 121,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "28e443b3b489c2ae93e0ebde00a2676465877dd2",
+      "short": "28e443b",
+      "parents": "ac85ebfad6a7df80e2d6d351f9fb1097015e91e3",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T04:20:53+01:00",
+      "timestamp": 1770434453,
+      "subject": "refactor: modularise copt into library components",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 5140,
+        "lane": 0,
+        "radius": 6,
+        "depth": 122,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "ac85ebfad6a7df80e2d6d351f9fb1097015e91e3",
+      "short": "ac85ebf",
+      "parents": "b828504b7c0a08a6d9958a1929534d27636cf21a",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T04:06:11+01:00",
+      "timestamp": 1770433571,
+      "subject": "feat: auto-detect native screen resolution via xrandr/weston-info",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 5180,
+        "lane": 0,
+        "radius": 6,
+        "depth": 123,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "b828504b7c0a08a6d9958a1929534d27636cf21a",
+      "short": "b828504",
+      "parents": "ac912b73513274f707f718de5e97bc7ef0441418",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T04:05:26+01:00",
+      "timestamp": 1770433526,
+      "subject": "feat: add youtube live streaming support with rtmp/hls",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 5220,
+        "lane": 0,
+        "radius": 6,
+        "depth": 124,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "ac912b73513274f707f718de5e97bc7ef0441418",
+      "short": "ac912b7",
+      "parents": "",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-07T03:49:49+01:00",
+      "timestamp": 1770432589,
+      "subject": "feat: add copt wayland screen capture with ffmpeg kmsgrab",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 5260,
+        "lane": 0,
+        "radius": 6,
+        "depth": 125,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    }
+  ],
+  "branches": [
+    {
+      "name": "047f5ab119cfcc6f399d81e67ce7e4f5077c38dd chore(dc-init): load workflows,actions",
+      "sha": "*",
+      "current": false,
+      "merged": false
+    }
+  ],
+  "tags": [
+    {
+      "name": "latest",
+      "sha": "023d8747f415f8c6f01aa120ce41d482101bb0a8"
+    },
+    {
+      "name": "v0.0.1",
+      "sha": "6929e21453ff1f0d19f0cf7c61ac937b041b6779"
+    }
+  ]
+}
+;
+
+        const canvas = document.getElementById('treeCanvas');
+        const ctx = canvas.getContext('2d');
+        const tooltip = document.getElementById('tooltip');
+        const viewport = document.getElementById('viewport');
+        const statsEl = document.getElementById('stats');
+
+        let animationEnabled = true;
+        let windEnabled = true;
+        let frame = 0;
+        let hoveredCommit = null;
+        let selectedCommit = null;
+
+        // Build lookup maps
+        const commitBySha = {};
+        gitData.commits.forEach(c => { commitBySha[c.sha] = c; });
+
+        // Build tag lookup
+        const tagsBySha = {};
+        (gitData.tags || []).forEach(t => {
+            if (!tagsBySha[t.sha]) tagsBySha[t.sha] = [];
+            tagsBySha[t.sha].push(t.name);
+        });
+
+        // Build branch lookup
+        const branchBySha = {};
+        (gitData.branches || []).forEach(b => {
+            if (!branchBySha[b.sha]) branchBySha[b.sha] = [];
+            branchBySha[b.sha].push(b.name);
+        });
+
+        // Stats
+        const mergeCount = gitData.commits.filter(c => c.position && c.position.is_merge).length;
+        const forkCount = gitData.commits.filter(c => c.position && c.position.is_fork).length;
+        statsEl.textContent = `${gitData.commits.length} commits · ${mergeCount} merges · ${forkCount} forks · ${(gitData.tags || []).length} tags`;
+
+        // Branch colours (consistent per lane)
+        const LANE_COLOURS = [
+            '#4ade80', '#60a5fa', '#f472b6', '#fb923c', '#a78bfa',
+            '#34d399', '#fbbf24', '#f87171', '#38bdf8', '#c084fc',
+            '#2dd4bf', '#e879f9', '#facc15', '#818cf8', '#fb7185'
+        ];
+        function laneColour(lane) {
+            if (lane === 0) return '#4ade80'; // trunk green
+            const idx = ((Math.abs(lane) - 1) % (LANE_COLOURS.length - 1)) + 1;
+            return LANE_COLOURS[idx];
+        }
+
+        // Get ancestry chain for highlighting
+        function getAncestry(commit) {
+            const shas = new Set();
+            const queue = [commit.sha];
+            let limit = 500;
+            while (queue.length > 0 && limit-- > 0) {
+                const sha = queue.shift();
+                if (shas.has(sha)) continue;
+                shas.add(sha);
+                const c = commitBySha[sha];
+                if (c && c.parents) {
+                    c.parents.split(' ').filter(Boolean).forEach(p => queue.push(p));
+                }
+            }
+            return shas;
+        }
+
+        let ancestryHighlight = null;
+
+        // Wind intensity multiplier (0-5, default 1.0)
+        let windIntensity = 1.0;
+
+        function updateWindIntensity(val) {
+            windIntensity = val / 100;
+            document.getElementById('windVal').textContent = val + '%';
+            if (!animationEnabled) drawTree();
+        }
+
+        // Wind simulation — intensified base amplitudes
+        function windOffset(x, y, t) {
+            if (!windEnabled) return 0;
+            const s = windIntensity;
+            const w1 = Math.sin(t * 0.02 + x * 0.008 + y * 0.003) * 6 * s;
+            const w2 = Math.sin(t * 0.035 + x * 0.012 - y * 0.005) * 3 * s;
+            const w3 = Math.cos(t * 0.015 + y * 0.007) * 4 * s;
+            return w1 + w2 + w3;
+        }
+
+        function drawTree() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Dark background with subtle gradient
+            const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            bg.addColorStop(0, '#0a0a1a');
+            bg.addColorStop(0.5, '#0d0d20');
+            bg.addColorStop(1, '#080818');
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Subtle grid
+            ctx.strokeStyle = 'rgba(60, 60, 100, 0.08)';
+            ctx.lineWidth = 0.5;
+            for (let y = 0; y < canvas.height; y += 80) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // ---- Draw branch connection lines ----
+            gitData.commits.forEach(commit => {
+                if (!commit.position || !commit.parents) return;
+                const parents = commit.parents.split(' ').filter(Boolean);
+                parents.forEach(parentSha => {
+                    const parent = commitBySha[parentSha];
+                    if (!parent || !parent.position) return;
+
+                    const cx = commit.position.x + windOffset(commit.position.x, commit.position.y, frame);
+                    const cy = commit.position.y;
+                    const px = parent.position.x + windOffset(parent.position.x, parent.position.y, frame);
+                    const py = parent.position.y;
+
+                    const colour = laneColour(commit.position.lane);
+                    const isHighlighted = ancestryHighlight && ancestryHighlight.has(commit.sha) && ancestryHighlight.has(parentSha);
+
+                    ctx.strokeStyle = isHighlighted ? colour : (colour + '40');
+                    ctx.lineWidth = isHighlighted ? 2.5 : 1.5;
+
+                    ctx.beginPath();
+                    ctx.moveTo(cx, cy);
+
+                    if (commit.position.lane !== parent.position.lane) {
+                        // Curved branch/merge line
+                        const cpx1 = cx;
+                        const cpy1 = cy + (py - cy) * 0.4;
+                        const cpx2 = px;
+                        const cpy2 = cy + (py - cy) * 0.6;
+                        ctx.bezierCurveTo(cpx1, cpy1, cpx2, cpy2, px, py);
+                    } else {
+                        // Straight trunk line
+                        ctx.lineTo(px, py);
+                    }
+                    ctx.stroke();
+                });
+            });
+
+            // ---- Draw commit nodes (leaves) ----
+            gitData.commits.forEach(commit => {
+                if (!commit.position) return;
+                const pos = commit.position;
+                const isHovered = hoveredCommit === commit;
+                const isSelected = selectedCommit === commit;
+                const isInAncestry = ancestryHighlight && ancestryHighlight.has(commit.sha);
+                const hasTags = tagsBySha[commit.sha];
+                const hasBranch = branchBySha[commit.sha];
+
+                // Wind wobble on leaves
+                const wobble = windOffset(pos.x, pos.y, frame);
+                const x = pos.x + wobble;
+                const y = pos.y;
+
+                let baseRadius = pos.radius || 6;
+                if (hasTags) baseRadius = Math.max(baseRadius, 9);
+                const radius = isHovered ? baseRadius * 1.8 : (isSelected ? baseRadius * 1.5 : baseRadius);
+
+                // Choose colour
+                let fillColour;
+                if (hasTags) fillColour = '#38bdf8';
+                else if (pos.is_merge) fillColour = '#c084fc';
+                else if (pos.is_fork) fillColour = '#fb923c';
+                else fillColour = laneColour(pos.lane);
+
+                const dimmed = ancestryHighlight && !isInAncestry;
+                const alpha = dimmed ? 0.15 : 1;
+
+                // Glow for hovered/selected
+                if ((isHovered || isSelected) && !dimmed) {
+                    ctx.save();
+                    ctx.globalAlpha = 0.25;
+                    ctx.shadowColor = fillColour;
+                    ctx.shadowBlur = 20;
+                    ctx.fillStyle = fillColour;
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius * 2.2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                // Leaf shape: draw a tiny leaf silhouette for non-merge commits
+                ctx.save();
+                ctx.globalAlpha = alpha;
+
+                if (!pos.is_merge && !hasTags && animationEnabled) {
+                    // Organic leaf shape
+                    const leafAngle = Math.sin(frame * 0.025 + pos.x * 0.01) * 0.3 + wobble * 0.05;
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.rotate(leafAngle);
+
+                    // Leaf body
+                    ctx.beginPath();
+                    ctx.moveTo(0, -radius * 1.2);
+                    ctx.bezierCurveTo(radius * 0.8, -radius * 0.4, radius * 0.8, radius * 0.6, 0, radius * 1.2);
+                    ctx.bezierCurveTo(-radius * 0.8, radius * 0.6, -radius * 0.8, -radius * 0.4, 0, -radius * 1.2);
+                    ctx.fillStyle = fillColour;
+                    ctx.fill();
+
+                    // Leaf vein
+                    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                    ctx.lineWidth = 0.5;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -radius * 0.8);
+                    ctx.lineTo(0, radius * 0.8);
+                    ctx.stroke();
+
+                    ctx.restore();
+                } else {
+                    // Circle for merges, tags, or when animation is off
+                    const grad = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, 0, x, y, radius);
+                    grad.addColorStop(0, fillColour);
+                    grad.addColorStop(1, fillColour + 'aa');
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Outline
+                    ctx.strokeStyle = isHovered ? '#fbbf24' : 'rgba(255,255,255,0.15)';
+                    ctx.lineWidth = isHovered ? 2 : 1;
+                    ctx.stroke();
+                }
+
+                ctx.restore();
+
+                // Tag/branch labels
+                if (!dimmed && (hasTags || hasBranch)) {
+                    ctx.save();
+                    ctx.globalAlpha = alpha;
+                    const labels = [];
+                    if (hasTags) hasTags.forEach(t => labels.push({ text: '🏷 ' + t, colour: '#38bdf8' }));
+                    if (hasBranch) hasBranch.forEach(b => labels.push({ text: '⎇ ' + b, colour: '#34d399' }));
+
+                    labels.forEach((lbl, li) => {
+                        const lx = x + radius + 8;
+                        const ly = y + 4 + li * 16;
+                        ctx.font = 'bold 10px system-ui, sans-serif';
+                        const metrics = ctx.measureText(lbl.text);
+                        // Label background
+                        ctx.fillStyle = 'rgba(10, 10, 30, 0.85)';
+                        ctx.beginPath();
+                        ctx.roundRect(lx - 4, ly - 11, metrics.width + 8, 15, 3);
+                        ctx.fill();
+                        ctx.fillStyle = lbl.colour;
+                        ctx.fillText(lbl.text, lx, ly);
+                    });
+                    ctx.restore();
+                }
+            });
+
+            if (animationEnabled) {
+                frame++;
+                requestAnimationFrame(drawTree);
+            }
+        }
+
+        // Handle mouse movement for tooltip — positioned close to cursor
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            // Account for scroll within viewport
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            const mouseY = (e.clientY - rect.top) * scaleY;
+
+            let found = null;
+            let bestDist = Infinity;
+            gitData.commits.forEach(commit => {
+                if (!commit.position) return;
+                const wx = windOffset(commit.position.x, commit.position.y, frame);
+                const dx = mouseX - (commit.position.x + wx);
+                const dy = mouseY - commit.position.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const hitRadius = Math.max((commit.position.radius || 6) * 2, 12);
+                if (distance < hitRadius && distance < bestDist) {
+                    bestDist = distance;
+                    found = commit;
+                }
+            });
+
+            if (found !== hoveredCommit) {
+                hoveredCommit = found;
+                if (!animationEnabled) drawTree();
+            }
+
+            if (hoveredCommit) {
+                tooltip.querySelector('.tooltip-sha').textContent = hoveredCommit.short;
+                tooltip.querySelector('.tooltip-msg').textContent = hoveredCommit.subject;
+                tooltip.querySelector('.tooltip-author').textContent = `by ${hoveredCommit.author}`;
+                tooltip.querySelector('.tooltip-date').textContent = new Date(hoveredCommit.date).toLocaleString();
+
+                const refs = [];
+                if (tagsBySha[hoveredCommit.sha]) refs.push(...tagsBySha[hoveredCommit.sha].map(t => '🏷 ' + t));
+                if (branchBySha[hoveredCommit.sha]) refs.push(...branchBySha[hoveredCommit.sha].map(b => '⎇ ' + b));
+                tooltip.querySelector('.tooltip-refs').textContent = refs.join('  ');
+
+                // Position tooltip near cursor but keep within viewport
+                let tx = e.clientX + 16;
+                let ty = e.clientY + 16;
+                const tw = tooltip.offsetWidth || 300;
+                const th = tooltip.offsetHeight || 100;
+                if (tx + tw > window.innerWidth - 10) tx = e.clientX - tw - 16;
+                if (ty + th > window.innerHeight - 10) ty = e.clientY - th - 16;
+                if (tx < 10) tx = 10;
+                if (ty < 10) ty = 10;
+                tooltip.style.left = tx + 'px';
+                tooltip.style.top = ty + 'px';
+                tooltip.classList.add('visible');
+            } else {
+                tooltip.classList.remove('visible');
+            }
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            hoveredCommit = null;
+            tooltip.classList.remove('visible');
+            if (!animationEnabled) drawTree();
+        });
+
+        // Click to highlight ancestry; Ctrl+click or middle-click opens commit page
+        const repoUrl = (gitData.metadata && gitData.metadata.repo_url) || '';
+        canvas.addEventListener('click', (e) => {
+            if (hoveredCommit) {
+                if (e.ctrlKey || e.metaKey) {
+                    // Open commit page in new tab
+                    if (repoUrl) {
+                        window.open(repoUrl + '/commit/' + hoveredCommit.sha, '_blank', 'noopener');
+                    }
+                    return;
+                }
+                if (selectedCommit === hoveredCommit) {
+                    selectedCommit = null;
+                    ancestryHighlight = null;
+                } else {
+                    selectedCommit = hoveredCommit;
+                    ancestryHighlight = getAncestry(hoveredCommit);
+                }
+            } else {
+                selectedCommit = null;
+                ancestryHighlight = null;
+            }
+            if (!animationEnabled) drawTree();
+        });
+
+        canvas.addEventListener('auxclick', (e) => {
+            if (e.button === 1 && hoveredCommit && repoUrl) {
+                e.preventDefault();
+                window.open(repoUrl + '/commit/' + hoveredCommit.sha, '_blank', 'noopener');
+            }
+        });
+
+        function resetView() {
+            frame = 0;
+            hoveredCommit = null;
+            selectedCommit = null;
+            ancestryHighlight = null;
+            viewport.scrollTop = 0;
+            drawTree();
+        }
+
+        function toggleAnimation() {
+            animationEnabled = !animationEnabled;
+            if (animationEnabled) drawTree();
+        }
+
+        function toggleWind() {
+            windEnabled = !windEnabled;
+            if (!animationEnabled) drawTree();
+        }
+
+        // Initial draw
+        drawTree();
+    </script>
+</body>
+</html>
