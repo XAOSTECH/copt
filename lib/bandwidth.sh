@@ -5,7 +5,7 @@
 # Automatically adjusts encoding parameters to fit within a maximum bandwidth
 # limit by reducing resolution, framerate, or bitrate.
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-Licence-Identifier: GPL-3.0-or-later
 # ============================================================================
 
 # ----- bandwidth adaptation logic -------------------------------------------

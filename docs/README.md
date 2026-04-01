@@ -63,7 +63,7 @@
 - [Contributing](#-contributing)
 - [Roadmap](#-roadmap)
 - [Support](#-support)
-- [License](#-license)
+- [Licence](#-licence)
 - [Acknowledgements](#-acknowledgements)
 
 ---
@@ -277,7 +277,7 @@ See the [open issues](https://github.com/XAOSTECH/copt/issues) for a full list o
 
 ---
 
-## 📄 License
+## 📄 Licence
 
 Distributed under the GPL-3.0 License. See [`LICENSE`](LICENSE) for more information.
 
@@ -301,3 +301,12 @@ Distributed under the GPL-3.0 License. See [`LICENSE`](LICENSE) for more informa
 <p align="center">
   <a href="#copt">⬆️ Back to Top</a>
 </p>
+<!-- TREE-VIZ-START -->
+
+## Git Tree Visualisation
+
+![Git Tree Visualisation](../.github/tree-viz/git-tree-mini.svg)
+
+[Full SVG](../.github/tree-viz/git-tree.svg) · [Interactive version](../.github/tree-viz/git-tree.html) · [View data](../.github/tree-viz/git-tree-data.json)
+
+<!-- TREE-VIZ-END -->
