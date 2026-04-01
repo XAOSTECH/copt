@@ -8,7 +8,7 @@
 # Usage:  sudo copt-autorestart [COPT_OPTIONS]
 # Example:  sudo copt-autorestart -y STREAM_KEY
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-Licence-Identifier: GPL-3.0-or-later
 # ============================================================================
 
 set -euo pipefail

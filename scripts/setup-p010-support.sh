@@ -82,7 +82,7 @@ check_installed() {
     if dkms status v4l2-p010 2>/dev/null | grep -q "installed"; then
         log_success "P010 kernel module is already installed"
         v4l2-ctl -d /dev/video0 --list-formats-ext 2>/dev/null | grep -i p010 && \
-            log_success "P010 format recognized by v4l2" || \
+            log_success "P010 format recognised by v4l2" || \
             log_warning "P010 module installed but not recognised - may need reboot"
         return 0
     else

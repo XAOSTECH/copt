@@ -45,7 +45,7 @@
 #   COPT_RESTART_DELAY    Seconds between restarts (default: 5)
 #   COPT_MAX_RETRIES      Max retries, 0=infinite (default: 0)
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-Licence-Identifier: GPL-3.0-or-later
 # ============================================================================
 
 set -euo pipefail

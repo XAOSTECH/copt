@@ -63,7 +63,7 @@
 - [Contributing](#-contributing)
 - [Roadmap](#-roadmap)
 - [Support](#-support)
-- [License](#-license)
+- [Licence](#-licence)
 - [Acknowledgements](#-acknowledgements)
 
 ---
@@ -277,7 +277,7 @@ See the [open issues](https://github.com/XAOSTECH/copt/issues) for a full list o
 
 ---
 
-## 📄 License
+## 📄 Licence
 
 Distributed under the GPL-3.0 License. See [`LICENSE`](LICENSE) for more information.
 
