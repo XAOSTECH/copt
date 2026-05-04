@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" 
      xmlns:xlink="http://www.w3.org/1999/xlink"
-     width="1200" height="5660" 
-     viewBox="0 0 1200 5660">
+     width="1200" height="5700" 
+     viewBox="0 0 1200 5700">
   <defs>
     <radialGradient id="leafGradient">
       <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
@@ -29,33 +29,33 @@
     </style>
   </defs>
   
-  <rect width="1200" height="5660" fill="#f8fafc"/>
+  <rect width="1200" height="5700" fill="#f8fafc"/>
   <defs>
     <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
       <path d="M 100 0 L 0 0 0 100" fill="none" stroke="#e2e8f0" stroke-width="0.5" opacity="0.3"/>
     </pattern>
   </defs>
-  <rect width="1200" height="5660" fill="url(#grid)"/>
+  <rect width="1200" height="5700" fill="url(#grid)"/>
   
   <!-- Branch connection lines -->
   <g id="branches">
     <line class="trunk-line" x1="600" y1="60" x2="600" y2="100"/>
     <line class="trunk-line" x1="600" y1="100" x2="600" y2="140"/>
     <line class="trunk-line" x1="600" y1="140" x2="600" y2="180"/>
-    <line class="trunk-line" x1="600" y1="180" x2="600" y2="300"/>
-    <path class="branch-line" d="M 600 180 C 600 196, 720 204, 720 220"/>
-    <path class="branch-line" d="M 720 220 C 720 252, 600 268, 600 300"/>
-    <line class="trunk-line" x1="600" y1="300" x2="600" y2="340"/>
+    <line class="trunk-line" x1="600" y1="180" x2="600" y2="220"/>
+    <line class="trunk-line" x1="600" y1="220" x2="600" y2="340"/>
+    <path class="branch-line" d="M 600 220 C 600 236, 720 244, 720 260"/>
+    <path class="branch-line" d="M 720 260 C 720 292, 600 308, 600 340"/>
     <line class="trunk-line" x1="600" y1="340" x2="600" y2="380"/>
     <line class="trunk-line" x1="600" y1="380" x2="600" y2="420"/>
     <line class="trunk-line" x1="600" y1="420" x2="600" y2="460"/>
     <line class="trunk-line" x1="600" y1="460" x2="600" y2="500"/>
     <line class="trunk-line" x1="600" y1="500" x2="600" y2="540"/>
     <line class="trunk-line" x1="600" y1="540" x2="600" y2="580"/>
-    <line class="trunk-line" x1="600" y1="580" x2="600" y2="700"/>
-    <path class="branch-line" d="M 600 580 C 600 596, 480 604, 480 620"/>
-    <path class="branch-line" d="M 480 620 C 480 652, 600 668, 600 700"/>
-    <line class="trunk-line" x1="600" y1="700" x2="600" y2="740"/>
+    <line class="trunk-line" x1="600" y1="580" x2="600" y2="620"/>
+    <line class="trunk-line" x1="600" y1="620" x2="600" y2="740"/>
+    <path class="branch-line" d="M 600 620 C 600 636, 480 644, 480 660"/>
+    <path class="branch-line" d="M 480 660 C 480 692, 600 708, 600 740"/>
     <line class="trunk-line" x1="600" y1="740" x2="600" y2="780"/>
     <line class="trunk-line" x1="600" y1="780" x2="600" y2="820"/>
     <line class="trunk-line" x1="600" y1="820" x2="600" y2="860"/>
@@ -107,23 +107,23 @@
     <line class="trunk-line" x1="600" y1="2660" x2="600" y2="2700"/>
     <line class="trunk-line" x1="600" y1="2700" x2="600" y2="2740"/>
     <line class="trunk-line" x1="600" y1="2740" x2="600" y2="2780"/>
-    <path class="branch-line" d="M 600 2740 C 600 2836, 840 2884, 840 2980"/>
     <line class="trunk-line" x1="600" y1="2780" x2="600" y2="2820"/>
+    <path class="branch-line" d="M 600 2780 C 600 2876, 840 2924, 840 3020"/>
     <line class="trunk-line" x1="600" y1="2820" x2="600" y2="2860"/>
     <line class="trunk-line" x1="600" y1="2860" x2="600" y2="2900"/>
     <line class="trunk-line" x1="600" y1="2900" x2="600" y2="2940"/>
-    <line class="trunk-line" x1="600" y1="2940" x2="600" y2="3060"/>
-    <path class="branch-line" d="M 840 2980 C 840 3012, 600 3028, 600 3060"/>
-    <line class="trunk-line" x1="600" y1="3060" x2="600" y2="3100"/>
+    <line class="trunk-line" x1="600" y1="2940" x2="600" y2="2980"/>
+    <line class="trunk-line" x1="600" y1="2980" x2="600" y2="3100"/>
+    <path class="branch-line" d="M 840 3020 C 840 3052, 600 3068, 600 3100"/>
     <line class="trunk-line" x1="600" y1="3100" x2="600" y2="3140"/>
     <line class="trunk-line" x1="600" y1="3140" x2="600" y2="3180"/>
     <line class="trunk-line" x1="600" y1="3180" x2="600" y2="3220"/>
-    <line class="trunk-line" x1="600" y1="3220" x2="600" y2="3340"/>
-    <path class="branch-line" d="M 600 3220 C 600 3236, 360 3244, 360 3260"/>
-    <path class="branch-line" d="M 360 3260 C 360 3292, 600 3308, 600 3340"/>
-    <line class="trunk-line" x1="600" y1="3340" x2="600" y2="3460"/>
-    <path class="branch-line" d="M 960 3380 C 960 3412, 600 3428, 600 3460"/>
-    <line class="trunk-line" x1="600" y1="3460" x2="600" y2="3500"/>
+    <line class="trunk-line" x1="600" y1="3220" x2="600" y2="3260"/>
+    <line class="trunk-line" x1="600" y1="3260" x2="600" y2="3380"/>
+    <path class="branch-line" d="M 600 3260 C 600 3276, 360 3284, 360 3300"/>
+    <path class="branch-line" d="M 360 3300 C 360 3332, 600 3348, 600 3380"/>
+    <line class="trunk-line" x1="600" y1="3380" x2="600" y2="3500"/>
+    <path class="branch-line" d="M 960 3420 C 960 3452, 600 3468, 600 3500"/>
     <line class="trunk-line" x1="600" y1="3500" x2="600" y2="3540"/>
     <line class="trunk-line" x1="600" y1="3540" x2="600" y2="3580"/>
     <line class="trunk-line" x1="600" y1="3580" x2="600" y2="3620"/>
@@ -155,10 +155,10 @@
     <line class="trunk-line" x1="600" y1="4620" x2="600" y2="4660"/>
     <line class="trunk-line" x1="600" y1="4660" x2="600" y2="4700"/>
     <line class="trunk-line" x1="600" y1="4700" x2="600" y2="4740"/>
-    <line class="trunk-line" x1="600" y1="4740" x2="600" y2="4860"/>
-    <path class="branch-line" d="M 600 4740 C 600 4756, 240 4764, 240 4780"/>
-    <path class="branch-line" d="M 240 4780 C 240 4812, 600 4828, 600 4860"/>
-    <line class="trunk-line" x1="600" y1="4860" x2="600" y2="4900"/>
+    <line class="trunk-line" x1="600" y1="4740" x2="600" y2="4780"/>
+    <line class="trunk-line" x1="600" y1="4780" x2="600" y2="4900"/>
+    <path class="branch-line" d="M 600 4780 C 600 4796, 240 4804, 240 4820"/>
+    <path class="branch-line" d="M 240 4820 C 240 4852, 600 4868, 600 4900"/>
     <line class="trunk-line" x1="600" y1="4900" x2="600" y2="4940"/>
     <line class="trunk-line" x1="600" y1="4940" x2="600" y2="4980"/>
     <line class="trunk-line" x1="600" y1="4980" x2="600" y2="5020"/>
@@ -175,141 +175,143 @@
     <line class="trunk-line" x1="600" y1="5420" x2="600" y2="5460"/>
     <line class="trunk-line" x1="600" y1="5460" x2="600" y2="5500"/>
     <line class="trunk-line" x1="600" y1="5500" x2="600" y2="5540"/>
+    <line class="trunk-line" x1="600" y1="5540" x2="600" y2="5580"/>
   </g>
   <!-- Commit nodes -->
   <g id="commits">
-    <circle class="commit-leaf" cx="600" cy="60" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>04dbc67: chore: update git tree visualisation</title></circle>
-    <circle class="commit-leaf" cx="600" cy="100" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>6edb8c3: chore: update git tree visualisation</title></circle>
-    <circle class="commit-leaf" cx="600" cy="140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>415870c: chore: update CHANGELOG for v0.1.0</title></circle>
-    <circle class="commit-leaf" cx="600" cy="180" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>24f31ff: Merge pull request #4 from XAOSTECH:anglicise/20260401-020459</title></circle>
-    <circle class="commit-leaf" cx="720" cy="220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>530729e: chore: convert American spellings to British English</title></circle>
-    <circle class="commit-leaf" cx="600" cy="300" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>810e09f: chore: update git tree visualisation</title></circle>
-    <circle class="commit-leaf" cx="600" cy="340" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>047f5ab: chore(dc-init): load workflows,actions</title></circle>
-    <circle class="commit-leaf" cx="600" cy="380" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>0c801ef: chore(dc-init): update workflows,actions</title></circle>
-    <circle class="commit-leaf" cx="600" cy="420" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>16df4f8: chore: dc-contain</title></circle>
-    <circle class="commit-leaf" cx="600" cy="460" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>0a39c34: chore: update CHANGELOG for v0.0.1 (re-release)</title></circle>
-    <circle class="commit-leaf" cx="600" cy="500" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>bc0d3ce: chore(dc-init): update workflows and actions</title></circle>
-    <circle class="commit-leaf" cx="600" cy="540" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8730ff9: Remove redundant obs-safe-launch.sh, use shared op-cap launcher</title></circle>
-    <circle class="commit-leaf" cx="600" cy="580" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>a74d975: Merge pull request #3 from XAOSTECH:anglicise/20260301-015228\n\nchore: Convert American spellings to British English</title></circle>
-    <circle class="commit-leaf" cx="480" cy="620" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>68a848b: chore: convert American spellings to British English</title></circle>
-    <circle class="commit-leaf" cx="600" cy="700" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>9f36a90: fix: remove stray ] from for loops; handle --skip-relay in worker</title></circle>
-    <circle class="commit-leaf" cx="600" cy="740" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>d433e38: fix: relay sync + --skip-relay flag + --help early exit + updated help text</title></circle>
-    <circle class="commit-leaf" cx="600" cy="780" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>0039916: fix(profiles): add missing colorspace vars; consolidate to 4k30 + 1080p60</title></circle>
-    <circle class="commit-leaf" cx="600" cy="820" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>be8460c: fix(ffmpeg.sh): declare input colorspace before -i to prevent implicit matrix conversion</title></circle>
-    <circle class="commit-leaf" cx="600" cy="860" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>3f5f5e0: fix(copt.sh): profile arg parsing + banner timing</title></circle>
-    <circle class="commit-leaf" cx="600" cy="900" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>98e0c8d: fix(ffmpeg.sh): embed HDR color metadata via setparams in USB hevc path</title></circle>
-    <circle class="commit-leaf" cx="600" cy="940" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>bf9adb1: chore: rremove .gitmodules</title></circle>
-    <circle class="commit-leaf" cx="600" cy="980" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>6df6b3a: Add USB capture and OBS crash prevention utilities</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1020" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>0f5a1f7: Simplify relay back to synchronous uploads with playlist timer</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1060" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>5da3680: Fix stale playlist and segment tracking issues</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1100" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c33556b: Refactor relay to upload segments in background for independent playlist scheduling</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>4aa1f1c: Reduce playlist upload interval to 3s and wrap logging</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1180" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>2ae1e35: Add debug logging for playlist upload timing</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>424d47b: Show full URL format with partial cid masking for debugging</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1260" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>81dd80a: Make relay cleanup more robust with verification loops</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1300" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>45964d2: Add explicit logging for m3u8 playlist uploads</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1340" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>608422d: Add relay cleanup and remove debug output exposing stream keys</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1380" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>79e1957: Fix HLS upload URL construction for YouTube endpoint</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1420" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8f2a404: Use SCRIPT_DIR in start_relay to find relay script</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1460" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b98c7a6: Fix symlink path resolution and remove unnecessary URL export</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1500" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>7a5d61c: fix: Export YT_HLS_URL so it's available to relay subprocess</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1540" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b2de963: fix: Remove 'local' keyword from non-function scope</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1580" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>bf7a05f: fix: Use existing SCRIPT_DIR for URL loading to resolve symlink path issue</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1620" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>1bc89fe: security: Obfuscate YouTube stream keys in all log output</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1660" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>ffc812b: Fix: use grep instead of source for reliable YT_HLS_URL loading</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1700" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>e7184a0: Fix relay startup: load YT_HLS_URL early from cfg/.env</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1740" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8ecfa99: Improve interrupt handling and remove duplicate EXIT trap</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1780" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>f33a926: Add relay robustness: improved error handling, logging, and URL loading</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1820" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>f719db3: Fix hls-upload-relay.sh syntax error in loop</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1860" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>d77d240: Implement async HLS upload relay - decouple encoding from network</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1900" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>e4cfec5: Fix HLS timeout parameter - use valid range</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1940" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>d7e18d4: Fix HLS upload blocking with persistent HTTP connections</title></circle>
-    <circle class="commit-leaf" cx="600" cy="1980" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b793ad6: Reduce 4K HDR bitrate to 17Mbps for 18Mbps upload limit</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2020" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>2518ddb: Fix HLS streaming configuration conflicts</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2060" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>1128f9a: Optimize NVENC for GPU-only encoding (minimize CPU usage)</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2100" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>4d835f5: Improve preview verification and FFmpeg cleanup</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>2ae5e8d: Add systemd service cleanup on exit</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2180" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b3036f9: Add PulseAudio restart to aggressive device cleanup</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>940a3b8: Improve stale process cleanup to handle ffplay and audio locks</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2260" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>28eb32b: Add documentation for GSettings schema fix for preview window</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2300" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c8f804d: Remove unsupported HDR metadata options from HLS encoder</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2340" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>2ae61d3: Fix preview window input format for USB capture</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2380" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8f7a80c: Fix FFmpeg HDR metadata options syntax</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2420" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8d231e4: Add Secure Boot detection and uninstall option to P010 setup script</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2460" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>1b010e3: docs: add P010 HDR streaming integration guide</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2500" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c175857: feat: add automated P010 Linux kernel module setup script</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2540" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>d047723: chore: add custom FFmpeg 7.1.1 build script for NVENC+HDR support</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2580" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>9b09908: feat: update profiles and USB capture encoder pipeline for nv12 HDR</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2620" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>6a60eb9: fix: h265/nv12 4K HDR streaming with NVENC and reconnect logic</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2660" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>fbd60e0: fix: auto-kill stale ffmpeg holding device</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2700" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c659167: fix: restore interactive sudo and adjust CUDA filter</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2740" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>340ce60: merge: remote changelog update</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2780" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>89d703c: fix: make sudo optional for worker execution</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2820" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>dd2d999: perf: GPU conversion + HLS tee + fast process cleanup</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2860" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>3d5fe3c: fix: parse flags before exec mode (respect --host)</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2900" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>e130fcc: fix: pass preview env through sudo/exec and fast Ctrl+C</title></circle>
-    <circle class="commit-leaf" cx="600" cy="2940" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c2230cc: feat: stream-based preview to avoid device contention</title></circle>
-    <circle class="commit-leaf" cx="840" cy="2980" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>877fd2c: chore: update CHANGELOG for v0.0.1 (re-release)</title></circle>
-    <circle class="commit-leaf" cx="600" cy="3060" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>f41f56a: chore(dc-init): generate release fix</title></circle>
-    <circle class="commit-leaf" cx="600" cy="3100" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b920d24: chore(dc-init): generate codeql fix</title></circle>
-    <circle class="commit-leaf" cx="600" cy="3140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>054f242: chore(dc-init): generate codeql and automerge fix</title></circle>
-    <circle class="commit-leaf" cx="600" cy="3180" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8c91835: chore(docs): restore readme content + move docs</title></circle>
-    <circle class="commit-leaf" cx="600" cy="3220" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>69fd4d9: Merge pull request #2 from XAOSTECH:anglicise/20260222-210023\n\nchore: Convert American spellings to British English</title></circle>
-    <circle class="commit-leaf" cx="360" cy="3260" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>19003cd: chore: convert American spellings to British English</title></circle>
-    <circle class="commit-leaf" cx="600" cy="3340" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>66b1527: dc-init</title></circle>
-    <circle class="commit-leaf" cx="960" cy="3380" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>6ab0530: chore: convert American spellings to British English</title></circle>
-    <circle class="commit-leaf" cx="600" cy="3460" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>2e06f2d: refactor: consolidate files - rename copt-host to copt</title></circle>
-    <circle class="commit-leaf" cx="600" cy="3500" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>9e6e3e5: docs: add YouTube HDR troubleshooting section</title></circle>
-    <circle class="commit-leaf" cx="600" cy="3540" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>6179670: feat: add --host flag for direct host execution (lower latency)</title></circle>
-    <circle class="commit-leaf" cx="600" cy="3580" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>cac8b01: feat: add --preview flag to copt-host</title></circle>
-    <circle class="commit-leaf" cx="600" cy="3620" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>e205e7f: fix: copt-preview display server access and diagnostics</title></circle>
-    <circle class="commit-leaf" cx="600" cy="3660" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>9b33df4: fix: copt-preview path resolution when installed to ~/bin</title></circle>
-    <circle class="commit-leaf" cx="600" cy="3700" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>47e238f: feat: add copt-preview - independent live preview window</title></circle>
-    <circle class="commit-leaf" cx="600" cy="3740" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>5695f06: fix: remove setparams HDR reinterpretation - device encodes HDR in 8-bit</title></circle>
-    <circle class="commit-leaf" cx="600" cy="3780" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>90378ed: fix: simplify find_video_device to prefer symlink unconditionally</title></circle>
-    <circle class="commit-leaf" cx="600" cy="3820" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>a620692: refactor: container-first execution, agnostic USB device naming, HDR metadata fixes</title></circle>
-    <circle class="commit-leaf" cx="600" cy="3860" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>9636f0f: Add .env loading debug output</title></circle>
-    <circle class="commit-leaf" cx="600" cy="3900" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>117b7e0: Fix YouTube HLS URL construction</title></circle>
-    <circle class="commit-leaf" cx="600" cy="3940" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>23e5d80: Add USB capture setup documentation</title></circle>
-    <circle class="commit-leaf" cx="600" cy="3980" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>db9b79b: Fix index-agnostic device detection: prefer udev symlink</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4020" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>678328d: Add UGREEN logo coordinates from screenshot analysis</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4060" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>db85bbb: Add smart logo detection for UGREEN idle screen</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4100" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b34f619: Fix dry-run: insert -t 5 after inputs and print actual test command</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>6c653c4: Fix .env sourcing, YT_HLS_URL fallback, and NVENC hwupload</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4180" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>fc48ca8: Fix copt-host: add native host mode, remove broken --device from exec</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>0ffa6e1: fix(copt-host): restore --device passthrough to podman exec</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4260" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>4ca776b: fix(udev): use ENV properties instead of ATTRS for stable symlink</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4300" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c4ddf00: fix(copt-host): filter container by image name; stable udev device symlink</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4340" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>ad623d6: fix(copt-host,ffmpeg): always exec in-container; guard -master_display probe</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4380" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>0da98a2: fix(copt-host): idempotent host/container auto-detection, run copt.sh directly on host</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4420" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c0202d3: fix(profile): --profile arg parsed incorrectly when other flags precede it</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4460" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8b98531: feat(usb-hdr): 4K 30fps HDR10 PQ via yuv420p passthrough + rewrite copt-host</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4500" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c7d0c98: dc-contain + small Makefile changes</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4540" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c163fd3: feat(usb): add USB V4L2 capture mode with auto-reconnect for UGREEN 25173</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4580" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>487a533: fix: add audio device access to container, simplify copt-host wrapper</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4620" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>0cba8fa: feat: auto-detect host ALSA device in copt-host wrapper</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4660" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>df4484d: docs: update Makefile help to include copt-host</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4700" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b5b51e3: fix: update Makefile copt-host path after moving to src/</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4740" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>fec2dbc: Merge build-module-ubuntu2510: Add native installation support</title></circle>
-    <circle class="commit-leaf" cx="240" cy="4780" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>beb2c85: feat: add build system for standalone Ubuntu installation</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4860" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>1fd1d88: feat: add host execution wrapper for DRI access</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4900" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>22090ef: fix: enable DRI device access for KMS grab in container</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4940" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>d3a5364: refactor: consolidate check-deps into install, remove all X11 references</title></circle>
-    <circle class="commit-leaf" cx="600" cy="4980" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>ce3c3ee: refactor: remove final X11 tool references from help text</title></circle>
-    <circle class="commit-leaf" cx="600" cy="5020" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8f66ade: refactor: remove X11 window detection, consolidate install script</title></circle>
-    <circle class="commit-leaf" cx="600" cy="5060" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8b91f1b: improve: better window detection reporting and error messages</title></circle>
-    <circle class="commit-leaf" cx="600" cy="5100" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>f251586: feat: add dependency checker and improve window detection errors</title></circle>
-    <circle class="commit-leaf" cx="600" cy="5140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>3ccbc61: feat: add automatic dependency installer for window capture</title></circle>
-    <circle class="commit-leaf" cx="600" cy="5180" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>1a406be: fix: improve copt binary detection for podman exec usage</title></circle>
-    <circle class="commit-leaf" cx="600" cy="5220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>2764d5d: fix: autorestart root check and log file permissions</title></circle>
-    <circle class="commit-leaf" cx="600" cy="5260" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>7a3c45c: chore: adapt json header</title></circle>
-    <circle class="commit-leaf" cx="600" cy="5300" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c2da1b9: feat: add window capture and auto-restart capabilities</title></circle>
-    <circle class="commit-leaf" cx="600" cy="5340" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>e94f994: refactor: reorganise project structure with src/ directory</title></circle>
-    <circle class="commit-leaf" cx="600" cy="5380" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>6998c14: Add encoding profiles with 4K HDR support and bandwidth adaptation</title></circle>
-    <circle class="commit-leaf" cx="600" cy="5420" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>28e443b: refactor: modularise copt into library components</title></circle>
-    <circle class="commit-leaf" cx="600" cy="5460" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>ac85ebf: feat: auto-detect native screen resolution via xrandr/weston-info</title></circle>
-    <circle class="commit-leaf" cx="600" cy="5500" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b828504: feat: add youtube live streaming support with rtmp/hls</title></circle>
-    <circle class="commit-leaf" cx="600" cy="5540" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>ac912b7: feat: add copt wayland screen capture with ffmpeg kmsgrab</title></circle>
+    <circle class="commit-leaf" cx="600" cy="60" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>556b880: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="600" cy="100" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>04dbc67: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="600" cy="140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>6edb8c3: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="600" cy="180" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>415870c: chore: update CHANGELOG for v0.1.0</title></circle>
+    <circle class="commit-leaf" cx="600" cy="220" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>24f31ff: Merge pull request #4 from XAOSTECH:anglicise/20260401-020459</title></circle>
+    <circle class="commit-leaf" cx="720" cy="260" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>530729e: chore: convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="600" cy="340" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>810e09f: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="600" cy="380" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>047f5ab: chore(dc-init): load workflows,actions</title></circle>
+    <circle class="commit-leaf" cx="600" cy="420" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>0c801ef: chore(dc-init): update workflows,actions</title></circle>
+    <circle class="commit-leaf" cx="600" cy="460" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>16df4f8: chore: dc-contain</title></circle>
+    <circle class="commit-leaf" cx="600" cy="500" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>0a39c34: chore: update CHANGELOG for v0.0.1 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="600" cy="540" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>bc0d3ce: chore(dc-init): update workflows and actions</title></circle>
+    <circle class="commit-leaf" cx="600" cy="580" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8730ff9: Remove redundant obs-safe-launch.sh, use shared op-cap launcher</title></circle>
+    <circle class="commit-leaf" cx="600" cy="620" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>a74d975: Merge pull request #3 from XAOSTECH:anglicise/20260301-015228\n\nchore: Convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="480" cy="660" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>68a848b: chore: convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="600" cy="740" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>9f36a90: fix: remove stray ] from for loops; handle --skip-relay in worker</title></circle>
+    <circle class="commit-leaf" cx="600" cy="780" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>d433e38: fix: relay sync + --skip-relay flag + --help early exit + updated help text</title></circle>
+    <circle class="commit-leaf" cx="600" cy="820" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>0039916: fix(profiles): add missing colorspace vars; consolidate to 4k30 + 1080p60</title></circle>
+    <circle class="commit-leaf" cx="600" cy="860" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>be8460c: fix(ffmpeg.sh): declare input colorspace before -i to prevent implicit matrix conversion</title></circle>
+    <circle class="commit-leaf" cx="600" cy="900" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>3f5f5e0: fix(copt.sh): profile arg parsing + banner timing</title></circle>
+    <circle class="commit-leaf" cx="600" cy="940" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>98e0c8d: fix(ffmpeg.sh): embed HDR color metadata via setparams in USB hevc path</title></circle>
+    <circle class="commit-leaf" cx="600" cy="980" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>bf9adb1: chore: rremove .gitmodules</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1020" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>6df6b3a: Add USB capture and OBS crash prevention utilities</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1060" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>0f5a1f7: Simplify relay back to synchronous uploads with playlist timer</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1100" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>5da3680: Fix stale playlist and segment tracking issues</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c33556b: Refactor relay to upload segments in background for independent playlist scheduling</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1180" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>4aa1f1c: Reduce playlist upload interval to 3s and wrap logging</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>2ae1e35: Add debug logging for playlist upload timing</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1260" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>424d47b: Show full URL format with partial cid masking for debugging</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1300" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>81dd80a: Make relay cleanup more robust with verification loops</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1340" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>45964d2: Add explicit logging for m3u8 playlist uploads</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1380" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>608422d: Add relay cleanup and remove debug output exposing stream keys</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1420" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>79e1957: Fix HLS upload URL construction for YouTube endpoint</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1460" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8f2a404: Use SCRIPT_DIR in start_relay to find relay script</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1500" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b98c7a6: Fix symlink path resolution and remove unnecessary URL export</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1540" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>7a5d61c: fix: Export YT_HLS_URL so it's available to relay subprocess</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1580" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b2de963: fix: Remove 'local' keyword from non-function scope</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1620" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>bf7a05f: fix: Use existing SCRIPT_DIR for URL loading to resolve symlink path issue</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1660" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>1bc89fe: security: Obfuscate YouTube stream keys in all log output</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1700" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>ffc812b: Fix: use grep instead of source for reliable YT_HLS_URL loading</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1740" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>e7184a0: Fix relay startup: load YT_HLS_URL early from cfg/.env</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1780" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8ecfa99: Improve interrupt handling and remove duplicate EXIT trap</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1820" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>f33a926: Add relay robustness: improved error handling, logging, and URL loading</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1860" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>f719db3: Fix hls-upload-relay.sh syntax error in loop</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1900" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>d77d240: Implement async HLS upload relay - decouple encoding from network</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1940" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>e4cfec5: Fix HLS timeout parameter - use valid range</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1980" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>d7e18d4: Fix HLS upload blocking with persistent HTTP connections</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2020" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b793ad6: Reduce 4K HDR bitrate to 17Mbps for 18Mbps upload limit</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2060" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>2518ddb: Fix HLS streaming configuration conflicts</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2100" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>1128f9a: Optimize NVENC for GPU-only encoding (minimize CPU usage)</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>4d835f5: Improve preview verification and FFmpeg cleanup</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2180" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>2ae5e8d: Add systemd service cleanup on exit</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b3036f9: Add PulseAudio restart to aggressive device cleanup</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2260" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>940a3b8: Improve stale process cleanup to handle ffplay and audio locks</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2300" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>28eb32b: Add documentation for GSettings schema fix for preview window</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2340" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c8f804d: Remove unsupported HDR metadata options from HLS encoder</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2380" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>2ae61d3: Fix preview window input format for USB capture</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2420" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8f7a80c: Fix FFmpeg HDR metadata options syntax</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2460" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8d231e4: Add Secure Boot detection and uninstall option to P010 setup script</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2500" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>1b010e3: docs: add P010 HDR streaming integration guide</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2540" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c175857: feat: add automated P010 Linux kernel module setup script</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2580" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>d047723: chore: add custom FFmpeg 7.1.1 build script for NVENC+HDR support</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2620" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>9b09908: feat: update profiles and USB capture encoder pipeline for nv12 HDR</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2660" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>6a60eb9: fix: h265/nv12 4K HDR streaming with NVENC and reconnect logic</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2700" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>fbd60e0: fix: auto-kill stale ffmpeg holding device</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2740" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c659167: fix: restore interactive sudo and adjust CUDA filter</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2780" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>340ce60: merge: remote changelog update</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2820" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>89d703c: fix: make sudo optional for worker execution</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2860" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>dd2d999: perf: GPU conversion + HLS tee + fast process cleanup</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2900" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>3d5fe3c: fix: parse flags before exec mode (respect --host)</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2940" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>e130fcc: fix: pass preview env through sudo/exec and fast Ctrl+C</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2980" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c2230cc: feat: stream-based preview to avoid device contention</title></circle>
+    <circle class="commit-leaf" cx="840" cy="3020" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>877fd2c: chore: update CHANGELOG for v0.0.1 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="600" cy="3100" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>f41f56a: chore(dc-init): generate release fix</title></circle>
+    <circle class="commit-leaf" cx="600" cy="3140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b920d24: chore(dc-init): generate codeql fix</title></circle>
+    <circle class="commit-leaf" cx="600" cy="3180" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>054f242: chore(dc-init): generate codeql and automerge fix</title></circle>
+    <circle class="commit-leaf" cx="600" cy="3220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8c91835: chore(docs): restore readme content + move docs</title></circle>
+    <circle class="commit-leaf" cx="600" cy="3260" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>69fd4d9: Merge pull request #2 from XAOSTECH:anglicise/20260222-210023\n\nchore: Convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="360" cy="3300" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>19003cd: chore: convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="600" cy="3380" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>66b1527: dc-init</title></circle>
+    <circle class="commit-leaf" cx="960" cy="3420" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>6ab0530: chore: convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="600" cy="3500" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>2e06f2d: refactor: consolidate files - rename copt-host to copt</title></circle>
+    <circle class="commit-leaf" cx="600" cy="3540" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>9e6e3e5: docs: add YouTube HDR troubleshooting section</title></circle>
+    <circle class="commit-leaf" cx="600" cy="3580" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>6179670: feat: add --host flag for direct host execution (lower latency)</title></circle>
+    <circle class="commit-leaf" cx="600" cy="3620" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>cac8b01: feat: add --preview flag to copt-host</title></circle>
+    <circle class="commit-leaf" cx="600" cy="3660" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>e205e7f: fix: copt-preview display server access and diagnostics</title></circle>
+    <circle class="commit-leaf" cx="600" cy="3700" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>9b33df4: fix: copt-preview path resolution when installed to ~/bin</title></circle>
+    <circle class="commit-leaf" cx="600" cy="3740" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>47e238f: feat: add copt-preview - independent live preview window</title></circle>
+    <circle class="commit-leaf" cx="600" cy="3780" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>5695f06: fix: remove setparams HDR reinterpretation - device encodes HDR in 8-bit</title></circle>
+    <circle class="commit-leaf" cx="600" cy="3820" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>90378ed: fix: simplify find_video_device to prefer symlink unconditionally</title></circle>
+    <circle class="commit-leaf" cx="600" cy="3860" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>a620692: refactor: container-first execution, agnostic USB device naming, HDR metadata fixes</title></circle>
+    <circle class="commit-leaf" cx="600" cy="3900" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>9636f0f: Add .env loading debug output</title></circle>
+    <circle class="commit-leaf" cx="600" cy="3940" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>117b7e0: Fix YouTube HLS URL construction</title></circle>
+    <circle class="commit-leaf" cx="600" cy="3980" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>23e5d80: Add USB capture setup documentation</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4020" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>db9b79b: Fix index-agnostic device detection: prefer udev symlink</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4060" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>678328d: Add UGREEN logo coordinates from screenshot analysis</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4100" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>db85bbb: Add smart logo detection for UGREEN idle screen</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b34f619: Fix dry-run: insert -t 5 after inputs and print actual test command</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4180" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>6c653c4: Fix .env sourcing, YT_HLS_URL fallback, and NVENC hwupload</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>fc48ca8: Fix copt-host: add native host mode, remove broken --device from exec</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4260" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>0ffa6e1: fix(copt-host): restore --device passthrough to podman exec</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4300" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>4ca776b: fix(udev): use ENV properties instead of ATTRS for stable symlink</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4340" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c4ddf00: fix(copt-host): filter container by image name; stable udev device symlink</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4380" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>ad623d6: fix(copt-host,ffmpeg): always exec in-container; guard -master_display probe</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4420" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>0da98a2: fix(copt-host): idempotent host/container auto-detection, run copt.sh directly on host</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4460" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c0202d3: fix(profile): --profile arg parsed incorrectly when other flags precede it</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4500" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8b98531: feat(usb-hdr): 4K 30fps HDR10 PQ via yuv420p passthrough + rewrite copt-host</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4540" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c7d0c98: dc-contain + small Makefile changes</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4580" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c163fd3: feat(usb): add USB V4L2 capture mode with auto-reconnect for UGREEN 25173</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4620" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>487a533: fix: add audio device access to container, simplify copt-host wrapper</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4660" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>0cba8fa: feat: auto-detect host ALSA device in copt-host wrapper</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4700" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>df4484d: docs: update Makefile help to include copt-host</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4740" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b5b51e3: fix: update Makefile copt-host path after moving to src/</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4780" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>fec2dbc: Merge build-module-ubuntu2510: Add native installation support</title></circle>
+    <circle class="commit-leaf" cx="240" cy="4820" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>beb2c85: feat: add build system for standalone Ubuntu installation</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4900" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>1fd1d88: feat: add host execution wrapper for DRI access</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4940" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>22090ef: fix: enable DRI device access for KMS grab in container</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4980" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>d3a5364: refactor: consolidate check-deps into install, remove all X11 references</title></circle>
+    <circle class="commit-leaf" cx="600" cy="5020" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>ce3c3ee: refactor: remove final X11 tool references from help text</title></circle>
+    <circle class="commit-leaf" cx="600" cy="5060" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8f66ade: refactor: remove X11 window detection, consolidate install script</title></circle>
+    <circle class="commit-leaf" cx="600" cy="5100" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8b91f1b: improve: better window detection reporting and error messages</title></circle>
+    <circle class="commit-leaf" cx="600" cy="5140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>f251586: feat: add dependency checker and improve window detection errors</title></circle>
+    <circle class="commit-leaf" cx="600" cy="5180" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>3ccbc61: feat: add automatic dependency installer for window capture</title></circle>
+    <circle class="commit-leaf" cx="600" cy="5220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>1a406be: fix: improve copt binary detection for podman exec usage</title></circle>
+    <circle class="commit-leaf" cx="600" cy="5260" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>2764d5d: fix: autorestart root check and log file permissions</title></circle>
+    <circle class="commit-leaf" cx="600" cy="5300" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>7a3c45c: chore: adapt json header</title></circle>
+    <circle class="commit-leaf" cx="600" cy="5340" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c2da1b9: feat: add window capture and auto-restart capabilities</title></circle>
+    <circle class="commit-leaf" cx="600" cy="5380" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>e94f994: refactor: reorganise project structure with src/ directory</title></circle>
+    <circle class="commit-leaf" cx="600" cy="5420" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>6998c14: Add encoding profiles with 4K HDR support and bandwidth adaptation</title></circle>
+    <circle class="commit-leaf" cx="600" cy="5460" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>28e443b: refactor: modularise copt into library components</title></circle>
+    <circle class="commit-leaf" cx="600" cy="5500" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>ac85ebf: feat: auto-detect native screen resolution via xrandr/weston-info</title></circle>
+    <circle class="commit-leaf" cx="600" cy="5540" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b828504: feat: add youtube live streaming support with rtmp/hls</title></circle>
+    <circle class="commit-leaf" cx="600" cy="5580" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>ac912b7: feat: add copt wayland screen capture with ffmpeg kmsgrab</title></circle>
   </g>
   
   <!-- Legend -->
@@ -326,12 +328,12 @@
   </g>
   
   <!-- Repository info -->
-  <g id="info" transform="translate(20, 5620)">
+  <g id="info" transform="translate(20, 5660)">
     <text x="0" y="0" class="branch-label" font-size="12" fill="#666">
       Repository: copt
     </text>
     <text x="0" y="20" class="branch-label" font-size="10" fill="#999">
-      Generated: 2026-04-27 03:49:01 UTC
+      Generated: 2026-05-04 03:55:11 UTC
     </text>
   </g>
 </svg>
