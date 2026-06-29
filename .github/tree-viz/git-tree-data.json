@@ -3,10 +3,54 @@
     "repository": "copt",
     "current_branch": "main",
     "repo_url": "https://github.com/XAOSTECH/copt",
-    "generated": "2026-05-25T04:39:50Z",
+    "generated": "2026-06-22T05:13:13Z",
     "max_commits": 500
   },
   "commits": [
+  {
+    "sha": "9e08b649921fbffd111ecb821341da9a99366584",
+    "short": "9e08b64",
+    "parents": "8f8c4668d11e4b9c54a775a34ac8e981646345aa",
+    "author": "xaos-bot",
+    "email": "262248812+xaos-bot@users.noreply.github.com",
+    "date": "2026-06-15T05:11:59Z",
+    "timestamp": 1781500319,
+    "subject": "chore: update git tree visualisation",
+    "refs": "HEAD -> main, origin/main"
+  },
+  {
+    "sha": "8f8c4668d11e4b9c54a775a34ac8e981646345aa",
+    "short": "8f8c466",
+    "parents": "a31f3812a6599c08e94042ad52bbea9f6ce628a8",
+    "author": "xaos-bot",
+    "email": "262248812+xaos-bot@users.noreply.github.com",
+    "date": "2026-06-08T04:50:18Z",
+    "timestamp": 1780894218,
+    "subject": "chore: update git tree visualisation",
+    "refs": ""
+  },
+  {
+    "sha": "a31f3812a6599c08e94042ad52bbea9f6ce628a8",
+    "short": "a31f381",
+    "parents": "d65a669127198117b60ee1fa6a2d392b9152d8a5",
+    "author": "xaos-bot",
+    "email": "262248812+xaos-bot@users.noreply.github.com",
+    "date": "2026-06-01T05:01:50Z",
+    "timestamp": 1780290110,
+    "subject": "chore: update git tree visualisation",
+    "refs": ""
+  },
+  {
+    "sha": "d65a669127198117b60ee1fa6a2d392b9152d8a5",
+    "short": "d65a669",
+    "parents": "da178e1490af3cea18957972eaa3a42973e22c74",
+    "author": "xaos-bot",
+    "email": "262248812+xaos-bot@users.noreply.github.com",
+    "date": "2026-05-25T04:39:51Z",
+    "timestamp": 1779683991,
+    "subject": "chore: update git tree visualisation",
+    "refs": ""
+  },
   {
     "sha": "da178e1490af3cea18957972eaa3a42973e22c74",
     "short": "da178e1",
@@ -16,7 +60,7 @@
     "date": "2026-05-18T04:19:17Z",
     "timestamp": 1779077957,
     "subject": "chore: update CHANGELOG for v0.1.0 (re-release)",
-    "refs": "HEAD -> main, tag: v0.1.0, tag: latest, origin/main"
+    "refs": "tag: v0.1.0, tag: latest"
   },
   {
     "sha": "2104f52b144e9cd53224de326e72032421becd6a",
@@ -1505,7 +1549,7 @@
   }
 ],
   "branches": [
-  {"name":"da178e1490af3cea18957972eaa3a42973e22c74 chore: update CHANGELOG for v0.1.0 (re-release)","sha":"*","current":false,"merged":false}
+  {"name":"9e08b649921fbffd111ecb821341da9a99366584 chore: update git tree visualisation","sha":"*","current":false,"merged":false}
 ],
   "tags": [
   {"name":"latest","sha":"d5360834f3f75e060576af76ae16220c19358211"},
