@@ -3,10 +3,32 @@
     "repository": "copt",
     "current_branch": "main",
     "repo_url": "https://github.com/XAOSTECH/copt",
-    "generated": "2026-08-10T02:21:47Z",
+    "generated": "2026-08-17T01:45:00Z",
     "max_commits": 500
   },
   "commits": [
+  {
+    "sha": "24b740f53c9269a36ab4dd2d87e4d4d85255c164",
+    "short": "24b740f",
+    "parents": "c5a67922bdb2e2b9e41324f32d25ea04660531bc",
+    "author": "xaos-bot",
+    "email": "262248812+xaos-bot@users.noreply.github.com",
+    "date": "2026-08-17T01:45:00Z",
+    "timestamp": 1786931100,
+    "subject": "chore: update CHANGELOG for v0.1.0 (re-release)",
+    "refs": "HEAD -> main, tag: v0.1.0, tag: latest, origin/main"
+  },
+  {
+    "sha": "c5a67922bdb2e2b9e41324f32d25ea04660531bc",
+    "short": "c5a6792",
+    "parents": "1576e9cfb24713120055f8a61c9c7871587a966b",
+    "author": "xaos-bot",
+    "email": "262248812+xaos-bot@users.noreply.github.com",
+    "date": "2026-08-10T02:21:48Z",
+    "timestamp": 1786328508,
+    "subject": "chore: update git tree visualisation",
+    "refs": ""
+  },
   {
     "sha": "1576e9cfb24713120055f8a61c9c7871587a966b",
     "short": "1576e9c",
@@ -16,7 +38,7 @@
     "date": "2026-08-03T03:38:57Z",
     "timestamp": 1785728337,
     "subject": "chore: update git tree visualisation",
-    "refs": "HEAD -> main, origin/main"
+    "refs": ""
   },
   {
     "sha": "6ec7bcc2edab158740075d3479d2050b8c173f40",
@@ -60,7 +82,7 @@
     "date": "2026-07-06T04:15:22Z",
     "timestamp": 1783311322,
     "subject": "chore: update CHANGELOG for v0.1.0 (re-release)",
-    "refs": "tag: v0.1.0, tag: latest"
+    "refs": ""
   },
   {
     "sha": "96185c0518cd5d105627b1a31ff7164dc8264cce",
@@ -1670,13 +1692,13 @@
   }
 ],
   "branches": [
-  {"name":"1576e9cfb24713120055f8a61c9c7871587a966b chore: update git tree visualisation","sha":"*","current":false,"merged":false}
+  {"name":"24b740f53c9269a36ab4dd2d87e4d4d85255c164 chore: update CHANGELOG for v0.1.0 (re-release)","sha":"*","current":false,"merged":false}
 ],
   "tags": [
   {"name":"backup/main-pre-drop-20260630T160036Z","sha":"96185c0518cd5d105627b1a31ff7164dc8264cce"},
   {"name":"backup/main-pre-drop-20260630T160138Z","sha":"c9235ccd920aaeb6776ec1c32759b23c324399ec"},
-  {"name":"latest","sha":"76de7e02ae778a882ea9781cbc2073e94efd9162"},
+  {"name":"latest","sha":"b79fc3a60c4a8f1de1f1effc153bec480c0b55f1"},
   {"name":"v0.0.1","sha":"6929e21453ff1f0d19f0cf7c61ac937b041b6779"},
-  {"name":"v0.1.0","sha":"1ba7bc54cb3c7fb8c40cceef45d46a469501462b"}
+  {"name":"v0.1.0","sha":"956ddda5e5538b1479738c8af7ea62b4bb647595"}
 ]
 }
