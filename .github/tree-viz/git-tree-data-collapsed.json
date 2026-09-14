@@ -3,10 +3,21 @@
     "repository": "copt",
     "current_branch": "main",
     "repo_url": "https://github.com/XAOSTECH/copt",
-    "generated": "2026-08-17T01:45:00Z",
+    "generated": "2026-09-07T04:12:07Z",
     "max_commits": 500
   },
   "commits": [
+    {
+      "sha": "f3e95eb16fb9a27f4afafacc65d48f4c26361f77",
+      "short": "f3e95eb",
+      "parents": "24b740f53c9269a36ab4dd2d87e4d4d85255c164",
+      "author": "xaos-bot",
+      "email": "262248812+xaos-bot@users.noreply.github.com",
+      "date": "2026-09-07T04:12:07Z",
+      "timestamp": 1788754327,
+      "subject": "chore: update git tree visualisation",
+      "refs": "HEAD -> main, origin/main"
+    },
     {
       "sha": "24b740f53c9269a36ab4dd2d87e4d4d85255c164",
       "short": "24b740f",
@@ -16,7 +27,7 @@
       "date": "2026-08-17T01:45:00Z",
       "timestamp": 1786931100,
       "subject": "chore: update CHANGELOG for v0.1.0 (re-release)",
-      "refs": "HEAD -> main, tag: v0.1.0, tag: latest, origin/main"
+      "refs": "tag: v0.1.0, tag: latest"
     },
     {
       "sha": "collapsed:c5a67922bdb2e2b9e41324f32d25ea04660531bc:5f3c57828bac2e16213dcbab239ac3450cfe3fc2",
@@ -510,7 +521,7 @@
   ],
   "branches": [
     {
-      "name": "24b740f53c9269a36ab4dd2d87e4d4d85255c164 chore: update CHANGELOG for v0.1.0 (re-release)",
+      "name": "f3e95eb16fb9a27f4afafacc65d48f4c26361f77 chore: update git tree visualisation",
       "sha": "*",
       "current": false,
       "merged": false
