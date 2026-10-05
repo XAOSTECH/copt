@@ -3,10 +3,21 @@
     "repository": "copt",
     "current_branch": "main",
     "repo_url": "https://github.com/XAOSTECH/copt",
-    "generated": "2026-09-21T04:34:07Z",
+    "generated": "2026-09-28T05:00:17Z",
     "max_commits": 500
   },
   "commits": [
+  {
+    "sha": "6ed70423a225cd2f1217e9e9c6d852643cb84650",
+    "short": "6ed7042",
+    "parents": "6d498f52776c2f493aa14c5a4d6de262233c9ab9",
+    "author": "xaos-bot",
+    "email": "262248812+xaos-bot@users.noreply.github.com",
+    "date": "2026-09-28T05:00:17Z",
+    "timestamp": 1790571617,
+    "subject": "chore: update git tree visualisation",
+    "refs": "HEAD -> main, origin/main"
+  },
   {
     "sha": "6d498f52776c2f493aa14c5a4d6de262233c9ab9",
     "short": "6d498f5",
@@ -16,7 +27,7 @@
     "date": "2026-09-21T04:34:07Z",
     "timestamp": 1789965247,
     "subject": "chore: update git tree visualisation",
-    "refs": "HEAD -> main, origin/main"
+    "refs": ""
   },
   {
     "sha": "9ad00f6939a8c1ef96f76cf19e1ee8e404c2c677",
@@ -1725,7 +1736,7 @@
   }
 ],
   "branches": [
-  {"name":"6d498f52776c2f493aa14c5a4d6de262233c9ab9 chore: update git tree visualisation","sha":"*","current":false,"merged":false}
+  {"name":"6ed70423a225cd2f1217e9e9c6d852643cb84650 chore: update git tree visualisation","sha":"*","current":false,"merged":false}
 ],
   "tags": [
   {"name":"backup/main-pre-drop-20260630T160036Z","sha":"96185c0518cd5d105627b1a31ff7164dc8264cce"},

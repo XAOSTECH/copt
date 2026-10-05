@@ -3,42 +3,33 @@
     "repository": "copt",
     "current_branch": "main",
     "repo_url": "https://github.com/XAOSTECH/copt",
-    "generated": "2026-09-21T04:34:07Z",
+    "generated": "2026-09-28T05:00:17Z",
     "max_commits": 500
   },
   "commits": [
     {
-      "sha": "6d498f52776c2f493aa14c5a4d6de262233c9ab9",
-      "short": "6d498f5",
-      "parents": "9ad00f6939a8c1ef96f76cf19e1ee8e404c2c677",
+      "sha": "6ed70423a225cd2f1217e9e9c6d852643cb84650",
+      "short": "6ed7042",
+      "parents": "collapsed:6d498f52776c2f493aa14c5a4d6de262233c9ab9:f3e95eb16fb9a27f4afafacc65d48f4c26361f77",
       "author": "xaos-bot",
       "email": "262248812+xaos-bot@users.noreply.github.com",
-      "date": "2026-09-21T04:34:07Z",
-      "timestamp": 1789965247,
+      "date": "2026-09-28T05:00:17Z",
+      "timestamp": 1790571617,
       "subject": "chore: update git tree visualisation",
       "refs": "HEAD -> main, origin/main"
     },
     {
-      "sha": "9ad00f6939a8c1ef96f76cf19e1ee8e404c2c677",
-      "short": "9ad00f6",
-      "parents": "f3e95eb16fb9a27f4afafacc65d48f4c26361f77",
-      "author": "xaos-bot",
-      "email": "262248812+xaos-bot@users.noreply.github.com",
-      "date": "2026-09-14T04:33:51Z",
-      "timestamp": 1789360431,
-      "subject": "chore: update git tree visualisation",
-      "refs": ""
-    },
-    {
-      "sha": "f3e95eb16fb9a27f4afafacc65d48f4c26361f77",
-      "short": "f3e95eb",
+      "sha": "collapsed:6d498f52776c2f493aa14c5a4d6de262233c9ab9:f3e95eb16fb9a27f4afafacc65d48f4c26361f77",
+      "short": "3",
       "parents": "24b740f53c9269a36ab4dd2d87e4d4d85255c164",
-      "author": "xaos-bot",
-      "email": "262248812+xaos-bot@users.noreply.github.com",
-      "date": "2026-09-07T04:12:07Z",
-      "timestamp": 1788754327,
-      "subject": "chore: update git tree visualisation",
-      "refs": ""
+      "author": "",
+      "email": "",
+      "date": "2026-09-21T04:34:07Z",
+      "timestamp": 1789965247,
+      "subject": "3 commits",
+      "refs": "",
+      "collapsed": true,
+      "count": 3
     },
     {
       "sha": "24b740f53c9269a36ab4dd2d87e4d4d85255c164",
@@ -543,7 +534,7 @@
   ],
   "branches": [
     {
-      "name": "6d498f52776c2f493aa14c5a4d6de262233c9ab9 chore: update git tree visualisation",
+      "name": "6ed70423a225cd2f1217e9e9c6d852643cb84650 chore: update git tree visualisation",
       "sha": "*",
       "current": false,
       "merged": false
