@@ -117,8 +117,7 @@ while true; do
     set -e
 
     # --- USB disconnect detection (from log tail) ---
-    # copt's built-in run_with_usb_reconnect handles device-level reconnects,
-    # but if it exhausts COPT_USB_MAX_RECONNECTS the whole process exits.
+    # copt's built-in run_with_usb_reconnect handles device-level reconnects, but if it exhausts COPT_USB_MAX_RECONNECTS the whole process exits.
     # Detect that here so we can give a targeted message and wait longer.
     usb_disconnect=0
     if [[ "${USB_AWARE}" -eq 1 ]]; then

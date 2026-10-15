@@ -3,8 +3,7 @@
 # extract-logo-reference — Capture UGREEN idle logo for detection
 # ============================================================================
 # Captures one frame of the UGREEN logo that appears when no input connected.
-# This reference frame is used by smart logo detection to hide the logo only
-# when it's actually showing (not during real content).
+# This reference frame is used by smart logo detection to hide the logo only when it's actually showing (not during real content).
 #
 # Usage: sudo ./extract-logo-reference.sh [device]
 #        sudo ./extract-logo-reference.sh /dev/usb-video-capture1
