@@ -2,8 +2,7 @@
 # ============================================================================
 # copt — Capture Operations for Wayland (kmsgrab + FFmpeg)
 # ============================================================================
-# Low-level screen/region/audio capture on Wayland using KMS grab,
-# hardware-accelerated encoding (VAAPI / NVENC), and ALSA audio.
+# Low-level screen/region/audio capture on Wayland using KMS grab, hardware-accelerated encoding (VAAPI / NVENC), and ALSA audio.
 #
 # Requires: FFmpeg (with --enable-libx264/x265, kmsgrab, vaapi or nvenc),
 #           root access (sudo) for /dev/dri KMS framebuffer reads.
@@ -313,8 +312,7 @@ main() {
     load_config
     
     # Parse args once to extract --profile before load_profile is called.
-    # Must use index arithmetic — shift/for-loop combination incorrectly
-    # shifts $1 (not the loop cursor) so "$1" ends up pointing at the wrong arg.
+    # Must use index arithmetic — shift/for-loop combination incorrectly shifts $1 (not the loop cursor) so "$1" ends up pointing at the wrong arg.
     info "copt.sh called with args: $*"
     local -a _args=("$@")
     for _i in "${!_args[@]}"; do

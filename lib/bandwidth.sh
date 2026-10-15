@@ -2,8 +2,7 @@
 # ============================================================================
 # lib/bandwidth.sh — Bandwidth-adaptive profile adjustment
 # ============================================================================
-# Automatically adjusts encoding parameters to fit within a maximum bandwidth
-# limit by reducing resolution, framerate, or bitrate.
+# Automatically adjusts encoding parameters to fit within a maximum bandwidth limit by reducing resolution, framerate, or bitrate.
 #
 # SPDX-Licence-Identifier: GPL-3.0-or-later
 # ============================================================================
