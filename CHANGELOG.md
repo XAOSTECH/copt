@@ -1,4 +1,18 @@
 
+## [0.1.0] - 2026-10-19 (re-release)
+
+### Fixed
+- adapt example/minimal config files
+
+### Changed
+- chore: humanise hard-wrapped comments and prose
+- chore(dc-init): update workflows,actions
+- chore: convert American spellings to British English
+- chore(dc-init): load workflows,actions
+- chore: dc-contain
+- chore(dc-init): update workflows and actions
+- Remove redundant obs-safe-launch.sh, use shared op-cap launcher
+
 ## [0.1.0] - 2026-10-12 (re-release)
 
 ### Fixed
