@@ -1,4 +1,29 @@
 
+## [0.1.0] - 2026-11-02 (re-release)
+
+### Fixed
+- adapt example/minimal config files
+- remove stray ] from for loops; handle --skip-relay in worker
+- relay sync + --skip-relay flag + --help early exit + updated help text
+- add missing colorspace vars; consolidate to 4k30 + 1080p60
+- declare input colorspace before -i to prevent implicit matrix conversion
+- profile arg parsing + banner timing
+- embed HDR color metadata via setparams in USB hevc path
+
+### Changed
+- chore(dc-init): update workflows,actions
+- chore: convert American spellings to British English
+- chore(dc-init): load workflows,actions
+- chore: dc-contain
+- chore(dc-init): update workflows and actions
+- Remove redundant obs-safe-launch.sh, use shared op-cap launcher
+- chore: rremove .gitmodules
+- Add USB capture and OBS crash prevention utilities
+- Simplify relay back to synchronous uploads with playlist timer
+- Fix stale playlist and segment tracking issues
+- Refactor relay to upload segments in background for independent playlist scheduling
+- Reduce playlist upload interval to 3s and wrap logging
+
 ## [0.1.0] - 2026-10-12 (re-release)
 
 ### Fixed
