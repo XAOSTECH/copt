@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" 
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="13240" height="10500" 
+     viewBox="0 0 13240 10500">
+  <defs>
+    <radialGradient id="leafGradient">
+      <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#16a34a;stop-opacity:0.8" />
+    </radialGradient>
+    <radialGradient id="mergeGradient">
+      <stop offset="0%" style="stop-color:#a78bfa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:0.8" />
+    </radialGradient>
+    <radialGradient id="forkGradient">
+      <stop offset="0%" style="stop-color:#fb923c;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ea580c;stop-opacity:0.8" />
+    </radialGradient>
+    <radialGradient id="tagGradient">
+      <stop offset="0%" style="stop-color:#38bdf8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0284c7;stop-opacity:0.8" />
+    </radialGradient>
+    <style>
+      .branch-line { stroke: #64748b; stroke-width: 2; fill: none; opacity: 0.7; }
+      .trunk-line { stroke: #22c55e; stroke-width: 2.5; fill: none; opacity: 0.6; }
+      .commit-leaf { cursor: pointer; }
+      .commit-leaf:hover { filter: brightness(1.5); }
+      .branch-label { font-family: sans-serif; font-size: 12px; font-weight: bold; fill: #0f172a; }
+    </style>
+  </defs>
+  
+  <rect width="13240" height="10500" fill="#f8fafc"/>
+  <defs>
+    <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
+      <path d="M 100 0 L 0 0 0 100" fill="none" stroke="#e2e8f0" stroke-width="0.5" opacity="0.3"/>
+    </pattern>
+  </defs>
+  <rect width="13240" height="10500" fill="url(#grid)"/>
+  
+  <!-- Branch connection lines -->
+  <g id="branches">
+    <line class="trunk-line" x1="600" y1="60" x2="600" y2="180"/>
+    <path class="branch-line" d="M 720 100 C 720 212, 360 268, 360 380"/>
+    <line class="trunk-line" x1="600" y1="180" x2="600" y2="460"/>
+    <path class="branch-line" d="M 480 220 C 480 332, 960 388, 960 500"/>
+    <path class="branch-line" d="M 840 300 C 840 412, 240 468, 240 580"/>
+    <path class="branch-line" d="M 360 380 C 360 492, 1080 548, 1080 660"/>
+    <line class="trunk-line" x1="600" y1="460" x2="600" y2="740"/>
+    <path class="branch-line" d="M 960 500 C 960 612, 120 668, 120 780"/>
+    <path class="branch-line" d="M 240 580 C 240 692, 1200 748, 1200 860"/>
+    <path class="branch-line" d="M 1080 660 C 1080 772, 0 828, 0 940"/>
+    <line class="trunk-line" x1="600" y1="740" x2="600" y2="1020"/>
+    <path class="branch-line" d="M 120 780 C 120 892, 1320 948, 1320 1060"/>
+    <path class="branch-line" d="M 1200 860 C 1200 1228, 1800 1412, 1800 1780"/>
+    <path class="branch-line" d="M 0 940 C 0 1020, -120 1060, -120 1140"/>
+    <line class="trunk-line" x1="600" y1="1020" x2="600" y2="1300"/>
+    <path class="branch-line" d="M 1320 1060 C 1320 1172, -240 1228, -240 1340"/>
+    <path class="branch-line" d="M -120 1140 C -120 1172, 1440 1188, 1440 1220"/>
+    <path class="branch-line" d="M 1440 1220 C 1440 1332, -360 1388, -360 1500"/>
+    <line class="trunk-line" x1="600" y1="1300" x2="600" y2="1660"/>
+    <path class="branch-line" d="M -240 1340 C -240 1484, -480 1556, -480 1700"/>
+    <path class="branch-line" d="M 1560 1420 C 1560 1596, -600 1684, -600 1860"/>
+    <path class="branch-line" d="M -360 1500 C -360 1676, 1920 1764, 1920 1940"/>
+    <path class="branch-line" d="M 1680 1580 C 1680 1756, -720 1844, -720 2020"/>
+    <line class="trunk-line" x1="600" y1="1660" x2="600" y2="2100"/>
+    <path class="branch-line" d="M -480 1700 C -480 1876, 2040 1964, 2040 2140"/>
+    <path class="branch-line" d="M 1800 1780 C 1800 2436, -1680 2764, -1680 3420"/>
+    <path class="branch-line" d="M -600 1860 C -600 2004, -840 2076, -840 2220"/>
+    <path class="branch-line" d="M 1920 1940 C 1920 2084, 2160 2156, 2160 2300"/>
+    <path class="branch-line" d="M -720 2020 C -720 2164, -960 2236, -960 2380"/>
+    <line class="trunk-line" x1="600" y1="2100" x2="600" y2="2700"/>
+    <path class="branch-line" d="M 2040 2140 C 2040 2380, -1200 2500, -1200 2740"/>
+    <path class="branch-line" d="M -840 2220 C -840 2316, 2280 2364, 2280 2460"/>
+    <path class="branch-line" d="M 2160 2300 C 2160 2396, -1080 2444, -1080 2540"/>
+    <path class="branch-line" d="M -960 2380 C -960 2476, 2400 2524, 2400 2620"/>
+    <path class="branch-line" d="M 2280 2460 C 2280 2604, 2520 2676, 2520 2820"/>
+    <path class="branch-line" d="M -1080 2540 C -1080 2716, 2640 2804, 2640 2980"/>
+    <path class="branch-line" d="M 2400 2620 C 2400 2796, -1440 2884, -1440 3060"/>
+    <line class="trunk-line" x1="600" y1="2700" x2="600" y2="3380"/>
+    <path class="branch-line" d="M -1200 2740 C -1200 3044, 3000 3196, 3000 3500"/>
+    <path class="branch-line" d="M 2520 2820 C 2520 2852, -1320 2868, -1320 2900"/>
+    <path class="branch-line" d="M -1320 2900 C -1320 3028, -1560 3092, -1560 3220"/>
+    <path class="branch-line" d="M 2640 2980 C 2640 3044, 2760 3076, 2760 3140"/>
+    <path class="branch-line" d="M -1440 3060 C -1440 3156, 2880 3204, 2880 3300"/>
+    <path class="branch-line" d="M 2760 3140 C 2760 3316, -1800 3404, -1800 3580"/>
+    <path class="branch-line" d="M -1560 3220 C -1560 3396, 3120 3484, 3120 3660"/>
+    <path class="branch-line" d="M 2880 3300 C 2880 3476, -1920 3564, -1920 3740"/>
+    <line class="trunk-line" x1="600" y1="3380" x2="600" y2="3820"/>
+    <path class="branch-line" d="M -1680 3420 C -1680 3596, 3240 3684, 3240 3860"/>
+    <path class="branch-line" d="M 3000 3500 C 3000 3676, -2040 3764, -2040 3940"/>
+    <path class="branch-line" d="M -1800 3580 C -1800 3756, 3360 3844, 3360 4020"/>
+    <path class="branch-line" d="M 3120 3660 C 3120 4012, 3720 4188, 3720 4540"/>
+    <path class="branch-line" d="M 3120 3660 C 3120 3836, -2160 3924, -2160 4100"/>
+    <path class="branch-line" d="M -1920 3740 C -1920 3916, 3480 4004, 3480 4180"/>
+    <line class="trunk-line" x1="600" y1="3820" x2="600" y2="4260"/>
+    <path class="branch-line" d="M 3240 3860 C 3240 4036, -2280 4124, -2280 4300"/>
+    <path class="branch-line" d="M -2040 3940 C -2040 4116, 3600 4204, 3600 4380"/>
+    <path class="branch-line" d="M 3360 4020 C 3360 4196, -2400 4284, -2400 4460"/>
+    <path class="branch-line" d="M -2160 4100 C -2160 4276, 3720 4364, 3720 4540"/>
+    <path class="branch-line" d="M 3480 4180 C 3480 4324, 3720 4396, 3720 4540"/>
+    <line class="trunk-line" x1="600" y1="4260" x2="600" y2="4780"/>
+    <path class="branch-line" d="M -2280 4300 C -2280 4508, -2640 4612, -2640 4820"/>
+    <path class="branch-line" d="M 3600 4380 C 3600 4588, 3960 4692, 3960 4900"/>
+    <path class="branch-line" d="M -2400 4460 C -2400 4524, -2520 4556, -2520 4620"/>
+    <path class="branch-line" d="M 3720 4540 C 3720 4604, 3840 4636, 3840 4700"/>
+    <path class="branch-line" d="M -2520 4620 C -2520 4764, -2760 4836, -2760 4980"/>
+    <path class="branch-line" d="M 3840 4700 C 3840 4844, 4080 4916, 4080 5060"/>
+    <line class="trunk-line" x1="600" y1="4780" x2="600" y2="5300"/>
+    <path class="branch-line" d="M -2640 4820 C -2640 5028, -3000 5132, -3000 5340"/>
+    <path class="branch-line" d="M 3960 4900 C 3960 5108, 4320 5212, 4320 5420"/>
+    <path class="branch-line" d="M -2760 4980 C -2760 5044, -2880 5076, -2880 5140"/>
+    <path class="branch-line" d="M 4080 5060 C 4080 5124, 4200 5156, 4200 5220"/>
+    <path class="branch-line" d="M -2880 5140 C -2880 5284, -3120 5356, -3120 5500"/>
+    <path class="branch-line" d="M 4200 5220 C 4200 5364, 4440 5436, 4440 5580"/>
+    <line class="trunk-line" x1="600" y1="5300" x2="600" y2="5660"/>
+    <path class="branch-line" d="M -3000 5340 C -3000 5484, -3240 5556, -3240 5700"/>
+    <path class="branch-line" d="M 4320 5420 C 4320 5564, 4560 5636, 4560 5780"/>
+    <path class="branch-line" d="M -3120 5500 C -3120 5644, -3360 5716, -3360 5860"/>
+    <path class="branch-line" d="M 4440 5580 C 4440 5724, 4680 5796, 4680 5940"/>
+    <line class="trunk-line" x1="600" y1="5660" x2="600" y2="6020"/>
+    <path class="branch-line" d="M -3240 5700 C -3240 5844, -3480 5916, -3480 6060"/>
+    <path class="branch-line" d="M 4560 5780 C 4560 5924, 4800 5996, 4800 6140"/>
+    <path class="branch-line" d="M -3360 5860 C -3360 6004, -3600 6076, -3600 6220"/>
+    <path class="branch-line" d="M 4680 5940 C 4680 6084, 4920 6156, 4920 6300"/>
+    <line class="trunk-line" x1="600" y1="6020" x2="600" y2="6380"/>
+    <path class="branch-line" d="M -3480 6060 C -3480 6204, -3720 6276, -3720 6420"/>
+    <path class="branch-line" d="M 4800 6140 C 4800 6284, 5040 6356, 5040 6500"/>
+    <path class="branch-line" d="M -3600 6220 C -3600 6364, -3840 6436, -3840 6580"/>
+    <path class="branch-line" d="M 4920 6300 C 4920 6444, 5160 6516, 5160 6660"/>
+    <line class="trunk-line" x1="600" y1="6380" x2="600" y2="6740"/>
+    <path class="branch-line" d="M -3720 6420 C -3720 6564, -3960 6636, -3960 6780"/>
+    <path class="branch-line" d="M 5040 6500 C 5040 6644, 5280 6716, 5280 6860"/>
+    <path class="branch-line" d="M -3840 6580 C -3840 6724, -4080 6796, -4080 6940"/>
+    <path class="branch-line" d="M 5160 6660 C 5160 6916, -4320 7044, -4320 7300"/>
+    <path class="branch-line" d="M 5160 6660 C 5160 6804, 5400 6876, 5400 7020"/>
+    <line class="trunk-line" x1="600" y1="6740" x2="600" y2="7100"/>
+    <path class="branch-line" d="M -3960 6780 C -3960 6924, -4200 6996, -4200 7140"/>
+    <path class="branch-line" d="M 5280 6860 C 5280 7004, 5520 7076, 5520 7220"/>
+    <path class="branch-line" d="M -4080 6940 C -4080 7084, -4320 7156, -4320 7300"/>
+    <path class="branch-line" d="M 5400 7020 C 5400 7132, -4320 7188, -4320 7300"/>
+    <line class="trunk-line" x1="600" y1="7100" x2="600" y2="7380"/>
+    <path class="branch-line" d="M -4200 7140 C -4200 7252, 5640 7308, 5640 7420"/>
+    <path class="branch-line" d="M 5520 7220 C 5520 7332, -4440 7388, -4440 7500"/>
+    <path class="branch-line" d="M -4320 7300 C -4320 7412, 5760 7468, 5760 7580"/>
+    <line class="trunk-line" x1="600" y1="7380" x2="600" y2="7660"/>
+    <path class="branch-line" d="M 5640 7420 C 5640 7532, -4560 7588, -4560 7700"/>
+    <path class="branch-line" d="M -4440 7500 C -4440 7612, 5880 7668, 5880 7780"/>
+    <path class="branch-line" d="M 5760 7580 C 5760 7692, -4680 7748, -4680 7860"/>
+    <line class="trunk-line" x1="600" y1="7660" x2="600" y2="7940"/>
+    <path class="branch-line" d="M -4560 7700 C -4560 7812, 6000 7868, 6000 7980"/>
+    <path class="branch-line" d="M 5880 7780 C 5880 7892, -4800 7948, -4800 8060"/>
+    <path class="branch-line" d="M -4680 7860 C -4680 7972, 6120 8028, 6120 8140"/>
+    <line class="trunk-line" x1="600" y1="7940" x2="600" y2="8220"/>
+    <path class="branch-line" d="M 6000 7980 C 6000 8092, -4920 8148, -4920 8260"/>
+    <path class="branch-line" d="M -4800 8060 C -4800 8140, -4920 8180, -4920 8260"/>
+    <path class="branch-line" d="M 6120 8140 C 6120 8220, 6240 8260, 6240 8340"/>
+    <line class="trunk-line" x1="600" y1="8220" x2="600" y2="8420"/>
+    <path class="branch-line" d="M -4920 8260 C -4920 8340, -5040 8380, -5040 8460"/>
+    <path class="branch-line" d="M 6240 8340 C 6240 8420, 6360 8460, 6360 8540"/>
+    <line class="trunk-line" x1="600" y1="8420" x2="600" y2="8620"/>
+    <path class="branch-line" d="M -5040 8460 C -5040 8540, -5160 8580, -5160 8660"/>
+    <path class="branch-line" d="M 6360 8540 C 6360 8620, 6480 8660, 6480 8740"/>
+    <line class="trunk-line" x1="600" y1="8620" x2="600" y2="8820"/>
+    <path class="branch-line" d="M -5160 8660 C -5160 8740, -5280 8780, -5280 8860"/>
+    <path class="branch-line" d="M 6480 8740 C 6480 8788, -5280 8812, -5280 8860"/>
+    <line class="trunk-line" x1="600" y1="8820" x2="600" y2="8940"/>
+    <path class="branch-line" d="M -5280 8860 C -5280 8908, 6600 8932, 6600 8980"/>
+    <line class="trunk-line" x1="600" y1="8940" x2="600" y2="9060"/>
+    <path class="branch-line" d="M 6600 8980 C 6600 9028, -5400 9052, -5400 9100"/>
+    <line class="trunk-line" x1="600" y1="9060" x2="600" y2="9180"/>
+    <path class="branch-line" d="M -5400 9100 C -5400 9148, 6720 9172, 6720 9220"/>
+    <line class="trunk-line" x1="600" y1="9180" x2="600" y2="9300"/>
+    <path class="branch-line" d="M 6720 9220 C 6720 9268, -5520 9292, -5520 9340"/>
+    <line class="trunk-line" x1="600" y1="9300" x2="600" y2="9420"/>
+    <path class="branch-line" d="M -5520 9340 C -5520 9388, 6840 9412, 6840 9460"/>
+    <line class="trunk-line" x1="600" y1="9420" x2="600" y2="9540"/>
+    <path class="branch-line" d="M 6840 9460 C 6840 9492, 600 9508, 600 9540"/>
+    <line class="trunk-line" x1="600" y1="9540" x2="600" y2="9580"/>
+    <line class="trunk-line" x1="600" y1="9580" x2="600" y2="9620"/>
+    <line class="trunk-line" x1="600" y1="9620" x2="600" y2="9660"/>
+    <path class="branch-line" d="M 600 9620 C 600 9652, -5640 9668, -5640 9700"/>
+    <line class="trunk-line" x1="600" y1="9660" x2="600" y2="9780"/>
+    <path class="branch-line" d="M -5640 9700 C -5640 9732, 600 9748, 600 9780"/>
+    <line class="trunk-line" x1="600" y1="9780" x2="600" y2="9820"/>
+    <line class="trunk-line" x1="600" y1="9820" x2="600" y2="9860"/>
+    <line class="trunk-line" x1="600" y1="9860" x2="600" y2="9980"/>
+    <path class="branch-line" d="M 600 9860 C 600 9876, 6960 9884, 6960 9900"/>
+    <path class="branch-line" d="M 6960 9900 C 6960 9932, 600 9948, 600 9980"/>
+    <line class="trunk-line" x1="600" y1="9980" x2="600" y2="10100"/>
+    <path class="branch-line" d="M -5760 10020 C -5760 10052, 600 10068, 600 10100"/>
+    <line class="trunk-line" x1="600" y1="10100" x2="600" y2="10140"/>
+    <line class="trunk-line" x1="600" y1="10140" x2="600" y2="10180"/>
+    <line class="trunk-line" x1="600" y1="10180" x2="600" y2="10300"/>
+    <path class="branch-line" d="M 600 10180 C 600 10196, 7080 10204, 7080 10220"/>
+    <path class="branch-line" d="M 7080 10220 C 7080 10252, 600 10268, 600 10300"/>
+    <line class="trunk-line" x1="600" y1="10300" x2="600" y2="10340"/>
+    <line class="trunk-line" x1="600" y1="10340" x2="600" y2="10380"/>
+  </g>
+  <!-- Commit nodes -->
+  <g id="commits">
+    <circle class="commit-leaf" cx="600" cy="60" r="6" fill="url(#tagGradient)" stroke="#0284c7" stroke-width="1.5"><title>85d7129: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="720" cy="100" r="6" fill="url(#tagGradient)" stroke="#0284c7" stroke-width="1.5"><title>1bc5453: chore(dc-init): update workflows,actions</title></circle>
+    <circle class="commit-leaf" cx="600" cy="180" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>915d452: chore(dc-init): update workflows,actions</title></circle>
+    <circle class="commit-leaf" cx="480" cy="220" r="6" fill="url(#tagGradient)" stroke="#0284c7" stroke-width="1.5"><title>5d80492: chore(dc-init): update workflows,actions</title></circle>
+    <circle class="commit-leaf" cx="840" cy="300" r="6" fill="url(#tagGradient)" stroke="#0284c7" stroke-width="1.5"><title>50a6dfa: chore(dc-init): update workflows,actions</title></circle>
+    <circle class="commit-leaf" cx="360" cy="380" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>729c0a1: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="600" cy="460" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c39f7b9: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="960" cy="500" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>e88529d: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="240" cy="580" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>bfa4e96: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="1080" cy="660" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>ba2dc27: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="600" cy="740" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>63dac7a: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="120" cy="780" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>014ed23: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="1200" cy="860" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>3f0e67f: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="0" cy="940" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>853463f: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1020" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>1c6462c: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="1320" cy="1060" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b4675c5: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="-120" cy="1140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>dd1efdb: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="1440" cy="1220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>a142456: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1300" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>aaa171e: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="-240" cy="1340" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>02a46aa: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="1560" cy="1420" r="6" fill="url(#tagGradient)" stroke="#0284c7" stroke-width="1.5"><title>96185c0: fix(container): adapt example/minimal config files</title></circle>
+    <circle class="commit-leaf" cx="-360" cy="1500" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>5344568: fix(container): adapt example/minimal config files</title></circle>
+    <circle class="commit-leaf" cx="1680" cy="1580" r="6" fill="url(#tagGradient)" stroke="#0284c7" stroke-width="1.5"><title>c9235cc: fix(container): adapt example/minimal config files</title></circle>
+    <circle class="commit-leaf" cx="600" cy="1660" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>14ee111: fix(container): adapt example/minimal config files</title></circle>
+    <circle class="commit-leaf" cx="-480" cy="1700" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>fe58daf: fix(container): adapt example/minimal config files</title></circle>
+    <circle class="commit-leaf" cx="1800" cy="1780" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>f2a48c6: fix(container): adapt example/minimal config files</title></circle>
+    <circle class="commit-leaf" cx="-600" cy="1860" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>ffabefb: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="1920" cy="1940" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>624ca8f: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="-720" cy="2020" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>4b38084: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2100" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>7743207: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="2040" cy="2140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>7f1fd1e: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="-840" cy="2220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8230319: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="2160" cy="2300" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>3170f1e: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="-960" cy="2380" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>15a77f2: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="2280" cy="2460" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>087673b: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="-1080" cy="2540" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>2b80098: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="2400" cy="2620" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>e06c0f9: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="600" cy="2700" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>f0c6f18: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="-1200" cy="2740" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>124eb9e: chore: update CHANGELOG for v0.1.0 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="2520" cy="2820" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>04eb3ff: chore: update git tree visualisation</title></circle>
+    <g class="commit-leaf"><rect x="-1329" y="2891" width="18" height="18" rx="3" transform="rotate(45 -1320 2900)" fill="#475569" stroke="#cbd5e1" stroke-width="1.5"/><text x="-1320" y="2904" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="bold" fill="#f8fafc">3</text><title>3 commits</title></g>
+    <circle class="commit-leaf" cx="2640" cy="2980" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>9b46a75: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="-1440" cy="3060" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>ed12f98: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="2760" cy="3140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>1877d73: chore: update CHANGELOG for v0.1.0</title></circle>
+    <circle class="commit-leaf" cx="-1560" cy="3220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>415870c: chore: update CHANGELOG for v0.1.0</title></circle>
+    <circle class="commit-leaf" cx="2880" cy="3300" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>bfa2217: chore: update CHANGELOG for v0.1.0</title></circle>
+    <circle class="commit-leaf" cx="600" cy="3380" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>7260154: chore: update CHANGELOG for v0.1.0</title></circle>
+    <circle class="commit-leaf" cx="-1680" cy="3420" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>5198795: chore: update CHANGELOG for v0.1.0</title></circle>
+    <circle class="commit-leaf" cx="3000" cy="3500" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>4428839: chore: update CHANGELOG for v0.1.0</title></circle>
+    <circle class="commit-leaf" cx="-1800" cy="3580" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>d77192f: Merge pull request #4 from XAOSTECH:anglicise/20260401-020459</title></circle>
+    <circle class="commit-leaf" cx="3120" cy="3660" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>24f31ff: Merge pull request #4 from XAOSTECH:anglicise/20260401-020459</title></circle>
+    <circle class="commit-leaf" cx="-1920" cy="3740" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8b65935: Merge pull request #4 from XAOSTECH:anglicise/20260401-020459</title></circle>
+    <circle class="commit-leaf" cx="600" cy="3820" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>2a2a0be: Merge pull request #4 from XAOSTECH:anglicise/20260401-020459</title></circle>
+    <circle class="commit-leaf" cx="3240" cy="3860" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>dac272c: Merge pull request #4 from XAOSTECH:anglicise/20260401-020459</title></circle>
+    <circle class="commit-leaf" cx="-2040" cy="3940" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>019af6f: Merge pull request #4 from XAOSTECH:anglicise/20260401-020459</title></circle>
+    <circle class="commit-leaf" cx="3360" cy="4020" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>91993fd: chore: convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="-2160" cy="4100" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>530729e: chore: convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="3480" cy="4180" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8e4cbe0: chore: convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4260" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>3459502: chore: convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="-2280" cy="4300" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>bf9c459: chore: convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="3600" cy="4380" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>1462350: chore: convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="-2400" cy="4460" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c04c407: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="3720" cy="4540" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>810e09f: chore: update git tree visualisation</title></circle>
+    <circle class="commit-leaf" cx="-2520" cy="4620" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>d851846: chore(dc-init): load workflows,actions</title></circle>
+    <circle class="commit-leaf" cx="3840" cy="4700" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>047f5ab: chore(dc-init): load workflows,actions</title></circle>
+    <circle class="commit-leaf" cx="600" cy="4780" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>83aed8a: chore(dc-init): load workflows,actions</title></circle>
+    <circle class="commit-leaf" cx="-2640" cy="4820" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c55be7b: chore(dc-init): load workflows,actions</title></circle>
+    <circle class="commit-leaf" cx="3960" cy="4900" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>5260a0e: chore(dc-init): load workflows,actions</title></circle>
+    <circle class="commit-leaf" cx="-2760" cy="4980" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>3b971ce: chore(dc-init): update workflows,actions</title></circle>
+    <circle class="commit-leaf" cx="4080" cy="5060" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>0c801ef: chore(dc-init): update workflows,actions</title></circle>
+    <circle class="commit-leaf" cx="-2880" cy="5140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>ee095f6: chore: dc-contain</title></circle>
+    <circle class="commit-leaf" cx="4200" cy="5220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>16df4f8: chore: dc-contain</title></circle>
+    <circle class="commit-leaf" cx="600" cy="5300" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>a7ff073: chore: dc-contain</title></circle>
+    <circle class="commit-leaf" cx="-3000" cy="5340" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>2990f40: chore: dc-contain</title></circle>
+    <circle class="commit-leaf" cx="4320" cy="5420" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>5f09d23: chore: dc-contain</title></circle>
+    <circle class="commit-leaf" cx="-3120" cy="5500" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>5b088fa: chore: update CHANGELOG for v0.0.1 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="4440" cy="5580" r="6" fill="url(#tagGradient)" stroke="#0284c7" stroke-width="1.5"><title>0a39c34: chore: update CHANGELOG for v0.0.1 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="600" cy="5660" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>ebd0f91: chore: update CHANGELOG for v0.0.1 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="-3240" cy="5700" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>3a4f0f4: chore: update CHANGELOG for v0.0.1 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="4560" cy="5780" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b695277: chore: update CHANGELOG for v0.0.1 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="-3360" cy="5860" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>e6c5025: chore(dc-init): update workflows and actions</title></circle>
+    <circle class="commit-leaf" cx="4680" cy="5940" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>bc0d3ce: chore(dc-init): update workflows and actions</title></circle>
+    <circle class="commit-leaf" cx="600" cy="6020" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>91e7655: chore(dc-init): update workflows and actions</title></circle>
+    <circle class="commit-leaf" cx="-3480" cy="6060" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>08b0ff2: chore(dc-init): update workflows and actions</title></circle>
+    <circle class="commit-leaf" cx="4800" cy="6140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8d05a73: chore(dc-init): update workflows and actions</title></circle>
+    <circle class="commit-leaf" cx="-3600" cy="6220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>9f1c23e: Remove redundant obs-safe-launch.sh, use shared op-cap launcher</title></circle>
+    <circle class="commit-leaf" cx="4920" cy="6300" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8730ff9: Remove redundant obs-safe-launch.sh, use shared op-cap launcher</title></circle>
+    <circle class="commit-leaf" cx="600" cy="6380" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>505298a: Remove redundant obs-safe-launch.sh, use shared op-cap launcher</title></circle>
+    <circle class="commit-leaf" cx="-3720" cy="6420" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b729bf8: Remove redundant obs-safe-launch.sh, use shared op-cap launcher</title></circle>
+    <circle class="commit-leaf" cx="5040" cy="6500" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>93ca81c: Remove redundant obs-safe-launch.sh, use shared op-cap launcher</title></circle>
+    <circle class="commit-leaf" cx="-3840" cy="6580" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>5e6b0ac: Merge pull request #3 from XAOSTECH:anglicise/20260301-015228\n\nchore: Convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="5160" cy="6660" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>a74d975: Merge pull request #3 from XAOSTECH:anglicise/20260301-015228\n\nchore: Convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="600" cy="6740" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>1a9001f: Merge pull request #3 from XAOSTECH:anglicise/20260301-015228\n\nchore: Convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="-3960" cy="6780" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>aa27ae0: Merge pull request #3 from XAOSTECH:anglicise/20260301-015228\n\nchore: Convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="5280" cy="6860" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>8a6330f: Merge pull request #3 from XAOSTECH:anglicise/20260301-015228\n\nchore: Convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="-4080" cy="6940" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>b7c9529: chore: convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="5400" cy="7020" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>68a848b: chore: convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="600" cy="7100" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>ddafd57: fix: remove stray ] from for loops; handle --skip-relay in worker</title></circle>
+    <circle class="commit-leaf" cx="-4200" cy="7140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>e2e46fa: fix: remove stray ] from for loops; handle --skip-relay in worker</title></circle>
+    <circle class="commit-leaf" cx="5520" cy="7220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>218ef36: fix: remove stray ] from for loops; handle --skip-relay in worker</title></circle>
+    <circle class="commit-leaf" cx="-4320" cy="7300" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>9f36a90: fix: remove stray ] from for loops; handle --skip-relay in worker</title></circle>
+    <circle class="commit-leaf" cx="600" cy="7380" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>ed787b6: fix: relay sync + --skip-relay flag + --help early exit + updated help text</title></circle>
+    <circle class="commit-leaf" cx="5640" cy="7420" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>295dd94: fix: relay sync + --skip-relay flag + --help early exit + updated help text</title></circle>
+    <circle class="commit-leaf" cx="-4440" cy="7500" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>d2ec976: fix: relay sync + --skip-relay flag + --help early exit + updated help text</title></circle>
+    <circle class="commit-leaf" cx="5760" cy="7580" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>d433e38: fix: relay sync + --skip-relay flag + --help early exit + updated help text</title></circle>
+    <circle class="commit-leaf" cx="600" cy="7660" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>0a44afe: fix(profiles): add missing colorspace vars; consolidate to 4k30 + 1080p60</title></circle>
+    <circle class="commit-leaf" cx="-4560" cy="7700" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>86c763b: fix(profiles): add missing colorspace vars; consolidate to 4k30 + 1080p60</title></circle>
+    <circle class="commit-leaf" cx="5880" cy="7780" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>7729b4d: fix(profiles): add missing colorspace vars; consolidate to 4k30 + 1080p60</title></circle>
+    <circle class="commit-leaf" cx="-4680" cy="7860" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>0039916: fix(profiles): add missing colorspace vars; consolidate to 4k30 + 1080p60</title></circle>
+    <circle class="commit-leaf" cx="600" cy="7940" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>5b0646f: fix(ffmpeg.sh): declare input colorspace before -i to prevent implicit matrix conversion</title></circle>
+    <circle class="commit-leaf" cx="6000" cy="7980" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>a55ab2e: fix(ffmpeg.sh): declare input colorspace before -i to prevent implicit matrix conversion</title></circle>
+    <circle class="commit-leaf" cx="-4800" cy="8060" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>5e43825: fix(ffmpeg.sh): declare input colorspace before -i to prevent implicit matrix conversion</title></circle>
+    <circle class="commit-leaf" cx="6120" cy="8140" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>be8460c: fix(ffmpeg.sh): declare input colorspace before -i to prevent implicit matrix conversion</title></circle>
+    <circle class="commit-leaf" cx="600" cy="8220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>3d91339: fix(copt.sh): profile arg parsing + banner timing</title></circle>
+    <circle class="commit-leaf" cx="-4920" cy="8260" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>55d3286: fix(copt.sh): profile arg parsing + banner timing</title></circle>
+    <circle class="commit-leaf" cx="6240" cy="8340" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>3f5f5e0: fix(copt.sh): profile arg parsing + banner timing</title></circle>
+    <circle class="commit-leaf" cx="600" cy="8420" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>f723159: fix(ffmpeg.sh): embed HDR color metadata via setparams in USB hevc path</title></circle>
+    <circle class="commit-leaf" cx="-5040" cy="8460" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>33c5efd: fix(ffmpeg.sh): embed HDR color metadata via setparams in USB hevc path</title></circle>
+    <circle class="commit-leaf" cx="6360" cy="8540" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>98e0c8d: fix(ffmpeg.sh): embed HDR color metadata via setparams in USB hevc path</title></circle>
+    <circle class="commit-leaf" cx="600" cy="8620" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>4e38919: chore: rremove .gitmodules</title></circle>
+    <circle class="commit-leaf" cx="-5160" cy="8660" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>9896d57: chore: rremove .gitmodules</title></circle>
+    <circle class="commit-leaf" cx="6480" cy="8740" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>bf9adb1: chore: rremove .gitmodules</title></circle>
+    <circle class="commit-leaf" cx="600" cy="8820" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>9eb7964: Add USB capture and OBS crash prevention utilities</title></circle>
+    <circle class="commit-leaf" cx="-5280" cy="8860" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>6df6b3a: Add USB capture and OBS crash prevention utilities</title></circle>
+    <circle class="commit-leaf" cx="600" cy="8940" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>db969f5: Simplify relay back to synchronous uploads with playlist timer</title></circle>
+    <circle class="commit-leaf" cx="6600" cy="8980" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>0f5a1f7: Simplify relay back to synchronous uploads with playlist timer</title></circle>
+    <circle class="commit-leaf" cx="600" cy="9060" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>f127076: Fix stale playlist and segment tracking issues</title></circle>
+    <circle class="commit-leaf" cx="-5400" cy="9100" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>5da3680: Fix stale playlist and segment tracking issues</title></circle>
+    <circle class="commit-leaf" cx="600" cy="9180" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>22342e5: Refactor relay to upload segments in background for independent playlist scheduling</title></circle>
+    <circle class="commit-leaf" cx="6720" cy="9220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>c33556b: Refactor relay to upload segments in background for independent playlist scheduling</title></circle>
+    <circle class="commit-leaf" cx="600" cy="9300" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>efc5a1d: Reduce playlist upload interval to 3s and wrap logging</title></circle>
+    <circle class="commit-leaf" cx="-5520" cy="9340" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>4aa1f1c: Reduce playlist upload interval to 3s and wrap logging</title></circle>
+    <circle class="commit-leaf" cx="600" cy="9420" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>e255b30: Add debug logging for playlist upload timing</title></circle>
+    <circle class="commit-leaf" cx="6840" cy="9460" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>2ae1e35: Add debug logging for playlist upload timing</title></circle>
+    <circle class="commit-leaf" cx="600" cy="9540" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>424d47b: Show full URL format with partial cid masking for debugging</title></circle>
+    <g class="commit-leaf"><rect x="591" y="9571" width="18" height="18" rx="3" transform="rotate(45 600 9580)" fill="#475569" stroke="#cbd5e1" stroke-width="1.5"/><text x="600" y="9584" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="bold" fill="#f8fafc">37</text><title>37 commits</title></g>
+    <circle class="commit-leaf" cx="600" cy="9620" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>340ce60: merge: remote changelog update</title></circle>
+    <g class="commit-leaf"><rect x="591" y="9651" width="18" height="18" rx="3" transform="rotate(45 600 9660)" fill="#475569" stroke="#cbd5e1" stroke-width="1.5"/><text x="600" y="9664" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="bold" fill="#f8fafc">5</text><title>5 commits</title></g>
+    <circle class="commit-leaf" cx="-5640" cy="9700" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>877fd2c: chore: update CHANGELOG for v0.0.1 (re-release)</title></circle>
+    <circle class="commit-leaf" cx="600" cy="9780" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>f41f56a: chore(dc-init): generate release fix</title></circle>
+    <g class="commit-leaf"><rect x="591" y="9811" width="18" height="18" rx="3" transform="rotate(45 600 9820)" fill="#475569" stroke="#cbd5e1" stroke-width="1.5"/><text x="600" y="9824" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="bold" fill="#f8fafc">3</text><title>3 commits</title></g>
+    <circle class="commit-leaf" cx="600" cy="9860" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>69fd4d9: Merge pull request #2 from XAOSTECH:anglicise/20260222-210023\n\nchore: Convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="6960" cy="9900" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>19003cd: chore: convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="600" cy="9980" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>66b1527: dc-init</title></circle>
+    <circle class="commit-leaf" cx="-5760" cy="10020" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>6ab0530: chore: convert American spellings to British English</title></circle>
+    <circle class="commit-leaf" cx="600" cy="10100" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>2e06f2d: refactor: consolidate files - rename copt-host to copt</title></circle>
+    <g class="commit-leaf"><rect x="591" y="10131" width="18" height="18" rx="3" transform="rotate(45 600 10140)" fill="#475569" stroke="#cbd5e1" stroke-width="1.5"/><text x="600" y="10144" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="bold" fill="#f8fafc">31</text><title>31 commits</title></g>
+    <circle class="commit-leaf" cx="600" cy="10180" r="10" fill="url(#mergeGradient)" stroke="#7c3aed" stroke-width="1.5"><title>fec2dbc: Merge build-module-ubuntu2510: Add native installation support</title></circle>
+    <circle class="commit-leaf" cx="7080" cy="10220" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>beb2c85: feat: add build system for standalone Ubuntu installation</title></circle>
+    <circle class="commit-leaf" cx="600" cy="10300" r="9" fill="url(#forkGradient)" stroke="#ea580c" stroke-width="1.5"><title>1fd1d88: feat: add host execution wrapper for DRI access</title></circle>
+    <g class="commit-leaf"><rect x="591" y="10331" width="18" height="18" rx="3" transform="rotate(45 600 10340)" fill="#475569" stroke="#cbd5e1" stroke-width="1.5"/><text x="600" y="10344" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="bold" fill="#f8fafc">16</text><title>16 commits</title></g>
+    <circle class="commit-leaf" cx="600" cy="10380" r="6" fill="url(#leafGradient)" stroke="#16a34a" stroke-width="1.5"><title>ac912b7: feat: add copt wayland screen capture with ffmpeg kmsgrab</title></circle>
+  </g>
+  
+  <!-- Legend -->
+  <g id="legend" transform="translate(20, 20)">
+    <rect width="200" height="110" fill="white" stroke="#cbd5e1" stroke-width="1" rx="4"/>
+    <circle cx="20" cy="25" r="5" fill="url(#leafGradient)" stroke="#16a34a"/>
+    <text x="32" y="30" class="branch-label" font-size="12">Regular Commit</text>
+    <circle cx="20" cy="50" r="6" fill="url(#mergeGradient)" stroke="#7c3aed"/>
+    <text x="32" y="55" class="branch-label" font-size="12">Merge Commit</text>
+    <circle cx="20" cy="75" r="6" fill="url(#forkGradient)" stroke="#ea580c"/>
+    <text x="32" y="80" class="branch-label" font-size="12">Fork Point</text>
+    <circle cx="20" cy="100" r="6" fill="url(#tagGradient)" stroke="#0284c7"/>
+    <text x="32" y="105" class="branch-label" font-size="12">Tagged</text>
+  </g>
+  
+  <!-- Repository info -->
+  <g id="info" transform="translate(20, 10460)">
+    <text x="0" y="0" class="branch-label" font-size="12" fill="#666">
+      Repository: copt
+    </text>
+    <text x="0" y="20" class="branch-label" font-size="10" fill="#999">
+      Generated: 2026-11-02 05:39:04 UTC
+    </text>
+  </g>
+</svg>
