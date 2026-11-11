@@ -122,7 +122,7 @@ echo ""
 echo "[+] Build complete!"
 echo ""
 echo "[+] Verify HEVC support:"
-$INSTALL_PREFIX/bin/ffmpeg -hide_banner -encoders 2>/dev/null | grep -E "hevc|h265"
+"$INSTALL_PREFIX"/bin/ffmpeg -hide_banner -encoders 2>/dev/null | grep -E "hevc|h265"
 
 echo ""
 echo "[*] To use this FFmpeg build, either:"
