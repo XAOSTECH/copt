@@ -177,6 +177,6 @@ while true; do
         ((attempt++))
     else
         err "FFmpeg failed with code $ret"
-        exit $ret
+        exit "$ret"
     fi
 done

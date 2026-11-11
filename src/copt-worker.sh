@@ -419,7 +419,7 @@ Then log out and log back in for group changes to take effect."
         local has_duration=0
         for i in "${!test_cmd[@]}"; do
             if [[ "${test_cmd[$i]}" == "-t" ]]; then
-                test_cmd[$((i+1))]="5"
+                test_cmd[i+1]="5"
                 has_duration=1
                 break
             fi
@@ -433,7 +433,7 @@ Then log out and log back in for group changes to take effect."
             test_cmd=("${test_cmd[@]:0:$last_input_idx}" "-t" "5" "${test_cmd[@]:$last_input_idx}")
         fi
         # For streaming, ensure output goes to /tmp
-        [[ "${COPT_IS_STREAMING:-0}" -eq 1 ]] && test_cmd[$((${#test_cmd[@]}-1))]="${COPT_OUTPUT}"
+        [[ "${COPT_IS_STREAMING:-0}" -eq 1 ]] && test_cmd[${#test_cmd[@]}-1]="${COPT_OUTPUT}"
     fi
 
     # Print the command (test_cmd for dry-run, FFMPEG_CMD otherwise)
