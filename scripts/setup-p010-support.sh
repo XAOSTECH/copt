@@ -104,7 +104,8 @@ check_secure_boot() {
     fi
     
     # Fallback: check EFI vars
-    if [ -f /sys/firmware/efi/efivars/SecureBoot-* ] || [ -f /sys/firmware/efi/vars/SecureBoot-* ]; then
+    if compgen -G "/sys/firmware/efi/efivars/SecureBoot-*" > /dev/null 2>&1 || \
+    compgen -G "/sys/firmware/efi/vars/SecureBoot-*"  > /dev/null 2>&1; then
         return 0  # Likely enabled
     fi
     
