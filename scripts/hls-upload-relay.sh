@@ -2,8 +2,7 @@
 # ============================================================================
 # HLS upload relay — Asynchronous YouTube uploader for HLS segments
 # ============================================================================
-# Accepts HLS segments on local disk, uploads to YouTube with persistent
-# connection and proper buffering (like OBS does internally).
+# Accepts HLS segments on local disk, uploads to YouTube with persistent connection and proper buffering (like OBS does internally).
 #
 # This DECOUPLES encoding from network uploads:
 # - FFmpeg writes to /tmp/hls/ (instant, no network blocking)
@@ -49,8 +48,7 @@ done
 [[ -z "$YOUTUBE_URL" ]] && { echo "Error: --youtube-url required" | tee -a "$LOG_FILE"; exit 1; }
 
 # Initialise — wipe HLS dir so FFmpeg and relay always start in sync.
-# Stale .ts files from a previous run confuse YouTube: it gets a playlist
-# referencing segment N+M but the connection already closed at segment N.
+# Stale .ts files from a previous run confuse YouTube: it gets a playlist referencing segment N+M but the connection already closed at segment N.
 mkdir -p "$HLS_DIR"
 rm -f "$HLS_DIR"/*.ts "$HLS_DIR"/*.m3u8 2>/dev/null || true
 
