@@ -2,8 +2,7 @@
 ###############################################################################
 # Setup P010 HDR Kernel Module for Linux v4l2
 #
-# Enables native 10-bit P010 format support for UVC devices (UGREEN 25173, etc)
-# on Linux systems using DKMS (Dynamic Kernel Module Support).
+# Enables native 10-bit P010 format support for UVC devices (UGREEN 25173, etc) on Linux systems using DKMS (Dynamic Kernel Module Support).
 #
 # Credit: @awawa-dev (https://github.com/awawa-dev/P010_for_V4L2)
 #

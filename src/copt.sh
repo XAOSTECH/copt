@@ -2,8 +2,7 @@
 # ============================================================================
 # copt — Capture Operations with auto-restart and container exec support
 # ============================================================================
-# Main entry point for copt. Handles auto-restart, USB reconnect, container
-# exec mode detection, and preview window integration.
+# Main entry point for copt. Handles auto-restart, USB reconnect, container exec mode detection, and preview window integration.
 #
 # Execution mode (auto-detected):
 #
@@ -389,8 +388,7 @@ for _a in "${USER_ARGS[@]+"${USER_ARGS[@]}"}"; do
     elif [[ "$_a" == "--skip-relay" || "$_a" == "--no-relay" ]]; then
         SKIP_RELAY=1
     elif [[ "$_a" == "--help" || "$_a" == "-h" ]]; then
-        # Pass --help through to worker (which prints full usage and exits)
-        # but skip all the relay/USB setup overhead first.
+        # Pass --help through to worker (which prints full usage and exits) but skip all the relay/USB setup overhead first.
         FILTERED_ARGS+=("$_a")
     elif [[ "$_a" == "--preview" ]]; then
         PREVIEW_ENABLED=1
@@ -405,8 +403,7 @@ for _a in "${USER_ARGS[@]+"${USER_ARGS[@]}"}"; do
 done
 
 # ------------------------------------------------------------------
-# Early exit for --help / -h: don't start relay, don't check USB,
-# just exec the worker with --help and let it print usage + exit.
+# Early exit for --help / -h: don't start relay, don't check USB, just exec the worker with --help and let it print usage + exit.
 # ------------------------------------------------------------------
 for _a in "${USER_ARGS[@]+"${USER_ARGS[@]}"}"; do
     if [[ "$_a" == "--help" || "$_a" == "-h" ]]; then
@@ -466,8 +463,7 @@ else
         info "Lower latency mode - using host FFmpeg/NVENC directly"
     else
         # ── Default: exec into devcontainer (bleeding-edge FFmpeg/CUDA/NVENC) ──
-        # Container exec is preferred when available: the devcontainer holds
-        # compiled FFmpeg (NVENC SDK 13.0), CUDA, and all streaming tools.
+        # Container exec is preferred when available: the devcontainer holds compiled FFmpeg (NVENC SDK 13.0), CUDA, and all streaming tools.
         # Fallback to host-direct only when no container is running.
         CONTAINER_RAW="${COPT_CONTAINER:-}"
         if [[ -z "$CONTAINER_RAW" ]]; then

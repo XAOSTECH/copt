@@ -3,12 +3,9 @@
 # copt — USB capture device reconnect logic
 # ============================================================================
 # Handles UGREEN 25173 (3188:1000) class USB capture device instability:
-# the device physically disconnects from the USB-C bus after 7-13 minutes,
-# causing FFmpeg to exit with "Device /dev/videoX disconnected".
+# the device physically disconnects from the USB-C bus after 7-13 minutes, causing FFmpeg to exit with "Device /dev/videoX disconnected".
 #
-# Strategy: run FFmpeg in the foreground while a log monitor runs in the
-# background. On a detected USB disconnect we kill FFmpeg, wait for the
-# device to re-enumerate on the bus, then re-launch with the same command.
+# Strategy: run FFmpeg in the foreground while a log monitor runs in the background. On a detected USB disconnect we kill FFmpeg, wait for the device to re-enumerate on the bus, then re-launch with the same command.
 #
 # SPDX-Licence-Identifier: GPL-3.0-or-later
 # ============================================================================
