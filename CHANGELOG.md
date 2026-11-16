@@ -1,4 +1,16 @@
 
+## [0.1.1] - 2026-11-16
+
+### Fixed
+- -f can't evaluate a glob; expand with compgen -G and exit 0 if any match exists
+- apply automated ShellCheck and CodeQL remediation
+
+### Changed
+- chore: humanise hard-wrapped comments and prose
+- chore(dc-init): update workflows,actions,docs
+- chore(devcontainer): remove examples
+- chore(dc-init): update workflows,actions
+
 ## [0.1.0] - 2026-11-02 (re-release)
 
 ### Fixed
